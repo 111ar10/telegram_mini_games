@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Triangulate</title>
+
+  <!-- Telegram Web App SDK (same as the other mini-games in this repo) -->
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+  <style>
+    :root {
+      --bg: #0e1116; --panel: #171b22; --ink: #e8e6df; --muted: #8b90a0;
+      --grid: #232a34; --land: #1b2028; --water: #17313a;
+      --a: #57b0ff; --b: #ffb454; --c: #7bd88f; --lock: #4caf7d; --danger: #d9534f;
+      --shadow: rgba(0,0,0,.5);
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    html, body { height: 100%; }
+    body {
+      background: radial-gradient(120% 90% at 50% 0%, #1a1f28 0%, var(--bg) 65%);
+      color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      display: flex; flex-direction: column; align-items: center; min-height: 100%;
+      padding: 16px 14px 22px; user-select: none;
+    }
+    h1 { font-size: 18px; font-weight: 700; letter-spacing: .3px; }
+    .sub { margin-top: 5px; font-size: 12.5px; color: var(--muted); text-align: center; max-width: 360px; line-height: 1.45; }
+
+    .stage { position: relative; width: 340px; max-width: 92vw; margin-top: 14px; }
+    svg { width: 100%; height: auto; display: block; border-radius: 16px;
+          box-shadow: 0 10px 30px var(--shadow); background: var(--land); touch-action: none; }
+    .ring { fill-opacity: .07; stroke-width: 2.5; }
+    .ring.a { stroke: var(--a); fill: var(--a); } .ring.b { stroke: var(--b); fill: var(--b); } .ring.c { stroke: var(--c); fill: var(--c); }
+    .ring.locked { stroke-dasharray: none; stroke-width: 3.5; }
+    .handle { cursor: grab; }
+    .tower { font-size: 11px; font-weight: 700; }
+    .pill { fill: var(--panel); }
+
+    .meters { width: 340px; max-width: 92vw; margin-top: 12px; display: flex; flex-direction: column; gap: 7px; }
+    .meter { display: flex; align-items: center; gap: 9px; font-size: 12px; }
+    .dot { width: 11px; height: 11px; border-radius: 50%; flex: 0 0 auto; box-shadow: 0 0 0 2px rgba(255,255,255,.06); }
+    .bar { flex: 1; height: 7px; border-radius: 6px; background: #232a34; overflow: hidden; }
+    .bar > i { display: block; height: 100%; width: 0%; border-radius: 6px; transition: width .12s ease; }
+    .name { width: 74px; color: var(--muted); }
+    .hint { width: 60px; text-align: right; color: var(--muted); font-variant-numeric: tabular-nums; }
+
+    .locate {
+      margin-top: 16px; width: 340px; max-width: 92vw; padding: 14px; border: none; border-radius: 13px;
+      background: linear-gradient(180deg, #3a4150 0%, #2a303b 100%); color: #6f7686; font-size: 15px; font-weight: 800;
+      letter-spacing: .3px; box-shadow: 0 4px 0 #1a1e26; cursor: not-allowed; transition: all .15s;
+    }
+    .locate.ready { background: linear-gradient(180deg, var(--lock) 0%, #327a56 100%); color: #062015; cursor: pointer; box-shadow: 0 4px 0 #1e4a34; }
+    .locate.ready:active { transform: translateY(3px); box-shadow: none; }
+    .msg { min-height: 18px; margin-top: 12px; font-size: 13px; text-align: center; color: var(--muted); }
+
+    .overlay { position: fixed; inset: 0; background: rgba(10,12,16,.88); backdrop-filter: blur(3px);
+               display: none; align-items: center; justify-content: center; z-index: 20; padding: 24px; }
+    .overlay.show { display: flex; }
+    .card { background: var(--panel); border: 1px solid #333a46; border-radius: 18px; padding: 28px 24px;
+            text-align: center; max-width: 320px; width: 100%; box-shadow: 0 20px 50px var(--shadow); }
+    .card .emoji { font-size: 42px; } .card h2 { margin: 12px 0 6px; font-size: 20px; } .card p { color: var(--muted); font-size: 14px; line-height: 1.5; }
+  </style>
+</head>
+<body>
+  <h1 id="title">Triangulate the last ping</h1>
+  <div class="sub" id="sub"></div>
+
+  <div class="stage">
+    <svg id="map" viewBox="0 0 300 300" aria-label="map">
+      <defs>
+        <pattern id="grid" width="30" height="30" patternUnits="userSpaceOnUse">
+          <path d="M30 0 H0 V30" fill="none" stroke="var(--grid)" stroke-width="1"/>
+        </pattern>
+      </defs>
+      <rect x="0" y="0" width="300" height="300" fill="var(--land)"/>
+      <rect x="0" y="0" width="300" height="300" fill="url(#grid)"/>
+      <!-- schematic river Sava across the south -->
+      <path d="M0 250 C 80 235, 220 265, 300 245 L300 300 L0 300 Z" fill="var(--water)" opacity=".8"/>
+      <!-- district labels (decoys + the answer) -->
+      <g id="labels" font-size="9" fill="var(--muted)"></g>
+      <!-- rings + towers injected here -->
+      <g id="rings"></g>
+      <g id="towers"></g>
+      <!-- the resolved fix (hidden until solved) -->
+      <g id="fix" opacity="0">
+        <circle cx="150" cy="150" r="7" fill="none" stroke="var(--lock)" stroke-width="2"/>
+        <circle cx="150" cy="150" r="2.5" fill="var(--lock)"/>
+      </g>
+    </svg>
+  </div>
+
+  <div class="meters" id="meters"></div>
+  <button class="locate" id="locate">LOCATE</button>
+  <div class="msg" id="msg"></div>
+
+  <div class="overlay" id="overlay">
+    <div class="card">
+      <div class="emoji" id="rEmoji">📍</div>
+      <h2 id="rTitle">Located</h2>
+      <p id="rBody"></p>
+    </div>
+  </div>
+
+  <script>
+    const tg = window.Telegram ? window.Telegram.WebApp : null;
+    if (tg) { tg.ready(); tg.expand(); }
+    const haptic = (k) => { try { if (!tg||!tg.HapticFeedback) return;
+      if (k==='tick') tg.HapticFeedback.selectionChanged();
+      else if (k==='ok') tg.HapticFeedback.notificationOccurred('success');
+      else if (k==='err') tg.HapticFeedback.notificationOccurred('error'); } catch(e){} };
+
+    const q = new URLSearchParams(location.search);
+    const sessionId = q.get('sessionId');
+    const userId = (tg && tg.initDataUnsafe && tg.initDataUnsafe.user) ? tg.initDataUnsafe.user.id : q.get('userId');
+    const maxScore = parseInt(q.get('maxScore') || '100', 10);
+    const tol = parseFloat(q.get('tol') || '10'); // per-ring lock tolerance (map units)
+    let lang = (q.get('lang') || (tg && tg.initDataUnsafe && tg.initDataUnsafe.user && tg.initDataUnsafe.user.language_code) || 'en')
+                 .split('-')[0].toLowerCase();
+
+    const STR = {
+      en: { title: 'Triangulate the last ping', sub: 'Three cell towers caught her phone at 09:52. Grow each signal ring until it turns green — where all three cross is where she was.',
+            locate: 'LOCATE', need: 'Line up all three signals first.', ready: 'Signals locked — get the fix.',
+            hot: 'closer', cold: 'further', okT: 'Fix acquired', okB: 'The rings cross over the Glavni kolodvor — the main station.',
+            names: ['Tower A','Tower B','Tower C'], station: 'Glavni kolodvor', decoys: ['Trešnjevka','Maksimir','Dolac','Britanski trg'] },
+      hr: { title: 'Trianguliraj zadnji signal', sub: 'Tri odašiljača uhvatila su njezin mobitel u 09:52. Rasti svaki prsten signala dok ne postane zelen — gdje se sva tri sijeku, ondje je bila.',
+            locate: 'LOCIRAJ', need: 'Prvo poravnaj sva tri signala.', ready: 'Signali zaključani — izvuci lokaciju.',
+            hot: 'bliže', cold: 'dalje', okT: 'Lokacija utvrđena', okB: 'Prsteni se sijeku nad Glavnim kolodvorom.',
+            names: ['Odašiljač A','Odašiljač B','Odašiljač C'], station: 'Glavni kolodvor', decoys: ['Trešnjevka','Maksimir','Dolac','Britanski trg'] },
+    };
+    const S = STR[lang] || STR.en;
+    document.documentElement.lang = lang;
+    document.getElementById('title').textContent = S.title;
+    document.getElementById('sub').textContent = S.sub;
+
+    // Geometry: hidden target (the station) + three towers. True distance per tower = dist(tower, target).
+    const TARGET = { x: 150, y: 150 };
+    const towers = [
+      { x: 55,  y: 60,  cls: 'a' },
+      { x: 250, y: 80,  cls: 'b' },
+      { x: 150, y: 265, cls: 'c' },
+    ];
+    towers.forEach(t => { t.d = Math.hypot(t.x - TARGET.x, t.y - TARGET.y); t.r = 45; });
+
+    // District labels (answer + decoys, placed around the map for flavor)
+    const labelPts = [
+      { name: S.station, x: 158, y: 150, key: true },
+      { name: S.decoys[0], x: 40, y: 200 },
+      { name: S.decoys[1], x: 235, y: 175 },
+      { name: S.decoys[2], x: 120, y: 95 },
+      { name: S.decoys[3], x: 210, y: 40 },
+    ];
+    const labelsG = document.getElementById('labels');
+    labelPts.forEach(p => {
+      const dot = mk('circle', { cx: p.x - 6, cy: p.y - 3, r: 2, fill: 'var(--muted)' });
+      const tx = mk('text', { x: p.x, y: p.y, fill: 'var(--muted)' }); tx.textContent = p.name;
+      labelsG.append(dot, tx);
+    });
+
+    const ringsG = document.getElementById('rings');
+    const towersG = document.getElementById('towers');
+    const metersG = document.getElementById('meters');
+    let adjustments = 0, wrongLocates = 0, solved = false;
+
+    function mk(tag, attrs) {
+      const el = document.createElementNS('http://www.w3.org/2000/svg', tag);
+      for (const k in attrs) el.setAttribute(k, attrs[k]);
+      return el;
+    }
+
+    towers.forEach((t, i) => {
+      t.ring = mk('circle', { class: `ring ${t.cls}`, cx: t.x, cy: t.y, r: t.r });
+      // handle sits on the ring's right edge; drag it to resize
+      t.handle = mk('circle', { class: 'handle', cx: t.x + t.r, cy: t.y, r: 8, fill: `var(--${t.cls})` });
+      ringsG.append(t.ring);
+      towersG.append(t.handle);
+      const base = mk('circle', { cx: t.x, cy: t.y, r: 4, fill: `var(--${t.cls})` });
+      const halo = mk('circle', { cx: t.x, cy: t.y, r: 8, fill: 'none', stroke: `var(--${t.cls})`, 'stroke-width': 1, opacity: .5 });
+      towersG.append(halo, base);
+
+      // meter row
+      const row = document.createElement('div'); row.className = 'meter';
+      row.innerHTML = `<span class="dot" style="background:var(--${t.cls})"></span>` +
+        `<span class="name">${S.names[i]}</span><span class="bar"><i style="background:var(--${t.cls})"></i></span>` +
+        `<span class="hint"></span>`;
+      metersG.append(row);
+      t.barFill = row.querySelector('i'); t.hintEl = row.querySelector('.hint'); t.dotEl = row.querySelector('.dot');
+
+      // drag handling
+      let dragging = false;
+      const svg = document.getElementById('map');
+      const toSvg = (e) => { const pt = svg.createSVGPoint(); pt.x = e.clientX; pt.y = e.clientY;
+        return pt.matrixTransform(svg.getScreenCTM().inverse()); };
+      const onMove = (e) => {
+        if (!dragging || solved) return;
+        const p = toSvg(e);
+        const r = Math.max(15, Math.min(210, Math.hypot(p.x - t.x, p.y - t.y)));
+        if (Math.abs(r - t.r) > 0.5) { adjustments++; haptic('tick'); }
+        t.r = r; renderTower(t); updateLocate();
+      };
+      t.handle.addEventListener('pointerdown', (e) => { dragging = true; t.handle.setPointerCapture(e.pointerId); e.preventDefault(); });
+      t.handle.addEventListener('pointermove', onMove);
+      t.handle.addEventListener('pointerup', () => { dragging = false; });
+      t.handle.addEventListener('pointercancel', () => { dragging = false; });
+    });
+
+    function renderTower(t) {
+      t.ring.setAttribute('r', t.r);
+      t.handle.setAttribute('cx', t.x + t.r);
+      const err = Math.abs(t.r - t.d);
+      const locked = err <= tol;
+      t.ring.classList.toggle('locked', locked);
+      // bar fills as you approach the true distance (100% at lock)
+      const pct = Math.max(0, Math.min(100, 100 - (err / t.d) * 140));
+      t.barFill.style.width = pct + '%';
+      t.dotEl.style.boxShadow = locked ? `0 0 0 2px var(--lock)` : `0 0 0 2px rgba(255,255,255,.06)`;
+      t.hintEl.textContent = locked ? '✓' : (t.r < t.d ? S.hot : S.cold);
+    }
+    towers.forEach(renderTower);
+
+    const locateBtn = document.getElementById('locate');
+    const msgEl = document.getElementById('msg');
+    locateBtn.textContent = S.locate;
+    function allLocked() { return towers.every(t => Math.abs(t.r - t.d) <= tol); }
+    function updateLocate() {
+      const ready = allLocked();
+      locateBtn.classList.toggle('ready', ready);
+      msgEl.textContent = ready ? S.ready : '';
+    }
+    updateLocate();
+
+    function sendResult(success) {
+      const residual = towers.reduce((s, t) => s + Math.abs(t.r - t.d), 0);
+      const score = success ? Math.max(20, Math.round(maxScore - residual * 1.5 - wrongLocates * 10)) : 0;
+      const result = { sessionId, userId, gameId: 'triangulate', success, score,
+        adjustments, wrongLocates, residual: Math.round(residual), timestamp: Date.now() };
+      console.log('📤 triangulate result', result);
+      try {
+        if (tg && typeof tg.sendData === 'function') tg.sendData(JSON.stringify(result));
+        else localStorage.setItem('triangulate_result_latest', JSON.stringify(result));
+      } catch (e) { console.error('sendData failed', e); }
+    }
+
+    locateBtn.addEventListener('click', () => {
+      if (solved) return;
+      if (!allLocked()) { wrongLocates++; haptic('err'); msgEl.textContent = S.need; msgEl.style.color = 'var(--danger)'; return; }
+      solved = true; haptic('ok');
+      document.getElementById('fix').setAttribute('opacity', '1');
+      sendResult(true);
+      const ov = document.getElementById('overlay');
+      document.getElementById('rEmoji').textContent = '📍';
+      document.getElementById('rTitle').textContent = S.okT;
+      document.getElementById('rBody').textContent = S.okB;
+      setTimeout(() => ov.classList.add('show'), 600);
+    });
+
+    // test hook
+    window.__triang = { towers, TARGET, tol, lockAll: () => { towers.forEach(t => { t.r = t.d; renderTower(t); }); updateLocate(); } };
+  </script>
+</body>
+</html>
