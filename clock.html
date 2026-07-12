@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Set the Clock</title>
+
+  <!-- Telegram Web App SDK (same as the other mini-games in this repo) -->
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+  <style>
+    :root {
+      --bg: #0f1218; --face: #f4efe2; --face2: #e7dfcb; --ink: #23262e; --muted: #8b90a0;
+      --brass: #c9a24b; --hour: #2a2e38; --minute: #4a5060; --accent: #c9a24b; --ok: #4caf7d; --danger: #d9534f;
+      --shadow: rgba(0,0,0,.5);
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    html, body { height: 100%; }
+    body {
+      background: radial-gradient(120% 90% at 50% 0%, #1a1f28 0%, var(--bg) 65%);
+      color: #e8e6df; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      display: flex; flex-direction: column; align-items: center; min-height: 100%;
+      padding: 20px 16px 26px; user-select: none;
+    }
+    h1 { font-size: 19px; font-weight: 700; }
+    .sub { margin-top: 6px; font-size: 12.5px; color: var(--muted); text-align: center; max-width: 340px; line-height: 1.45; }
+    .time { margin-top: 14px; font-size: 30px; font-weight: 800; font-variant-numeric: tabular-nums; letter-spacing: 1px; color: var(--brass); }
+
+    svg { width: 300px; max-width: 82vw; height: auto; display: block; margin-top: 8px;
+          filter: drop-shadow(0 12px 26px var(--shadow)); touch-action: none; }
+    .tick { stroke: var(--ink); } .tick.major { stroke-width: 3; } .tick.minor { stroke-width: 1; opacity: .5; }
+    .num { fill: var(--ink); font-size: 15px; font-weight: 700; text-anchor: middle; dominant-baseline: central; }
+    .hand { stroke-linecap: round; cursor: grab; }
+    .hand.hour { stroke: var(--hour); stroke-width: 8; }
+    .hand.minute { stroke: var(--minute); stroke-width: 5; }
+    .knob { cursor: grab; }
+
+    .confirm {
+      margin-top: 20px; width: 300px; max-width: 82vw; padding: 14px; border: none; border-radius: 13px;
+      background: linear-gradient(180deg, var(--brass) 0%, #8a6d2c 100%); color: #221a06; font-size: 16px; font-weight: 800;
+      letter-spacing: .4px; box-shadow: 0 4px 0 #5c4a1f, 0 8px 18px var(--shadow); cursor: pointer; transition: transform .07s, box-shadow .07s;
+    }
+    .confirm:active { transform: translateY(3px); box-shadow: 0 1px 0 #5c4a1f; }
+    .msg { min-height: 18px; margin-top: 14px; font-size: 13.5px; text-align: center; color: var(--muted); }
+    .msg.err { color: var(--danger); } .msg.ok { color: var(--ok); }
+
+    .overlay { position: fixed; inset: 0; background: rgba(10,12,16,.88); backdrop-filter: blur(3px);
+               display: none; align-items: center; justify-content: center; z-index: 20; padding: 24px; }
+    .overlay.show { display: flex; }
+    .card { background: #171b22; border: 1px solid #333a46; border-radius: 18px; padding: 28px 24px;
+            text-align: center; max-width: 320px; width: 100%; box-shadow: 0 20px 50px var(--shadow); }
+    .card .emoji { font-size: 42px; } .card h2 { margin: 12px 0 6px; font-size: 20px; } .card p { color: var(--muted); font-size: 14px; line-height: 1.5; }
+  </style>
+</head>
+<body>
+  <h1 id="title">Set the clock</h1>
+  <div class="sub" id="sub"></div>
+  <div class="time" id="time">--:--</div>
+
+  <svg id="clock" viewBox="0 0 200 200" aria-label="clock">
+    <circle cx="100" cy="100" r="97" fill="var(--face2)"/>
+    <circle cx="100" cy="100" r="92" fill="var(--face)"/>
+    <g id="ticks"></g>
+    <g id="nums"></g>
+    <line id="hourHand" class="hand hour" x1="100" y1="100" x2="100" y2="52"/>
+    <line id="minuteHand" class="hand minute" x1="100" y1="100" x2="100" y2="30"/>
+    <circle id="hourKnob" class="knob" r="9" fill="var(--hour)" opacity="0.85"/>
+    <circle id="minuteKnob" class="knob" r="8" fill="var(--minute)" opacity="0.85"/>
+    <circle cx="100" cy="100" r="6" fill="var(--accent)"/>
+  </svg>
+
+  <button class="confirm" id="confirm">CONFIRM</button>
+  <div class="msg" id="msg"></div>
+
+  <div class="overlay" id="overlay">
+    <div class="card">
+      <div class="emoji" id="rEmoji">🔔</div>
+      <h2 id="rTitle">Right on the hour</h2>
+      <p id="rBody"></p>
+    </div>
+  </div>
+
+  <script>
+    const tg = window.Telegram ? window.Telegram.WebApp : null;
+    if (tg) { tg.ready(); tg.expand(); }
+    const haptic = (k) => { try { if (!tg||!tg.HapticFeedback) return;
+      if (k==='tick') tg.HapticFeedback.selectionChanged();
+      else if (k==='ok') tg.HapticFeedback.notificationOccurred('success');
+      else if (k==='err') tg.HapticFeedback.notificationOccurred('error'); } catch(e){} };
+
+    const q = new URLSearchParams(location.search);
+    const sessionId = q.get('sessionId');
+    const userId = (tg && tg.initDataUnsafe && tg.initDataUnsafe.user) ? tg.initDataUnsafe.user.id : q.get('userId');
+    const maxScore = parseInt(q.get('maxScore') || '100', 10);
+    // Target time, default noon (the Grič cannon). Format HH:MM (24h ok; clock is 12h).
+    const [tH, tM] = (q.get('target') || '12:00').split(':').map(n => parseInt(n, 10));
+    const targetHour12 = ((tH % 12) + 12) % 12;
+    let lang = (q.get('lang') || (tg && tg.initDataUnsafe && tg.initDataUnsafe.user && tg.initDataUnsafe.user.language_code) || 'en')
+                 .split('-')[0].toLowerCase();
+
+    const STR = {
+      en: { title: 'Set the clock', sub: 'Under the clock on the square. Drag the hands to the hour the cannon names, then confirm.',
+            confirm: 'CONFIRM', early: 'The cannon hasn\'t fired yet…', close: 'Almost — check the hands.',
+            okT: 'Noon.', okB: 'The Grič cannon booms across the rooftops. This was a meeting in broad daylight.' },
+      hr: { title: 'Namjesti sat', sub: 'Pod satom na trgu. Povuci kazaljke na sat koji top objavljuje, pa potvrdi.',
+            confirm: 'POTVRDI', early: 'Top još nije opalio…', close: 'Skoro — provjeri kazaljke.',
+            okT: 'Podne.', okB: 'Grički top zaori nad krovovima. Ovo je bio sastanak usred bijela dana.' },
+    };
+    const S = STR[lang] || STR.en;
+    document.documentElement.lang = lang;
+    document.getElementById('title').textContent = S.title;
+    document.getElementById('sub').textContent = S.sub;
+    document.getElementById('confirm').textContent = S.confirm;
+
+    const svg = document.getElementById('clock');
+    const ticksG = document.getElementById('ticks');
+    const numsG = document.getElementById('nums');
+    function mk(tag, attrs) { const e = document.createElementNS('http://www.w3.org/2000/svg', tag);
+      for (const k in attrs) e.setAttribute(k, attrs[k]); return e; }
+    for (let i = 0; i < 60; i++) {
+      const a = i * 6 * Math.PI / 180, major = i % 5 === 0;
+      const r1 = major ? 78 : 82, r2 = 90;
+      ticksG.append(mk('line', { class: `tick ${major ? 'major' : 'minor'}`,
+        x1: 100 + r1 * Math.sin(a), y1: 100 - r1 * Math.cos(a),
+        x2: 100 + r2 * Math.sin(a), y2: 100 - r2 * Math.cos(a) }));
+    }
+    for (let h = 1; h <= 12; h++) {
+      const a = h * 30 * Math.PI / 180;
+      const t = mk('text', { class: 'num', x: 100 + 66 * Math.sin(a), y: 100 - 66 * Math.cos(a) });
+      t.textContent = h; numsG.append(t);
+    }
+
+    // state: angles in degrees (0 = 12 o'clock, clockwise)
+    let hourAngle = 300, minuteAngle = 30; // start at a random-ish 10:05-ish so it isn't pre-solved
+    const hourHand = document.getElementById('hourHand');
+    const minuteHand = document.getElementById('minuteHand');
+    const hourKnob = document.getElementById('hourKnob');
+    const minuteKnob = document.getElementById('minuteKnob');
+    const timeEl = document.getElementById('time');
+    const msgEl = document.getElementById('msg');
+    let solved = false;
+
+    function polar(angleDeg, len) { const a = angleDeg * Math.PI / 180;
+      return { x: 100 + len * Math.sin(a), y: 100 - len * Math.cos(a) }; }
+    function render() {
+      const hp = polar(hourAngle, 48), mp = polar(minuteAngle, 70);
+      hourHand.setAttribute('x2', hp.x); hourHand.setAttribute('y2', hp.y);
+      minuteHand.setAttribute('x2', mp.x); minuteHand.setAttribute('y2', mp.y);
+      hourKnob.setAttribute('cx', hp.x); hourKnob.setAttribute('cy', hp.y);
+      minuteKnob.setAttribute('cx', mp.x); minuteKnob.setAttribute('cy', mp.y);
+      // derive displayed time
+      const minute = (Math.round(minuteAngle / 6) % 60 + 60) % 60;
+      let hour = Math.floor(((hourAngle % 360) + 360) % 360 / 30) % 12;
+      if (hour === 0) hour = 12;
+      timeEl.textContent = `${hour}:${String(minute).padStart(2, '0')}`;
+    }
+
+    function angleFromEvent(e) {
+      const pt = svg.createSVGPoint(); pt.x = e.clientX; pt.y = e.clientY;
+      const p = pt.matrixTransform(svg.getScreenCTM().inverse());
+      let deg = Math.atan2(p.x - 100, -(p.y - 100)) * 180 / Math.PI;
+      return (deg + 360) % 360;
+    }
+    function bindHand(knob, setter, snap) {
+      let dragging = false;
+      knob.addEventListener('pointerdown', (e) => { dragging = true; knob.setPointerCapture(e.pointerId); e.preventDefault(); });
+      knob.addEventListener('pointermove', (e) => {
+        if (!dragging || solved) return;
+        let deg = angleFromEvent(e); deg = Math.round(deg / snap) * snap;
+        setter(deg); haptic('tick'); render();
+      });
+      knob.addEventListener('pointerup', () => { dragging = false; });
+      knob.addEventListener('pointercancel', () => { dragging = false; });
+    }
+    bindHand(minuteKnob, (d) => { minuteAngle = d; }, 6);   // snap to minutes
+    bindHand(hourKnob, (d) => { hourAngle = d; }, 30);      // snap to hour ticks
+    render();
+
+    function sendResult(success) {
+      const result = { sessionId, userId, gameId: 'clock', success,
+        score: success ? maxScore : 0, hour: timeEl.textContent, timestamp: Date.now() };
+      console.log('📤 clock result', result);
+      try {
+        if (tg && typeof tg.sendData === 'function') tg.sendData(JSON.stringify(result));
+        else localStorage.setItem('clock_result_latest', JSON.stringify(result));
+      } catch (e) { console.error('sendData failed', e); }
+    }
+
+    document.getElementById('confirm').addEventListener('click', () => {
+      if (solved) return;
+      const minute = (Math.round(minuteAngle / 6) % 60 + 60) % 60;
+      const hour12 = Math.floor(((hourAngle % 360) + 360) % 360 / 30) % 12;
+      const ok = hour12 === targetHour12 && minute === ((tM % 60) + 60) % 60;
+      if (!ok) {
+        haptic('err'); msgEl.className = 'msg err';
+        // "cannon hasn't fired yet" when they're before the hour; generic nudge otherwise.
+        // Use 1..12 display hours so noon (hour12 === 0) orders as 12, not 0.
+        const disp = (h) => ((h + 11) % 12) + 1;
+        const beforeTarget = (disp(hour12) * 60 + minute) < (disp(targetHour12) * 60 + tM);
+        msgEl.textContent = beforeTarget ? S.early : S.close;
+        return;
+      }
+      solved = true; haptic('ok'); msgEl.textContent = '';
+      sendResult(true);
+      const ov = document.getElementById('overlay');
+      document.getElementById('rEmoji').textContent = '🔔';
+      document.getElementById('rTitle').textContent = S.okT;
+      document.getElementById('rBody').textContent = S.okB;
+      setTimeout(() => ov.classList.add('show'), 450);
+    });
+
+    // test hook
+    window.__clock = { set: (h, m) => { hourAngle = (h % 12) * 30; minuteAngle = m * 6; render(); },
+                      targetHour12, tM };
+  </script>
+</body>
+</html>
