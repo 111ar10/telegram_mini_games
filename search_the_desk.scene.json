@@ -1,0 +1,145 @@
+{
+  "bg": "mia_desk_scene.svg",
+  "hotspots": [
+    {
+      "id": "poster",
+      "shape": "rect",
+      "x": 0.05,
+      "y": 0.06,
+      "w": 0.32,
+      "h": 0.33,
+      "label": {
+        "en": "Gig poster",
+        "hr": "Plakat koncerta"
+      },
+      "kind": "look",
+      "lookText": {
+        "en": "A concert poster, corner curling. She circled a date in pen, months ago.",
+        "hr": "Plakat koncerta, ugao se već savija. Zaokružila je datum kemijskom, prije mjeseci."
+      }
+    },
+    {
+      "id": "mirror",
+      "shape": "rect",
+      "x": 0.68,
+      "y": 0.07,
+      "w": 0.25,
+      "h": 0.3,
+      "label": {
+        "en": "Mirror",
+        "hr": "Zrcalo"
+      },
+      "kind": "look",
+      "lookText": {
+        "en": "Nothing tucked in the frame but the photo you already noticed.",
+        "hr": "Ništa zataknuto u okvir osim fotografije koju si već primijetio/la."
+      }
+    },
+    {
+      "id": "photo",
+      "shape": "rect",
+      "x": 0.64,
+      "y": 0.34,
+      "w": 0.11,
+      "h": 0.17,
+      "label": {
+        "en": "Polaroid photo",
+        "hr": "Polaroid fotografija"
+      },
+      "kind": "look",
+      "lookText": {
+        "en": "Little Mia on a fishing boat, her father's arm around her, the grey coast behind. She kept it where she'd see it every morning.",
+        "hr": "Mala Mia na ribarskom brodu, očeva ruka oko nje, siva obala iza. Držala ju je ondje gdje bi je vidjela svako jutro."
+      }
+    },
+    {
+      "id": "chair",
+      "shape": "rect",
+      "x": 0.03,
+      "y": 0.53,
+      "w": 0.2,
+      "h": 0.45,
+      "label": {
+        "en": "Her chair",
+        "hr": "Njezina stolica"
+      },
+      "kind": "look",
+      "lookText": {
+        "en": "Pushed in neatly. Her school bag isn't here — wherever she went, she packed first.",
+        "hr": "Uredno gurnuta. Školske torbe nema — kamo god otišla, prije toga se spakirala."
+      }
+    },
+    {
+      "id": "books",
+      "shape": "rect",
+      "x": 0.33,
+      "y": 0.33,
+      "w": 0.2,
+      "h": 0.13,
+      "label": {
+        "en": "Stack of books",
+        "hr": "Hrpa knjiga"
+      },
+      "kind": "take",
+      "givesItem": "desk_key"
+    },
+    {
+      "id": "drawer",
+      "shape": "rect",
+      "x": 0.29,
+      "y": 0.67,
+      "w": 0.42,
+      "h": 0.23,
+      "label": {
+        "en": "Desk drawer",
+        "hr": "Ladica stola"
+      },
+      "kind": "open",
+      "locked": true,
+      "requiresItem": "desk_key",
+      "lookText": {
+        "en": "Locked. The bottom drawer always was.",
+        "hr": "Zaključano. Donja ladica je uvijek bila."
+      },
+      "openText": {
+        "en": "Inside, folded small: a page torn from her diary.",
+        "hr": "Unutra, sitno presavijena: stranica istrgnuta iz njezinog dnevnika."
+      },
+      "reveals": [
+        "diary_page"
+      ]
+    },
+    {
+      "id": "diary_page",
+      "shape": "rect",
+      "x": 0.36,
+      "y": 0.72,
+      "w": 0.16,
+      "h": 0.1,
+      "label": {
+        "en": "The diary page",
+        "hr": "Stranica dnevnika"
+      },
+      "kind": "take",
+      "givesItem": "diary_page_item"
+    }
+  ],
+  "inventory": [
+    {
+      "id": "desk_key",
+      "label": {
+        "en": "Small brass key",
+        "hr": "Mali mjedeni ključ"
+      },
+      "icon": "🗝️"
+    },
+    {
+      "id": "diary_page_item",
+      "label": {
+        "en": "Diary page",
+        "hr": "Stranica dnevnika"
+      },
+      "icon": "📄"
+    }
+  ]
+}

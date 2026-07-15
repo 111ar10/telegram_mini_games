@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Look Around</title>
+
+  <!-- Telegram Web App SDK (same as the other mini-games in this repo) -->
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+  <!--
+    GENERIC ESCAPE-ROOM SCENE  (reusable across games — config-driven, SERVER-AUTHORITATIVE)
+    ----------------------------------------------------------------------------------------------
+    A photo background with tappable hotspots — a desk, a wall, a room, anything. Each hotspot is
+    one of: LOOK (flavor text/image, no report), OPEN (toggles closed/open; can be locked until the
+    right tray item is used on it; opening can reveal child hotspots hidden inside), TAKE (adds an
+    item to the on-screen tray, once), COMBINE (accepts a tray item "used on" it — right item shows
+    its success content, wrong item shows a harmless rebuff, no penalty either way).
+
+    Two ways to finish, both server-authoritative same as every other app here:
+      • SUBMIT bar (default) — the player types whatever code/answer they discovered and taps Submit;
+        reports `{submission:"..."}`, validated against the puzzle's `answer` list exactly like an
+        in-chat text answer.
+      • `finalHotspot` param — when THAT hotspot's OPEN unlocks or its COMBINE succeeds, the scene
+        reports `{choice:"<finalHotspot id>"}` immediately, no typing needed (for puzzles that are
+        "complete the right action", not "find a code").
+    Either way nothing about which hotspot/action is "correct" needs to leave the server — the config
+    below only encodes what's physically in the scene (same trust model as every other config-driven
+    app in this family), and the actual pass/fail is decided by the puzzle's `answer`/`options` content.
+
+    Params (URL query):
+      scene       RECOMMENDED for any real scene — URL to a small hosted JSON file `{bg, hotspots,
+                  inventory}` (schema below), fetched at load. Telegram/servers reject overly long
+                  web_app button URLs (a real photo + a scene's worth of hotspots easily runs 5-10KB) —
+                  hosting the scene as its own file keeps the actual launch URL tiny regardless of scene
+                  size. `bg` inside that file is a normal image URL, resolved relative to the scene
+                  JSON's own location — upload the photo next to the scene JSON and it just works.
+      bg          Inline alternative to `scene.bg` — URL to the background photo. Fine for a genuinely
+                  tiny scene (few hotspots, no real photo), or for room-scene-builder.html's own local
+                  "Open Live Preview" (no server involved, so URL length doesn't matter there).
+      hotspots    Inline alternative to `scene.hotspots` — JSON array, url-encoded:
+                  [{ id, shape:"rect"|"circle", x,y,w,h (rect, 0..1) | cx,cy,r (circle, 0..1),
+                     label:{en,hr}, kind:"look"|"open"|"take"|"combine",
+                     locked, requiresItem, reveals:[ids], givesItem, acceptsItem,
+                     lookText:{en,hr}, lookImage, openText:{en,hr}, openImage, wrongText:{en,hr} }]
+      inventory   Inline alternative to `scene.inventory` — JSON array of item defs the hotspots
+                  reference: [{ id, label:{en,hr}, icon:"🗝️" }]
+      finalHotspot  optional — hotspot id whose successful OPEN/COMBINE auto-submits `{choice:id}`
+      title / tag   cosmetic header text (decodeURIComponent)
+      lang / sessionId / userId  same as every other app here
+    Result (Telegram.WebApp.sendData):
+      Submit bar:      { sessionId, userId, gameId:'room_scene', submission, timestamp }
+      finalHotspot:    { sessionId, userId, gameId:'room_scene', choice, timestamp }
+      give up:         { sessionId, userId, gameId:'room_scene', success:false, outcome:'abandoned', timestamp }
+  -->
+  <style>
+    :root {
+      --bg: #0b0d10; --panel: #14181d; --ink: #e7ebee; --muted: #8b96a1;
+      --accent: #ffb454; --accent-dark: #a8712f; --danger: #ff6b5e; --success: #6dffa0;
+      --shadow: rgba(0,0,0,.6); --marker: #ffd88a;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    html, body { height: 100%; }
+    body {
+      background: var(--bg); color: var(--ink);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      display: flex; flex-direction: column; min-height: 100%; user-select: none;
+    }
+    header { text-align: center; padding: 14px 16px 6px; }
+    h1 { font-size: 17px; font-weight: 700; }
+    .tag { margin-top: 4px; font-size: 12px; color: var(--muted); font-style: italic; line-height: 1.4; }
+
+    .stage { position: relative; margin: 6px 12px; border-radius: 12px; overflow: hidden;
+      background: #000; box-shadow: 0 10px 26px var(--shadow); flex: 1 1 auto; min-height: 200px; }
+    .stage img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .hotspot { position: absolute; cursor: pointer; }
+    .hotspot .dot {
+      position: absolute; top: 50%; left: 50%; width: 16px; height: 16px; margin: -8px 0 0 -8px;
+      border-radius: 50%; background: var(--marker); box-shadow: 0 0 0 4px rgba(255,216,138,.25), 0 2px 6px rgba(0,0,0,.5);
+      animation: pulse 1.8s ease-in-out infinite;
+    }
+    .hotspot.done .dot { background: #6d7885; box-shadow: 0 0 0 4px rgba(109,120,133,.2); animation: none; opacity: .55; }
+    @keyframes pulse { 0%,100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.25); opacity: .75; } }
+
+    .tray { display: flex; gap: 8px; padding: 8px 12px; overflow-x: auto; min-height: 44px; }
+    .trayItem {
+      flex: 0 0 auto; width: 44px; height: 44px; border-radius: 10px; background: var(--panel);
+      display: flex; align-items: center; justify-content: center; font-size: 20px; cursor: pointer;
+      box-shadow: inset 0 0 0 1px #262c33;
+    }
+    .trayItem.sel { box-shadow: inset 0 0 0 2px var(--accent), 0 0 8px rgba(255,180,84,.5); }
+    .trayHint { padding: 0 12px 4px; font-size: 11px; color: var(--muted); text-align: center; }
+
+    .footer { display: flex; align-items: center; gap: 10px; padding: 6px 12px 16px; }
+    .submitBtn {
+      flex: 1; padding: 13px; border: none; border-radius: 12px; cursor: pointer;
+      background: linear-gradient(180deg, var(--accent) 0%, var(--accent-dark) 100%);
+      color: #1a1406; font-size: 14px; font-weight: 800; letter-spacing: .3px;
+      box-shadow: 0 4px 0 #5c4a1f, 0 8px 18px var(--shadow);
+    }
+    .submitBtn:active { transform: translateY(2px); box-shadow: 0 1px 0 #5c4a1f; }
+    .giveup { background: none; border: none; color: var(--muted); font-size: 13px; text-decoration: underline; cursor: pointer; white-space: nowrap; }
+
+    .overlay { position: fixed; inset: 0; background: rgba(2,4,6,.82); backdrop-filter: blur(3px);
+      display: none; align-items: flex-end; justify-content: center; z-index: 20; }
+    .overlay.show { display: flex; }
+    .overlay.center { align-items: center; padding: 24px; }
+    .sheet { background: var(--panel); border-radius: 18px 18px 0 0; padding: 20px; width: 100%;
+      max-width: 420px; box-shadow: 0 -10px 30px var(--shadow); }
+    .overlay.center .sheet { border-radius: 18px; text-align: center; }
+    .sheet h2 { font-size: 17px; margin-bottom: 8px; }
+    .sheet img { width: 100%; border-radius: 10px; margin-bottom: 10px; max-height: 220px; object-fit: cover; }
+    .sheet p { color: #cfd6dc; font-size: 14px; line-height: 1.5; }
+    .sheet .row { display: flex; gap: 10px; margin-top: 16px; }
+    .sheet button.action {
+      flex: 1; padding: 12px; border: none; border-radius: 10px; font-size: 14px; font-weight: 800; cursor: pointer;
+      background: linear-gradient(180deg, var(--accent) 0%, var(--accent-dark) 100%); color: #1a1406;
+    }
+    .sheet button.close { flex: 1; padding: 12px; border: none; border-radius: 10px; font-size: 14px; font-weight: 700; cursor: pointer;
+      background: #202730; color: var(--muted); }
+    .sheet input[type=text] { width: 100%; margin-top: 10px; padding: 12px; border-radius: 10px; border: none;
+      background: #0d1116; color: var(--ink); font-size: 15px; box-shadow: inset 0 0 0 1px #262c33; }
+    .card .emoji { font-size: 42px; } .card h2 { margin: 12px 0 6px; }
+    .card p { color: var(--muted); font-size: 14px; line-height: 1.5; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1 id="title">Look Around</h1>
+    <div class="tag" id="tagEl"></div>
+  </header>
+
+  <div class="stage" id="stage">
+    <img id="bgImg" alt="">
+  </div>
+
+  <div class="trayHint" id="trayHint"></div>
+  <div class="tray" id="tray"></div>
+
+  <div class="footer">
+    <button class="giveup" id="giveup">Give up</button>
+    <button class="submitBtn" id="openSubmit" style="display:none">✅ Submit</button>
+  </div>
+
+  <div class="overlay" id="sheetOverlay">
+    <div class="sheet" id="sheet"></div>
+  </div>
+
+  <div class="overlay center" id="submitOverlay">
+    <div class="sheet" id="submitSheet">
+      <h2 id="submitTitle">What did you find?</h2>
+      <input type="text" id="submitInput" placeholder="type it here…" autocomplete="off">
+      <div class="row">
+        <button class="close" id="submitCancel">Cancel</button>
+        <button class="action" id="submitGo">Submit</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="overlay center" id="overlay">
+    <div class="sheet card" id="finalCard">
+      <div class="emoji" id="rEmoji">🔎</div>
+      <h2 id="rTitle">Sent</h2>
+      <p id="rBody"></p>
+    </div>
+  </div>
+
+  <script>
+    // ------- Telegram bootstrap (mirrors the rest of this repo's mini-games) -------
+    const tg = window.Telegram ? window.Telegram.WebApp : null;
+    if (tg) { tg.ready(); tg.expand(); }
+    const haptic = (kind) => {
+      try {
+        if (!tg || !tg.HapticFeedback) return;
+        if (kind === 'tick') tg.HapticFeedback.selectionChanged();
+        else if (kind === 'ok') tg.HapticFeedback.notificationOccurred('success');
+        else if (kind === 'err') tg.HapticFeedback.notificationOccurred('error');
+      } catch (e) {}
+    };
+
+    const q = new URLSearchParams(window.location.search);
+    const sessionId = q.get('sessionId');
+    const userId = (tg && tg.initDataUnsafe && tg.initDataUnsafe.user) ? tg.initDataUnsafe.user.id : q.get('userId');
+    let lang = (q.get('lang') || (tg && tg.initDataUnsafe && tg.initDataUnsafe.user && tg.initDataUnsafe.user.language_code) || 'en')
+                 .split('-')[0].toLowerCase();
+
+    const STR = {
+      en: { title: 'Look Around', give: 'Give up', submit: '✅ Submit', submitTitle: 'What did you find?',
+            cancel: 'Cancel', go: 'Submit', close: 'Close', take: 'Take', locked: "It's locked.",
+            emptyTake: "There's nothing left here.", needItem: 'Pick something from your things first.',
+            sent: 'Sent', sentBody: 'Check the chat for the verdict.', gaveTitle: 'Stepped away', gaveBody: 'You leave the room as it was.',
+            found: 'You found:', trayHint: 'Tap a thing, then tap where to use it.' },
+      hr: { title: 'Razgledaj', give: 'Odustani', submit: '✅ Pošalji', submitTitle: 'Što si pronašao/la?',
+            cancel: 'Odustani', go: 'Pošalji', close: 'Zatvori', take: 'Uzmi', locked: 'Zaključano je.',
+            emptyTake: 'Ovdje više nema ničega.', needItem: 'Prvo odaberi nešto od svojih stvari.',
+            sent: 'Poslano', sentBody: 'Provjeri chat za ishod.', gaveTitle: 'Odmakao/la si se', gaveBody: 'Ostavljaš sobu kakva je bila.',
+            found: 'Pronašao/la si:', trayHint: 'Dodirni nešto, pa dodirni gdje to koristiš.' },
+    };
+    const S = STR[lang] || STR.en;
+    document.documentElement.lang = lang;
+    document.getElementById('title').textContent = q.get('title') || S.title;
+    document.getElementById('giveup').textContent = S.give;
+    document.getElementById('openSubmit').textContent = S.submit;
+    document.getElementById('submitTitle').textContent = S.submitTitle;
+    document.getElementById('submitCancel').textContent = S.cancel;
+    document.getElementById('submitGo').textContent = S.go;
+    const tagText = q.get('tag');
+    if (tagText) document.getElementById('tagEl').textContent = decodeURIComponent(tagText);
+
+    function loc(v) { if (!v) return ''; return typeof v === 'string' ? v : (v[lang] || v.en || ''); }
+    function pjson(name, dflt) { try { const raw = q.get(name); return raw ? JSON.parse(decodeURIComponent(raw)) : dflt; } catch (e) { return dflt; } }
+
+    // Scene data comes from one of two places:
+    //  • `scene` param (REQUIRED for anything beyond a trivial scene) — a URL to a small hosted JSON
+    //    file `{bg, hotspots, inventory}`, fetched at load. Keeps the actual web_app launch URL tiny
+    //    (Telegram/servers reject overly long button URLs — a real photo + a scene's worth of hotspots
+    //    is easily 5-10KB, far too much to ride in the URL itself). `bg` inside that file is in turn
+    //    just a normal (relative or absolute) image URL, resolved against the scene JSON's own URL —
+    //    upload the photo + the scene JSON next to each other and it just works.
+    //  • Inline `bg`/`hotspots`/`inventory` params (unchanged, still supported) — fine for a genuinely
+    //    tiny scene (a couple of hotspots, no photo — e.g. a flat-color placeholder), or for the
+    //    builder tool's own local "Open Live Preview" (no server involved, so URL length is moot).
+    let bg = '', hotspots = [], inventory = [], invById = {}, revealedBy = {};
+    const finalHotspot = q.get('finalHotspot') || null;
+    if (!finalHotspot) document.getElementById('openSubmit').style.display = '';
+
+    async function loadScene() {
+      const sceneUrl = q.get('scene');
+      if (sceneUrl) {
+        try {
+          const res = await fetch(sceneUrl);
+          const scene = await res.json();
+          bg = new URL(scene.bg || '', sceneUrl).toString();
+          hotspots = scene.hotspots || [];
+          inventory = scene.inventory || [];
+        } catch (e) {
+          console.error('room-scene: failed to load `scene`', sceneUrl, e);
+        }
+      } else {
+        bg = q.get('bg') || '';
+        hotspots = pjson('hotspots', []);
+        inventory = pjson('inventory', []);
+      }
+      document.getElementById('bgImg').src = bg;
+      invById = Object.fromEntries(inventory.map((i) => [i.id, i]));
+      // Which hotspots start hidden (listed in some other hotspot's `reveals`) and who reveals them.
+      revealedBy = {};
+      for (const h of hotspots) for (const r of (h.reveals || [])) (revealedBy[r] = revealedBy[r] || []).push(h.id);
+    }
+
+    let solved = false;
+    const takenIds = new Set();   // hotspot ids whose item has been taken
+    const openIds = new Set();    // hotspot ids currently open / unlocked-and-used successfully
+    const tray = [];              // item ids collected, in order
+    let selected = null;          // currently selected tray item id
+
+    function isVisible(h) {
+      const parents = revealedBy[h.id];
+      if (!parents) return true;
+      return parents.some((p) => openIds.has(p));
+    }
+
+    const stage = document.getElementById('stage');
+    const hotspotEls = {};
+    function buildHotspots() {
+      for (const h of hotspots) {
+        const el = document.createElement('div');
+        el.className = 'hotspot';
+        if (h.shape === 'circle') {
+          const d = (h.r || 0.08) * 2;
+          el.style.left = ((h.cx - h.r) * 100) + '%'; el.style.top = ((h.cy - h.r) * 100) + '%';
+          el.style.width = (d * 100) + '%'; el.style.height = (d * 100) + '%';
+        } else {
+          el.style.left = (h.x * 100) + '%'; el.style.top = (h.y * 100) + '%';
+          el.style.width = (h.w * 100) + '%'; el.style.height = (h.h * 100) + '%';
+        }
+        const dot = document.createElement('div'); dot.className = 'dot'; el.appendChild(dot);
+        el.addEventListener('click', () => onTap(h));
+        stage.appendChild(el);
+        hotspotEls[h.id] = el;
+      }
+      renderVisibility();
+    }
+    function renderVisibility() {
+      for (const h of hotspots) {
+        const el = hotspotEls[h.id];
+        el.style.display = isVisible(h) ? '' : 'none';
+        const done = h.kind === 'take' ? takenIds.has(h.id) : h.kind === 'combine' ? openIds.has(h.id) : false;
+        el.classList.toggle('done', done);
+      }
+    }
+
+    function renderTray() {
+      const trayEl = document.getElementById('tray');
+      trayEl.innerHTML = '';
+      for (const id of tray) {
+        const def = invById[id] || { icon: '❔' };
+        const el = document.createElement('div');
+        el.className = 'trayItem' + (selected === id ? ' sel' : '');
+        el.textContent = def.icon || '❔';
+        el.title = loc(def.label);
+        el.addEventListener('click', () => { selected = (selected === id) ? null : id; renderTray(); });
+        trayEl.appendChild(el);
+      }
+      document.getElementById('trayHint').textContent = tray.length ? S.trayHint : '';
+    }
+
+    const sheetOverlay = document.getElementById('sheetOverlay');
+    const sheetEl = document.getElementById('sheet');
+    function showSheet(title, text, image, actionLabel, onAction) {
+      sheetEl.innerHTML = '';
+      const h2 = document.createElement('h2'); h2.textContent = title || ''; sheetEl.appendChild(h2);
+      if (image) { const img = document.createElement('img'); img.src = image; sheetEl.appendChild(img); }
+      if (text) { const p = document.createElement('p'); p.textContent = text; sheetEl.appendChild(p); }
+      const row = document.createElement('div'); row.className = 'row';
+      if (actionLabel && onAction) {
+        const ab = document.createElement('button'); ab.className = 'action'; ab.textContent = actionLabel;
+        ab.addEventListener('click', () => { sheetOverlay.classList.remove('show'); onAction(); });
+        row.appendChild(ab);
+      }
+      const cb = document.createElement('button'); cb.className = 'close'; cb.textContent = S.close;
+      cb.addEventListener('click', () => sheetOverlay.classList.remove('show'));
+      row.appendChild(cb);
+      sheetEl.appendChild(row);
+      sheetOverlay.classList.add('show');
+    }
+
+    function finishHotspot(h) {
+      if (h.id === finalHotspot) { doAutoSolve(h.id); return; }
+      renderVisibility();
+    }
+
+    function onTap(h) {
+      if (solved) return;
+      if (h.kind === 'look') {
+        showSheet(loc(h.label), loc(h.lookText), h.lookImage);
+        return;
+      }
+      if (h.kind === 'take') {
+        if (takenIds.has(h.id)) { showSheet(loc(h.label), S.emptyTake); return; }
+        takenIds.add(h.id);
+        if (h.givesItem) tray.push(h.givesItem);
+        haptic('ok');
+        renderTray();
+        const def = invById[h.givesItem] || {};
+        showSheet(loc(h.label), `${S.found} ${loc(def.label) || h.givesItem}`, h.lookImage || h.openImage);
+        finishHotspot(h);
+        return;
+      }
+      if (h.kind === 'open') {
+        if (openIds.has(h.id)) { showSheet(loc(h.label), loc(h.openText), h.openImage); return; }
+        if (h.locked && h.requiresItem && selected !== h.requiresItem) {
+          showSheet(loc(h.label), loc(h.lookText) || S.locked);
+          return;
+        }
+        openIds.add(h.id);
+        haptic('ok');
+        showSheet(loc(h.label), loc(h.openText), h.openImage);
+        finishHotspot(h);
+        return;
+      }
+      if (h.kind === 'combine') {
+        if (openIds.has(h.id)) { showSheet(loc(h.label), loc(h.openText), h.openImage); return; }
+        if (!selected) { showSheet(loc(h.label), S.needItem); return; }
+        if (selected === h.acceptsItem) {
+          openIds.add(h.id);
+          haptic('ok');
+          showSheet(loc(h.label), loc(h.openText), h.openImage);
+          finishHotspot(h);
+        } else {
+          haptic('err');
+          showSheet(loc(h.label), loc(h.wrongText));
+        }
+        return;
+      }
+    }
+
+    // ------- Result reporting (server-authoritative) -------
+    function send(payload) {
+      const result = { sessionId, userId, gameId: 'room_scene', timestamp: Date.now(), ...payload };
+      console.log('📤 room-scene result', result);
+      try { if (window.parent && window.parent !== window) window.parent.postMessage({ type: 'MINIGAME_RESULT', payload: result }, '*'); } catch (e) {}
+      try {
+        if (tg && typeof tg.sendData === 'function') tg.sendData(JSON.stringify(result));
+        else localStorage.setItem('room_scene_result_latest', JSON.stringify(result));
+      } catch (e) { console.error('sendData failed', e); }
+    }
+    function showFinal(gaveUp) {
+      document.getElementById('rEmoji').textContent = gaveUp ? '🚪' : '🔎';
+      document.getElementById('rTitle').textContent = gaveUp ? S.gaveTitle : S.sent;
+      document.getElementById('rBody').textContent = gaveUp ? S.gaveBody : S.sentBody;
+      document.getElementById('overlay').classList.add('show');
+    }
+    function doAutoSolve(hotspotId) {
+      if (solved) return;
+      solved = true;
+      send({ choice: hotspotId });
+      setTimeout(() => showFinal(false), 400);
+    }
+    document.getElementById('giveup').addEventListener('click', () => {
+      if (solved) return;
+      solved = true;
+      send({ success: false, outcome: 'abandoned' });
+      setTimeout(() => showFinal(true), 150);
+    });
+
+    const submitOverlay = document.getElementById('submitOverlay');
+    const submitInput = document.getElementById('submitInput');
+    document.getElementById('openSubmit').addEventListener('click', () => {
+      if (solved) return;
+      submitInput.value = '';
+      submitOverlay.classList.add('show');
+      setTimeout(() => submitInput.focus(), 50);
+    });
+    document.getElementById('submitCancel').addEventListener('click', () => submitOverlay.classList.remove('show'));
+    document.getElementById('submitGo').addEventListener('click', () => {
+      if (solved) return;
+      const text = submitInput.value.trim();
+      if (!text) return;
+      solved = true;
+      submitOverlay.classList.remove('show');
+      haptic('ok');
+      send({ submission: text });
+      setTimeout(() => showFinal(false), 300);
+    });
+    submitInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') document.getElementById('submitGo').click(); });
+
+    window.__room = {
+      tapHotspot(id) { const h = hotspots.find((x) => x.id === id); if (h) onTap(h); },
+      selectItem(id) { selected = (selected === id) ? null : id; renderTray(); },
+      submit(text) { submitInput.value = text; document.getElementById('submitGo').click(); },
+      state() { return { taken: [...takenIds], open: [...openIds], tray: [...tray], selected, solved }; },
+      ready: false,
+    };
+    loadScene().then(() => {
+      buildHotspots();
+      renderTray();
+      window.__room.ready = true;
+    });
+  </script>
+</body>
+</html>
