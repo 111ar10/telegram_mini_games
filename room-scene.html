@@ -225,8 +225,13 @@
     if (!finalHotspot) document.getElementById('openSubmit').style.display = '';
 
     async function loadScene() {
-      const sceneUrl = q.get('scene');
-      if (sceneUrl) {
+      const sceneParam = q.get('scene');
+      if (sceneParam) {
+        // `scene` is normally just a bare filename (e.g. "search_the_desk.scene.json") — resolve it
+        // to an absolute URL against THIS page's own location first. `new URL(x, base)` throws if
+        // `base` itself isn't absolute, so skipping this step silently breaks every relative `scene`
+        // reference (the whole point of hosting one alongside room-scene.html).
+        const sceneUrl = new URL(sceneParam, window.location.href).href;
         try {
           const res = await fetch(sceneUrl);
           const scene = await res.json();
