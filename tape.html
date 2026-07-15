@@ -9,19 +9,36 @@
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
   <!--
-    GENERIC CCTV / TAPE TIMECODE SCRUBBER  (reusable across games — config-driven, SERVER-AUTHORITATIVE)
+    CCTV / TAPE TIMECODE SCRUBBER  (reusable across games — config-driven, SERVER-AUTHORITATIVE)
     ----------------------------------------------------------------------------------------------
-    The target timecode is NEVER passed here. PULL FRAME reports whatever the HH:MM counter currently
-    shows as `submission` (zero-padded, e.g. "09:45"); the engine checks it against the puzzle's answer
-    server-side (same path as an in-chat text answer). Two independent digit reels (hour/minute) give
-    exact-minute precision — far easier to land on a narrow answer window than dragging analog hands.
+    Two modes, chosen by which params are present:
 
-    Params (URL query, all optional):
+    DIAL mode (default, no `figures` param) — blind HH:MM counter. Two independent digit reels
+    (hour/minute); PULL FRAME reports whatever they show as `submission`. No target time is ever
+    passed in; the player already knows/derived the time elsewhere and is just requesting it.
+
+    SPOT mode (`figures` param present) — an actual scrubbable feed. Drag / step / auto-play through
+    a time range (`start`..`end`, default 09:00-10:00) and TAP the frame while someone is crossing
+    the doors to capture that instant (a confirm sheet shows the exact timecode before it's sent —
+    confirming costs nothing extra, only an actual send counts as an attempt). `figures` = JSON array
+    of anonymous appearance events `[{id, at:"HH:MM", duration (minutes, default 3),
+    look:"backpack"|"cart"|"dog"|"cyclist"|"commuter"}]` — none of them is flagged as "correct"; the
+    player must recognize which one matches the clue given in the puzzle's own description/hints
+    (e.g. "backpack, crying, walking fast"). This keeps the actual correctness decision server-side,
+    same as every other app here — reading this file's source only reveals a few candidate
+    timestamps, never which one is right, same trust model as triangulate.html's fixed map geometry
+    (every candidate is equally "visible", nothing is labeled).
+
+    Params (URL query):
+      figures  SPOT mode trigger — JSON array, see above (encodeURIComponent'd)
+      start / end   SPOT mode time range, "HH:MM" (default "09:00"/"10:00")
+      speed    SPOT mode auto-play rate, in-fiction minutes per real second (default 1.5)
       label    camera/feed label overlay, e.g. "CAM 04 · JELAČIĆ TRG" (decodeURIComponent)
       lang     "en" | "hr" (else Telegram user lang)      tag  italic subtitle line (decodeURIComponent)
       sessionId / userId  passed straight back in the result payload
     Result (Telegram.WebApp.sendData):
-      on PULL FRAME: { sessionId, userId, gameId:'tape', submission, timestamp }
+      DIAL PULL FRAME / SPOT capture-confirm: { sessionId, userId, gameId:'tape', submission, timestamp }
+        (SPOT also rides `figure` = the tapped candidate's id, unvalidated flavor only)
       on give up:    { sessionId, userId, gameId:'tape', success:false, outcome:'abandoned', timestamp }
   -->
   <style>
@@ -67,7 +84,7 @@
     .feedrow .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--danger); box-shadow: 0 0 6px var(--danger); animation: blink 1.4s infinite; }
     @keyframes blink { 0%,55%{opacity:1} 56%,100%{opacity:.25} }
 
-    /* Counter (two reel groups) */
+    /* Counter (two reel groups) — DIAL mode */
     .counter { display: flex; align-items: center; justify-content: center; gap: 6px; position: relative; z-index: 2; margin: 6px 0 4px; }
     .reelgroup { display: flex; gap: 4px; }
     .colon { font-size: 34px; font-weight: 700; color: var(--phosphor); text-shadow: 0 0 10px rgba(109,255,160,.5); line-height: 1; align-self: center; padding-bottom: 2px; }
@@ -94,6 +111,26 @@
     .reellabels { display: flex; justify-content: center; gap: 14px; margin-top: 2px; position: relative; z-index: 2; }
     .reellabels .grp { width: 84px; text-align: center; font-size: 9px; letter-spacing: 3px; color: var(--muted); }
 
+    /* SPOT mode */
+    .frame { margin-top: 2px; border-radius: 8px; overflow: hidden; background: #030503;
+      box-shadow: inset 0 0 0 1px #1c2c19; position: relative; z-index: 2; cursor: pointer; }
+    .frame svg { display: block; width: 100%; height: auto; }
+    .timecode { margin-top: 10px; text-align: center; font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+      font-size: 22px; font-weight: 700; color: var(--phosphor); text-shadow: 0 0 8px rgba(109,255,160,.5);
+      position: relative; z-index: 2; letter-spacing: 1px; }
+    .scrub { margin-top: 10px; position: relative; z-index: 2; }
+    .scrubTrack { position: relative; height: 10px; border-radius: 6px; background: #0f1a10;
+      box-shadow: inset 0 0 0 1px #1c2c19; touch-action: none; cursor: pointer; }
+    .scrubFill { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 6px; background: var(--phosphor-dim); pointer-events: none; }
+    .scrubHandle { position: absolute; top: 50%; width: 16px; height: 16px; margin-left: -8px; margin-top: -8px;
+      border-radius: 50%; background: var(--phosphor); box-shadow: 0 0 8px rgba(109,255,160,.7); pointer-events: none; }
+    .ctrlrow { display: flex; align-items: center; justify-content: center; gap: 10px; margin-top: 12px; position: relative; z-index: 2; }
+    .ctrlbtn { min-width: 52px; height: 34px; border: none; border-radius: 8px; background: #0f1a10;
+      color: var(--phosphor-dim); font-size: 13px; font-weight: 700; box-shadow: 0 2px 0 #030503, inset 0 0 0 1px #1c2c19; cursor: pointer; }
+    .ctrlbtn:active { transform: translateY(2px); box-shadow: inset 0 0 0 1px #1c2c19; }
+    .playbtn { min-width: 64px; color: var(--phosphor); background: #16241a; }
+    .spothint { margin-top: 10px; font-size: 11.5px; color: var(--muted); text-align: center; line-height: 1.4; position: relative; z-index: 2; }
+
     .pull {
       margin-top: 22px; width: 100%; padding: 15px; border: none; border-radius: 12px; cursor: pointer;
       background: linear-gradient(180deg, var(--brass) 0%, var(--brass-dark) 100%);
@@ -117,6 +154,12 @@
       text-align: center; max-width: 320px; width: 100%; box-shadow: 0 20px 50px var(--shadow); }
     .card .emoji { font-size: 42px; } .card h2 { margin: 12px 0 6px; font-size: 20px; color: var(--ink); }
     .card p { color: var(--muted); font-size: 14px; line-height: 1.5; }
+    .confirmtime { font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace; font-size: 26px;
+      color: var(--phosphor); margin: 8px 0 4px !important; text-shadow: 0 0 8px rgba(109,255,160,.5); }
+    .confirmRow { display: flex; gap: 10px; margin-top: 16px; }
+    .confirmBtn { flex: 1; padding: 12px; border: none; border-radius: 10px; font-size: 14px; font-weight: 800; cursor: pointer; }
+    .confirmBtn.yes { background: linear-gradient(180deg, var(--brass) 0%, var(--brass-dark) 100%); color: #1a1406; }
+    .confirmBtn.no { background: #16241a; color: var(--muted); }
   </style>
 </head>
 <body>
@@ -130,10 +173,34 @@
       <span class="rec"><span class="dot"></span> REC</span>
       <span id="feedlabel">CAM 01</span>
     </div>
-    <div class="counter" id="counter"></div>
-    <div class="reellabels">
-      <div class="grp">HH</div>
-      <div class="grp">MM</div>
+
+    <!-- DIAL mode -->
+    <div id="dialUI">
+      <div class="counter" id="counter"></div>
+      <div class="reellabels">
+        <div class="grp">HH</div>
+        <div class="grp">MM</div>
+      </div>
+    </div>
+
+    <!-- SPOT mode -->
+    <div id="spotUI" style="display:none">
+      <div class="frame" id="frame">
+        <svg id="frameSvg" viewBox="0 0 300 150" preserveAspectRatio="xMidYMid meet"></svg>
+      </div>
+      <div class="timecode" id="timecode">09:00:00</div>
+      <div class="scrub">
+        <div class="scrubTrack" id="scrubTrack">
+          <div class="scrubFill" id="scrubFill"></div>
+          <div class="scrubHandle" id="scrubHandle"></div>
+        </div>
+      </div>
+      <div class="ctrlrow">
+        <button class="ctrlbtn" id="stepBack">−1m</button>
+        <button class="ctrlbtn playbtn" id="playBtn">▶</button>
+        <button class="ctrlbtn" id="stepFwd">+1m</button>
+      </div>
+      <div class="spothint" id="spothint"></div>
     </div>
   </div>
 
@@ -142,6 +209,18 @@
   <button class="giveup" id="giveup">Give up</button>
 
   <div class="flash" id="flash"></div>
+
+  <div class="overlay" id="confirmOverlay">
+    <div class="card">
+      <div class="emoji">📷</div>
+      <h2 id="confirmTitle">Capture this frame?</h2>
+      <p class="confirmtime" id="confirmTime"></p>
+      <div class="confirmRow">
+        <button class="confirmBtn no" id="confirmNo">Not this one</button>
+        <button class="confirmBtn yes" id="confirmYes">Capture</button>
+      </div>
+    </div>
+  </div>
 
   <div class="overlay" id="overlay">
     <div class="card">
@@ -174,10 +253,18 @@
     const STR = {
       en: { title: 'Security Feed', pull: 'PULL FRAME', give: 'Give up',
             sent: 'Sent', sentBody: 'Check the chat for the verdict.',
-            gaveTitle: 'Feed released', gaveBody: 'You step back from the deck.' },
+            gaveTitle: 'Feed released', gaveBody: 'You step back from the deck.',
+            play: '▶ Play', pause: '⏸ Pause',
+            spotHint: 'Scrub the tape. Tap anyone crossing the doors you recognize.',
+            nothingThere: 'Nothing there right now.',
+            captureTitle: 'Capture this frame?', captureBtn: 'Capture', notThisOne: 'Not this one' },
       hr: { title: 'Snimka kamere', pull: 'IZVUCI KADAR', give: 'Odustani',
             sent: 'Poslano', sentBody: 'Provjeri chat za ishod.',
-            gaveTitle: 'Snimka puštena', gaveBody: 'Odmakneš se od uređaja.' },
+            gaveTitle: 'Snimka puštena', gaveBody: 'Odmakneš se od uređaja.',
+            play: '▶ Pusti', pause: '⏸ Pauza',
+            spotHint: 'Premotaj traku. Dodirni bilo koga tko prolazi kroz vrata i koga prepoznaješ.',
+            nothingThere: 'Trenutačno ovdje nikoga nema.',
+            captureTitle: 'Uhvatiti ovaj kadar?', captureBtn: 'Uhvati', notThisOne: 'Nije ovo' },
     };
     const S = STR[lang] || STR.en;
     document.documentElement.lang = lang;
@@ -189,67 +276,13 @@
     const labelText = q.get('label');
     document.getElementById('feedlabel').textContent = labelText ? decodeURIComponent(labelText) : 'CAM 01';
 
-    // ------- Two independent digit reels: HOUR (mod 24) and MINUTE (mod 60), each 2 digits -------
-    let hour = 9, minute = 0; // arbitrary starting position — not a hint, just "not pre-solved"
-    let solved = false;
-    const counterEl = document.getElementById('counter');
-
-    function mod(n, m) { return ((n % m) + m) % m; }
-
-    function makeReel(getVal, setVal, m) {
-      const wrap = document.createElement('div'); wrap.className = 'dial';
-      const up = document.createElement('button'); up.className = 'arrow'; up.textContent = '▲';
-      const win = document.createElement('div'); win.className = 'window';
-      const reel = document.createElement('div'); reel.className = 'reel';
-      for (let k = 0; k < 5; k++) reel.appendChild(document.createElement('span'));
-      win.appendChild(reel);
-      const down = document.createElement('button'); down.className = 'arrow'; down.textContent = '▼';
-      wrap.append(up, win, down);
-
-      function render() {
-        const d = getVal();
-        const cells = reel.children;
-        const fmt = (n) => String(mod(n, m)).padStart(2, '0');
-        cells[0].textContent = fmt(d - 2); cells[0].className = '';
-        cells[1].textContent = fmt(d - 1); cells[1].className = '';
-        cells[2].textContent = fmt(d);     cells[2].className = 'mid';
-        cells[3].textContent = fmt(d + 1); cells[3].className = '';
-        cells[4].textContent = fmt(d + 2); cells[4].className = '';
-        reel.style.transform = 'translateY(-20px)';
-      }
-      function step(delta) {
-        if (solved) return;
-        setVal(mod(getVal() + delta, m));
-        render(); haptic('tick');
-      }
-      up.addEventListener('click', () => step(1));
-      down.addEventListener('click', () => step(-1));
-      let startY = null;
-      win.addEventListener('pointerdown', (e) => { startY = e.clientY; win.setPointerCapture(e.pointerId); });
-      win.addEventListener('pointermove', (e) => {
-        if (startY === null) return;
-        const dy = e.clientY - startY;
-        if (Math.abs(dy) >= 20) { step(dy < 0 ? 1 : -1); startY = e.clientY; }
-      });
-      win.addEventListener('pointerup', () => { startY = null; });
-      win.addEventListener('pointercancel', () => { startY = null; });
-      win.addEventListener('wheel', (e) => { e.preventDefault(); step(e.deltaY < 0 ? 1 : -1); }, { passive: false });
-      render();
-      return wrap;
-    }
-
-    // Two-digit reel = one physical reel showing a 2-digit padded number (single mod-N counter),
-    // matching a real tape-deck's HH/MM counter wheels.
-    const hourGroup = document.createElement('div'); hourGroup.className = 'reelgroup';
-    hourGroup.appendChild(makeReel(() => hour, (v) => { hour = v; }, 24));
-    const colon = document.createElement('div'); colon.className = 'colon'; colon.textContent = ':';
-    const minuteGroup = document.createElement('div'); minuteGroup.className = 'reelgroup';
-    minuteGroup.appendChild(makeReel(() => minute, (v) => { minute = v; }, 60));
-    counterEl.append(hourGroup, colon, minuteGroup);
+    function pad(n) { return String(n).padStart(2, '0'); }
+    function hhmmToMin(s) { const [h, m] = String(s).split(':').map(Number); return h * 60 + m; }
 
     // ------- Result reporting (server-authoritative) -------
-    // PULL FRAME reports the counter's HH:MM as `submission`; the engine validates it. We never send
-    // `success` and never receive the target timecode. `abandon` uses the legacy shape only to bow out.
+    // Both modes report the shown/current HH:MM as `submission`; the engine validates it. We never
+    // send `success` and never receive the target timecode. `abandon` uses the legacy shape only to bow out.
+    let solved = false;
     function send(payload) {
       const result = { sessionId, userId, gameId: 'tape', timestamp: Date.now(), ...payload };
       console.log('📤 tape result', result);
@@ -265,23 +298,281 @@
       document.getElementById('rBody').textContent = gaveUp ? S.gaveBody : S.sentBody;
       document.getElementById('overlay').classList.add('show');
     }
-
-    document.getElementById('pull').addEventListener('click', () => {
-      if (solved) return;
-      solved = true; // one submission per open; a wrong verdict re-launches the mini-game from chat
-      haptic('ok');
-      const flash = document.getElementById('flash');
-      flash.classList.remove('go'); void flash.offsetWidth; flash.classList.add('go');
-      const submission = String(hour).padStart(2, '0') + ':' + String(minute).padStart(2, '0');
-      send({ submission });
-      setTimeout(() => showOverlay(false), 500);
-    });
     document.getElementById('giveup').addEventListener('click', () => {
       if (solved) return;
       solved = true;
       send({ success: false, outcome: 'abandoned' });
       setTimeout(() => showOverlay(true), 200);
     });
+
+    // ------- Parse `figures` — presence switches into SPOT mode -------
+    let figures = [];
+    try {
+      const raw = q.get('figures');
+      if (raw) {
+        figures = JSON.parse(decodeURIComponent(raw)).map((f) => ({
+          id: f.id, at: f.at, look: f.look || 'commuter',
+          atMin: hhmmToMin(f.at), duration: Number(f.duration) || 3,
+        }));
+      }
+    } catch (e) { figures = []; }
+    const SPOT_MODE = figures.length > 0;
+
+    let dialTestHook = null;
+
+    if (!SPOT_MODE) {
+      // =========================================================================================
+      // DIAL mode — unchanged blind HH:MM counter (two independent digit reels)
+      // =========================================================================================
+      document.getElementById('spotUI').remove();
+      let hour = 9, minute = 0; // arbitrary starting position — not a hint, just "not pre-solved"
+      const counterEl = document.getElementById('counter');
+      const reelRenders = [];
+
+      function mod(n, m) { return ((n % m) + m) % m; }
+
+      function makeReel(getVal, setVal, m) {
+        const wrap = document.createElement('div'); wrap.className = 'dial';
+        const up = document.createElement('button'); up.className = 'arrow'; up.textContent = '▲';
+        const win = document.createElement('div'); win.className = 'window';
+        const reel = document.createElement('div'); reel.className = 'reel';
+        for (let k = 0; k < 5; k++) reel.appendChild(document.createElement('span'));
+        win.appendChild(reel);
+        const down = document.createElement('button'); down.className = 'arrow'; down.textContent = '▼';
+        wrap.append(up, win, down);
+
+        function render() {
+          const d = getVal();
+          const cells = reel.children;
+          const fmt = (n) => String(mod(n, m)).padStart(2, '0');
+          cells[0].textContent = fmt(d - 2); cells[0].className = '';
+          cells[1].textContent = fmt(d - 1); cells[1].className = '';
+          cells[2].textContent = fmt(d);     cells[2].className = 'mid';
+          cells[3].textContent = fmt(d + 1); cells[3].className = '';
+          cells[4].textContent = fmt(d + 2); cells[4].className = '';
+          reel.style.transform = 'translateY(-20px)';
+        }
+        function step(delta) {
+          if (solved) return;
+          setVal(mod(getVal() + delta, m));
+          render(); haptic('tick');
+        }
+        up.addEventListener('click', () => step(1));
+        down.addEventListener('click', () => step(-1));
+        let startY = null;
+        win.addEventListener('pointerdown', (e) => { startY = e.clientY; win.setPointerCapture(e.pointerId); });
+        win.addEventListener('pointermove', (e) => {
+          if (startY === null) return;
+          const dy = e.clientY - startY;
+          if (Math.abs(dy) >= 20) { step(dy < 0 ? 1 : -1); startY = e.clientY; }
+        });
+        win.addEventListener('pointerup', () => { startY = null; });
+        win.addEventListener('pointercancel', () => { startY = null; });
+        win.addEventListener('wheel', (e) => { e.preventDefault(); step(e.deltaY < 0 ? 1 : -1); }, { passive: false });
+        render();
+        reelRenders.push(render);
+        return wrap;
+      }
+
+      // Two-digit reel = one physical reel showing a 2-digit padded number (single mod-N counter),
+      // matching a real tape-deck's HH/MM counter wheels.
+      const hourGroup = document.createElement('div'); hourGroup.className = 'reelgroup';
+      hourGroup.appendChild(makeReel(() => hour, (v) => { hour = v; }, 24));
+      const colon = document.createElement('div'); colon.className = 'colon'; colon.textContent = ':';
+      const minuteGroup = document.createElement('div'); minuteGroup.className = 'reelgroup';
+      minuteGroup.appendChild(makeReel(() => minute, (v) => { minute = v; }, 60));
+      counterEl.append(hourGroup, colon, minuteGroup);
+
+      document.getElementById('pull').addEventListener('click', () => {
+        if (solved) return;
+        solved = true; // one submission per open; a wrong verdict re-launches the mini-game from chat
+        haptic('ok');
+        const flash = document.getElementById('flash');
+        flash.classList.remove('go'); void flash.offsetWidth; flash.classList.add('go');
+        const submission = String(hour).padStart(2, '0') + ':' + String(minute).padStart(2, '0');
+        send({ submission });
+        setTimeout(() => showOverlay(false), 500);
+      });
+
+      dialTestHook = {
+        setDial(h, m) { hour = mod(h, 24); minute = mod(m, 60); reelRenders.forEach((r) => r()); },
+      };
+    } else {
+      // =========================================================================================
+      // SPOT mode — scrub a feed, tap whoever's crossing the doors, confirm the timecode you saw
+      // =========================================================================================
+      document.getElementById('dialUI').remove();
+      document.getElementById('pull').style.display = 'none';
+      document.getElementById('spotUI').style.display = '';
+      document.getElementById('spothint').textContent = S.spotHint;
+      document.getElementById('confirmTitle').textContent = S.captureTitle;
+      document.getElementById('confirmYes').textContent = S.captureBtn;
+      document.getElementById('confirmNo').textContent = S.notThisOne;
+
+      const rangeStart = hhmmToMin(q.get('start') || '09:00');
+      const rangeEnd = hhmmToMin(q.get('end') || '10:00');
+      const speed = Number(q.get('speed') || '1.5'); // in-fiction minutes per real second
+
+      function minToTimeStr(min, withSeconds) {
+        const totalSec = Math.round(min * 60);
+        const hh = Math.floor(totalSec / 3600) % 24;
+        const mm = Math.floor((totalSec % 3600) / 60);
+        const ss = totalSec % 60;
+        return withSeconds ? `${pad(hh)}:${pad(mm)}:${pad(ss)}` : `${pad(hh)}:${pad(mm)}`;
+      }
+
+      let curMin = rangeStart;
+      let playing = false, lastTs = null, pendingFig = null;
+
+      const SVGNS = 'http://www.w3.org/2000/svg';
+      function svgEl(tag, attrs) {
+        const el = document.createElementNS(SVGNS, tag);
+        for (const k in attrs) el.setAttribute(k, attrs[k]);
+        return el;
+      }
+      const frameSvg = document.getElementById('frameSvg');
+      // static background — floor line, doorway, a bench (purely atmospheric)
+      frameSvg.appendChild(svgEl('rect', { x: 0, y: 0, width: 300, height: 150, fill: '#040604' }));
+      frameSvg.appendChild(svgEl('line', { x1: 0, y1: 118, x2: 300, y2: 118, stroke: '#12251a', 'stroke-width': 2 }));
+      frameSvg.appendChild(svgEl('rect', { x: 236, y: 26, width: 50, height: 94, rx: 3, fill: 'none', stroke: '#1c3322', 'stroke-width': 3 }));
+      frameSvg.appendChild(svgEl('rect', { x: 244, y: 34, width: 34, height: 86, rx: 2, fill: '#081008' }));
+      frameSvg.appendChild(svgEl('line', { x1: 261, y1: 34, x2: 261, y2: 120, stroke: '#1c3322', 'stroke-width': 1.5 }));
+      frameSvg.appendChild(svgEl('rect', { x: 14, y: 104, width: 46, height: 6, rx: 2, fill: '#12251a' }));
+      frameSvg.appendChild(svgEl('rect', { x: 18, y: 110, width: 4, height: 8, fill: '#12251a' }));
+      frameSvg.appendChild(svgEl('rect', { x: 52, y: 110, width: 4, height: 8, fill: '#12251a' }));
+
+      function buildFigureGroup(fig) {
+        const g = svgEl('g', { class: 'fig', opacity: 0 });
+        g.appendChild(svgEl('line', { x1: -4, y1: 14, x2: -6, y2: 26, stroke: '#3f6b48', 'stroke-width': 3, 'stroke-linecap': 'round' }));
+        g.appendChild(svgEl('line', { x1: 4, y1: 14, x2: 6, y2: 26, stroke: '#3f6b48', 'stroke-width': 3, 'stroke-linecap': 'round' }));
+        g.appendChild(svgEl('rect', { x: -7, y: -6, width: 14, height: 20, rx: 5, fill: '#4a7a54' }));
+        g.appendChild(svgEl('circle', { cx: 0, cy: -14, r: 5, fill: '#5a8a63' }));
+        if (fig.look === 'backpack') {
+          g.appendChild(svgEl('rect', { x: -11, y: -4, width: 6, height: 14, rx: 2, fill: '#2f5236' }));
+        } else if (fig.look === 'cart') {
+          g.appendChild(svgEl('rect', { x: -22, y: 6, width: 14, height: 10, rx: 1, fill: '#2f5236' }));
+          g.appendChild(svgEl('circle', { cx: -19, cy: 18, r: 2.4, fill: '#1c3322' }));
+          g.appendChild(svgEl('circle', { cx: -11, cy: 18, r: 2.4, fill: '#1c3322' }));
+        } else if (fig.look === 'dog') {
+          g.appendChild(svgEl('ellipse', { cx: 14, cy: 16, rx: 7, ry: 3.6, fill: '#2f5236' }));
+          g.appendChild(svgEl('line', { x1: 9, y1: 16, x2: 6, y2: 20, stroke: '#2f5236', 'stroke-width': 2 }));
+          g.appendChild(svgEl('line', { x1: 19, y1: 16, x2: 22, y2: 20, stroke: '#2f5236', 'stroke-width': 2 }));
+          g.appendChild(svgEl('line', { x1: 7, y1: -2, x2: 12, y2: 14, stroke: '#1c3322', 'stroke-width': 1.2 }));
+        } else if (fig.look === 'cyclist') {
+          g.appendChild(svgEl('circle', { cx: -10, cy: 20, r: 6, fill: 'none', stroke: '#2f5236', 'stroke-width': 2 }));
+          g.appendChild(svgEl('circle', { cx: 10, cy: 20, r: 6, fill: 'none', stroke: '#2f5236', 'stroke-width': 2 }));
+          g.appendChild(svgEl('line', { x1: -10, y1: 20, x2: 0, y2: 2, stroke: '#2f5236', 'stroke-width': 2 }));
+          g.appendChild(svgEl('line', { x1: 10, y1: 20, x2: 0, y2: 2, stroke: '#2f5236', 'stroke-width': 2 }));
+        }
+        return g;
+      }
+      for (const fig of figures) { fig.el = buildFigureGroup(fig); frameSvg.appendChild(fig.el); }
+      // transparent hit-rect on top — tapping ANYWHERE on the frame resolves by TIME, not by pixel
+      // position, so a figure never has to be pixel-perfectly tapped on a small phone screen.
+      const hit = svgEl('rect', { x: 0, y: 0, width: 300, height: 150, fill: 'transparent' });
+      frameSvg.appendChild(hit);
+
+      function visibleFigure() {
+        return figures.find((f) => { const t = (curMin - f.atMin) / f.duration; return t >= 0 && t <= 1; });
+      }
+      function renderSpot() {
+        document.getElementById('timecode').textContent = minToTimeStr(curMin, true);
+        const p = (curMin - rangeStart) / (rangeEnd - rangeStart);
+        document.getElementById('scrubFill').style.width = (p * 100) + '%';
+        document.getElementById('scrubHandle').style.left = (p * 100) + '%';
+        for (const fig of figures) {
+          const t = (curMin - fig.atMin) / fig.duration;
+          const vis = t >= -0.02 && t <= 1.02;
+          fig.el.setAttribute('opacity', vis ? 1 : 0);
+          if (vis) {
+            const ct = Math.min(1, Math.max(0, t));
+            fig.el.setAttribute('transform', `translate(${-20 + ct * 340},96)`);
+          }
+        }
+      }
+      renderSpot();
+
+      function updatePlayBtn() { document.getElementById('playBtn').textContent = playing ? S.pause : S.play; }
+      function tick(ts) {
+        if (playing) {
+          if (lastTs != null) {
+            curMin += speed * (ts - lastTs) / 1000;
+            if (curMin >= rangeEnd) curMin = rangeStart; // loop back to the start of the tape
+          }
+          lastTs = ts;
+          renderSpot();
+        } else {
+          lastTs = null;
+        }
+        requestAnimationFrame(tick);
+      }
+      requestAnimationFrame(tick);
+      document.getElementById('playBtn').addEventListener('click', () => { playing = !playing; updatePlayBtn(); });
+      document.getElementById('stepBack').addEventListener('click', () => {
+        playing = false; updatePlayBtn(); curMin = Math.max(rangeStart, curMin - 1); renderSpot();
+      });
+      document.getElementById('stepFwd').addEventListener('click', () => {
+        playing = false; updatePlayBtn(); curMin = Math.min(rangeEnd, curMin + 1); renderSpot();
+      });
+
+      const track = document.getElementById('scrubTrack');
+      let dragging = false;
+      function seekFromClientX(clientX) {
+        const r = track.getBoundingClientRect();
+        const p = Math.min(1, Math.max(0, (clientX - r.left) / r.width));
+        curMin = rangeStart + p * (rangeEnd - rangeStart);
+        playing = false; updatePlayBtn(); renderSpot();
+      }
+      track.addEventListener('pointerdown', (e) => { dragging = true; track.setPointerCapture(e.pointerId); seekFromClientX(e.clientX); });
+      track.addEventListener('pointermove', (e) => { if (dragging) seekFromClientX(e.clientX); });
+      track.addEventListener('pointerup', () => { dragging = false; });
+      track.addEventListener('pointercancel', () => { dragging = false; });
+
+      const msgEl = document.getElementById('msg');
+      let toastTimer = null;
+      function toast(text) {
+        clearTimeout(toastTimer);
+        msgEl.textContent = text; msgEl.className = 'msg err';
+        toastTimer = setTimeout(() => { msgEl.textContent = ''; msgEl.className = 'msg'; }, 1400);
+      }
+      function onFrameTap() {
+        if (solved) return;
+        const fig = visibleFigure();
+        if (!fig) { toast(S.nothingThere); return; }
+        playing = false; updatePlayBtn();
+        pendingFig = fig;
+        document.getElementById('confirmTime').textContent = minToTimeStr(curMin, false);
+        document.getElementById('confirmOverlay').classList.add('show');
+      }
+      hit.addEventListener('click', onFrameTap);
+
+      document.getElementById('confirmNo').addEventListener('click', () => {
+        document.getElementById('confirmOverlay').classList.remove('show');
+        pendingFig = null;
+      });
+      document.getElementById('confirmYes').addEventListener('click', () => {
+        if (solved || !pendingFig) return;
+        solved = true; // one submission per open; a wrong verdict re-launches the mini-game from chat
+        document.getElementById('confirmOverlay').classList.remove('show');
+        haptic('ok');
+        const flash = document.getElementById('flash');
+        flash.classList.remove('go'); void flash.offsetWidth; flash.classList.add('go');
+        send({ submission: minToTimeStr(curMin, false), figure: pendingFig.id });
+        setTimeout(() => showOverlay(false), 500);
+      });
+
+      dialTestHook = {
+        setMinutes(m) { curMin = Math.min(rangeEnd, Math.max(rangeStart, m)); renderSpot(); },
+        setTime(hhmm) { this.setMinutes(hhmmToMin(hhmm)); },
+        tapFrame() { onFrameTap(); },
+        confirmYes() { document.getElementById('confirmYes').click(); },
+        confirmNo() { document.getElementById('confirmNo').click(); },
+        figures: figures.map((f) => ({ id: f.id, at: f.at, duration: f.duration, look: f.look })),
+        range: { start: q.get('start') || '09:00', end: q.get('end') || '10:00' },
+      };
+    }
+
+    window.__tape = Object.assign({ mode: SPOT_MODE ? 'spot' : 'dial' }, dialTestHook);
   </script>
 </body>
 </html>
