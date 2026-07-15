@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Decoder</title>
+
+  <!-- Telegram Web App SDK (same as the other mini-games in this repo) -->
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+  <!--
+    GENERIC CAESAR-CIPHER DECODER  (reusable across games — config-driven, SERVER-AUTHORITATIVE)
+    ---------------------------------------------------------------------------------------------
+    The answer is NEVER passed here — the player reads the decoded word off the wheel and hits DECODE;
+    the app reports what they decoded as `submission` and the engine validates it against the puzzle's
+    answer server-side (same path as an in-chat text answer). A forged `success` can't earn anything.
+
+    Params (URL query, all optional except cipher):
+      cipher   ciphertext to decode, e.g. "PRUH"        (letters shifted; spaces/punctuation pass through)
+      lang     "en" | "hr" (else Telegram user lang)
+      title    header title override
+      tag      italic subtitle line (decodeURIComponent)
+      sessionId / userId  passed straight back in the result payload
+    Result (Telegram.WebApp.sendData):
+      on DECODE:  { sessionId, userId, gameId:'cipher', submission, shift, timestamp }
+      on give up: { sessionId, userId, gameId:'cipher', success:false, outcome:'abandoned', shift, timestamp }
+  -->
+  <style>
+    :root {
+      --bg: #14161c; --bg2: #1d2129; --ink: #e8e6df; --muted: #8b90a0;
+      --brass: #c9a24b; --brass-dark: #8a6d2c; --steel: #b9c0cc; --steel-dark: #6b7280;
+      --danger: #d9534f; --success: #4caf7d; --reel: #f4efe4; --reel-ink: #23262e;
+      --shadow: rgba(0,0,0,.45); --ring: #2b86d8; --ring-dark: #14538f;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    html, body { height: 100%; }
+    body {
+      background: radial-gradient(120% 90% at 50% 0%, #232833 0%, var(--bg) 60%);
+      color: var(--ink);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      display: flex; flex-direction: column; align-items: center;
+      min-height: 100%; padding: 20px 16px 28px; user-select: none;
+    }
+    header { text-align: center; margin-bottom: 6px; }
+    h1 { font-size: 20px; font-weight: 700; letter-spacing: .3px; }
+    .tag { margin-top: 8px; font-size: 13px; color: var(--muted); line-height: 1.4; max-width: 340px; font-style: italic; }
+
+    /* Decoder wheel */
+    .wheelwrap { margin: 14px auto 4px; width: 300px; max-width: 82vw; position: relative; }
+    svg.wheel { width: 100%; height: auto; display: block; touch-action: none; cursor: grab; }
+    svg.wheel:active { cursor: grabbing; }
+    .ringtext { font-size: 13px; font-weight: 700; font-family: "SFMono-Regular", ui-monospace, Menlo, Consolas, monospace; }
+    .outer-ch { fill: var(--steel); }
+    .inner-ch { fill: var(--brass); }
+    .pointer { fill: var(--success); }
+    .hub { fill: url(#hubgrad); stroke: #0f4472; }
+    .hublabel { fill: var(--ink); font-size: 11px; letter-spacing: 2px; text-transform: uppercase; text-anchor: middle; }
+    .shiftlabel { fill: var(--muted); font-size: 12px; text-anchor: middle; }
+
+    /* Nudge buttons under the wheel */
+    .nudge { display: flex; gap: 14px; justify-content: center; align-items: center; margin-top: 4px; }
+    .arrow {
+      width: 54px; height: 34px; border: none; border-radius: 9px; cursor: pointer;
+      background: #2f3542; color: var(--steel); font-size: 16px; line-height: 1;
+      box-shadow: 0 2px 0 #1a1e26; transition: transform .06s, background .15s;
+    }
+    .arrow:active { transform: translateY(2px); box-shadow: none; background: #3a4150; }
+
+    /* Message tiles: ciphertext -> live decoded */
+    .panel { margin: 16px auto 4px; width: 320px; max-width: 90vw; background: var(--bg2);
+      border: 1px solid #333a46; border-radius: 14px; padding: 14px 12px; text-align: center; }
+    .cipherline { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 15px; letter-spacing: 3px; color: var(--muted); }
+    .decodeline { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 26px; letter-spacing: 4px;
+      color: var(--reel); font-weight: 800; margin-top: 8px; min-height: 32px; word-break: break-word; }
+    .decodeline .ch { display: inline-block; transition: color .15s; }
+
+    .decode {
+      margin-top: 18px; width: 300px; max-width: 86vw; padding: 15px; border: none; border-radius: 14px; cursor: pointer;
+      background: linear-gradient(180deg, var(--brass) 0%, var(--brass-dark) 100%);
+      color: #221a06; font-size: 16px; font-weight: 800; letter-spacing: .4px;
+      box-shadow: 0 4px 0 #5c4a1f, 0 8px 18px var(--shadow); transition: transform .07s, box-shadow .07s;
+    }
+    .decode:active { transform: translateY(3px); box-shadow: 0 1px 0 #5c4a1f; }
+    .shake { animation: shake .4s; }
+    @keyframes shake { 10%,90%{transform:translateX(-2px)} 20%,80%{transform:translateX(4px)} 30%,50%,70%{transform:translateX(-8px)} 40%,60%{transform:translateX(8px)} }
+
+    .msg { min-height: 20px; margin-top: 14px; font-size: 14px; text-align: center; }
+    .msg.err { color: var(--danger); } .msg.ok { color: var(--success); }
+    .giveup { margin-top: 20px; background: none; border: none; color: var(--muted); font-size: 13px; text-decoration: underline; cursor: pointer; }
+
+    .overlay { position: fixed; inset: 0; background: rgba(10,12,16,.86); backdrop-filter: blur(3px);
+      display: none; align-items: center; justify-content: center; z-index: 20; padding: 24px; }
+    .overlay.show { display: flex; }
+    .card { background: var(--bg2); border: 1px solid #333a46; border-radius: 18px; padding: 28px 24px; text-align: center;
+      max-width: 320px; width: 100%; box-shadow: 0 20px 50px var(--shadow); }
+    .card .emoji { font-size: 44px; } .card h2 { margin: 12px 0 6px; font-size: 20px; }
+    .card p { color: var(--muted); font-size: 14px; line-height: 1.5; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1 id="title">Decoder Ring</h1>
+    <div class="tag" id="tag"></div>
+  </header>
+
+  <div class="wheelwrap">
+    <svg class="wheel" id="wheel" viewBox="0 0 300 300" aria-label="cipher wheel"></svg>
+  </div>
+
+  <div class="nudge">
+    <button class="arrow" id="left" aria-label="rotate back">◀</button>
+    <div class="shiftlabel" id="shiftlabel" style="min-width:70px"></div>
+    <button class="arrow" id="right" aria-label="rotate forward">▶</button>
+  </div>
+
+  <div class="panel">
+    <div class="cipherline" id="cipherline"></div>
+    <div class="decodeline" id="decodeline"></div>
+  </div>
+
+  <button class="decode" id="decode">DECODE</button>
+  <div class="msg" id="msg"></div>
+  <button class="giveup" id="giveup">Give up</button>
+
+  <div class="overlay" id="overlay">
+    <div class="card">
+      <div class="emoji" id="rEmoji">🗝️</div>
+      <h2 id="rTitle">Decoded</h2>
+      <p id="rBody"></p>
+    </div>
+  </div>
+
+  <script>
+    // ------- Telegram bootstrap (mirrors padlock.html) -------
+    const tg = window.Telegram ? window.Telegram.WebApp : null;
+    if (tg) { tg.ready(); tg.expand(); }
+    const haptic = (kind) => {
+      try {
+        if (!tg || !tg.HapticFeedback) return;
+        if (kind === 'tick') tg.HapticFeedback.selectionChanged();
+        else if (kind === 'ok') tg.HapticFeedback.notificationOccurred('success');
+        else if (kind === 'err') tg.HapticFeedback.notificationOccurred('error');
+      } catch (e) {}
+    };
+
+    // ------- Input params -------
+    const q = new URLSearchParams(window.location.search);
+    const sessionId = q.get('sessionId');
+    const userId = (tg && tg.initDataUnsafe && tg.initDataUnsafe.user) ? tg.initDataUnsafe.user.id : q.get('userId');
+    const CIPHER = (q.get('cipher') || 'PRUH');
+    // NOTE: the answer is deliberately NOT passed here. The player reads the decoded word themselves and hits
+    // DECODE; the app reports the decoded string as `submission` and the ENGINE validates it server-side.
+
+    let lang = (q.get('lang') || (tg && tg.initDataUnsafe && tg.initDataUnsafe.user && tg.initDataUnsafe.user.language_code) || 'en')
+                 .split('-')[0].toLowerCase();
+    const STR = {
+      en: { title: 'Decoder Ring', decode: 'DECODE', give: 'Give up', shift: 'shift',
+            sent: 'Sent', sentBody: 'Check the chat for the verdict.', gaveTitle: 'Left in code', gaveBody: 'You set the ring down.' },
+      hr: { title: 'Kotačić za šifru', decode: 'DEŠIFRIRAJ', give: 'Odustani', shift: 'pomak',
+            sent: 'Poslano', sentBody: 'Provjeri chat za ishod.', gaveTitle: 'Ostalo šifrirano', gaveBody: 'Spustiš kotačić.' },
+    };
+    const S = STR[lang] || STR.en;
+    document.documentElement.lang = lang;
+    document.getElementById('title').textContent = q.get('title') || S.title;
+    document.getElementById('decode').textContent = S.decode;
+    document.getElementById('giveup').textContent = S.give;
+    const tagText = q.get('tag');
+    if (tagText) document.getElementById('tag').textContent = decodeURIComponent(tagText);
+
+    // ------- Cipher helpers (Caesar, A-Z) -------
+    const AZ = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    const N = 26;
+    function decodeChar(ch, shift) {
+      const up = ch.toUpperCase();
+      const i = AZ.indexOf(up);
+      if (i < 0) return ch; // non-letter passes through
+      const plain = AZ[(i - shift + N * 10) % N];
+      return ch === up ? plain : plain.toLowerCase();
+    }
+    function decodeStr(str, shift) { return [...str].map((c) => decodeChar(c, shift)).join(''); }
+
+    let shift = 0;
+    let solved = false;
+
+    // ------- Build the wheel (SVG) -------
+    const NS = 'http://www.w3.org/2000/svg';
+    const wheel = document.getElementById('wheel');
+    const CX = 150, CY = 150, R_OUT = 132, R_IN = 104;
+    const step = 360 / N;
+    function el(tag, attrs) { const e = document.createElementNS(NS, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); return e; }
+
+    // defs (hub gradient)
+    const defs = el('defs', {});
+    defs.innerHTML = '<radialGradient id="hubgrad" cx="50%" cy="35%" r="75%">' +
+      '<stop offset="0%" stop-color="#2b86d8"/><stop offset="100%" stop-color="#14538f"/></radialGradient>';
+    wheel.appendChild(defs);
+
+    // outer ring track
+    wheel.appendChild(el('circle', { cx: CX, cy: CY, r: R_OUT + 12, fill: 'none', stroke: '#2a2f3a', 'stroke-width': 24 }));
+    // outer (fixed) cipher letters A..Z
+    for (let i = 0; i < N; i++) {
+      const ang = (-90 + i * step) * Math.PI / 180;
+      const x = CX + R_OUT * Math.cos(ang), y = CY + R_OUT * Math.sin(ang);
+      const t = el('text', { x, y: y + 4.5, 'text-anchor': 'middle', class: 'ringtext outer-ch',
+        transform: `rotate(${i * step} ${x} ${y})` });
+      t.textContent = AZ[i];
+      wheel.appendChild(t);
+    }
+    // inner rotating group with plain letters A..Z
+    const innerG = el('g', { id: 'innerG' });
+    wheel.appendChild(innerG);
+    innerG.appendChild(el('circle', { cx: CX, cy: CY, r: R_IN + 12, fill: 'none', stroke: 'rgba(201,162,75,.10)', 'stroke-width': 22 }));
+    for (let i = 0; i < N; i++) {
+      const ang = (-90 + i * step) * Math.PI / 180;
+      const x = CX + R_IN * Math.cos(ang), y = CY + R_IN * Math.sin(ang);
+      const t = el('text', { x, y: y + 4.5, 'text-anchor': 'middle', class: 'ringtext inner-ch',
+        transform: `rotate(${i * step} ${x} ${y})` });
+      t.textContent = AZ[i];
+      innerG.appendChild(t);
+    }
+    // hub
+    wheel.appendChild(el('circle', { cx: CX, cy: CY, r: 62, class: 'hub', 'stroke-width': 2 }));
+    const hubLabel = el('text', { x: CX, y: CY - 6, class: 'hublabel' }); hubLabel.textContent = 'CIPHER';
+    wheel.appendChild(hubLabel);
+    const hubShift = el('text', { x: CX, y: CY + 20, class: 'hublabel', 'font-size': 22 }); hubShift.textContent = '+0';
+    wheel.appendChild(hubShift);
+    // pointer notch at top
+    wheel.appendChild(el('path', { d: `M ${CX} ${CY - R_OUT - 26} l -9 -14 l 18 0 z`, class: 'pointer' }));
+
+    function applyShift() {
+      // rotating the inner ring by +shift steps puts plaintext(i) under outer position i
+      innerG.setAttribute('transform', `rotate(${shift * step} ${CX} ${CY})`);
+      hubShift.textContent = '+' + shift;
+      document.getElementById('shiftlabel').textContent = S.shift + ' ' + shift;
+      renderDecode();
+    }
+
+    // ------- Message panel -------
+    const cipherlineEl = document.getElementById('cipherline');
+    const decodelineEl = document.getElementById('decodeline');
+    cipherlineEl.textContent = CIPHER;
+    function renderDecode() {
+      const out = decodeStr(CIPHER, shift);
+      decodelineEl.textContent = out;
+    }
+
+    // ------- Rotation input: buttons + drag-around-the-wheel -------
+    function turn(delta) {
+      if (solved) return;
+      shift = ((shift + delta) % N + N) % N;
+      applyShift();
+      haptic('tick');
+    }
+    document.getElementById('left').addEventListener('click', () => turn(-1));
+    document.getElementById('right').addEventListener('click', () => turn(1));
+
+    // drag: track the angle of the pointer around the centre, convert accumulated rotation to steps
+    let dragging = false, lastAngle = 0, acc = 0;
+    function angleAt(e) {
+      const r = wheel.getBoundingClientRect();
+      const cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+      return Math.atan2(e.clientY - cy, e.clientX - cx) * 180 / Math.PI;
+    }
+    wheel.addEventListener('pointerdown', (e) => { if (solved) return; dragging = true; lastAngle = angleAt(e); acc = 0; wheel.setPointerCapture(e.pointerId); });
+    wheel.addEventListener('pointermove', (e) => {
+      if (!dragging) return;
+      const a = angleAt(e);
+      let d = a - lastAngle;
+      if (d > 180) d -= 360; else if (d < -180) d += 360;
+      acc += d; lastAngle = a;
+      while (acc >= step) { acc -= step; turn(1); }
+      while (acc <= -step) { acc += step; turn(-1); }
+    });
+    const endDrag = () => { dragging = false; };
+    wheel.addEventListener('pointerup', endDrag);
+    wheel.addEventListener('pointercancel', endDrag);
+
+    applyShift();
+
+    // ------- Result reporting (server-authoritative) -------
+    // DECODE reports the player's decoded string as `submission`; the engine checks it against the puzzle
+    // answer. We never send `success` (it can't be trusted) and never receive the answer. `abandon` uses the
+    // legacy client-trusted shape only to bow out (no submission → the engine treats it as a failed attempt).
+    function send(payload) {
+      const result = { sessionId, userId, gameId: 'cipher', shift, timestamp: Date.now(), ...payload };
+      console.log('📤 cipher result', result);
+      try { if (window.parent && window.parent !== window) window.parent.postMessage({ type: 'MINIGAME_RESULT', payload: result }, '*'); } catch (e) {}
+      try {
+        if (tg && typeof tg.sendData === 'function') tg.sendData(JSON.stringify(result));
+        else localStorage.setItem('cipher_result_latest', JSON.stringify(result));
+      } catch (e) { console.error('sendData failed', e); }
+    }
+    function showOverlay(gaveUp) {
+      document.getElementById('rEmoji').textContent = gaveUp ? '🔒' : '🗝️';
+      document.getElementById('rTitle').textContent = gaveUp ? S.gaveTitle : S.sent;
+      document.getElementById('rBody').textContent = gaveUp ? S.gaveBody : S.sentBody;
+      document.getElementById('overlay').classList.add('show');
+    }
+
+    document.getElementById('decode').addEventListener('click', () => {
+      if (solved) return;
+      solved = true; // one submission per open; a wrong verdict re-launches the mini-game from chat
+      haptic('ok');
+      send({ submission: decodeStr(CIPHER, shift) });
+      setTimeout(() => showOverlay(false), 400);
+    });
+    document.getElementById('giveup').addEventListener('click', () => {
+      if (solved) return; solved = true; send({ success: false, outcome: 'abandoned' }); setTimeout(() => showOverlay(true), 200);
+    });
+  </script>
+</body>
+</html>

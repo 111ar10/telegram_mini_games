@@ -1,0 +1,708 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Where is Mia? — Map</title>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+</head>
+<body>
+  <div id="mapgame"></div>
+  <!--
+    DEMO map game. The ONLY game-specific part is MAP_CONFIG below; the behaviour
+    lives in map-engine.js. Author new maps visually with map-builder.html.
+    Basemap + pins use the real where_is_mia Zagreb coordinates.
+  -->
+  <script>
+  window.MAP_CONFIG = {
+  "gameId": "mia_map",
+  "defaultLang": "en",
+  "title": {
+    "en": "Where is Mia? — City Map",
+    "hr": "Gdje je Mia? — Karta grada"
+  },
+  "intro": {
+    "en": "Tap ◎ to place yourself. Walk to a marker to unlock it.",
+    "hr": "Dodirni ◎ da se smjestiš. Priđi oznaci da je otključaš."
+  },
+  "map": {
+    "image": "data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20width%3D%271680%27%20height%3D%27840%27%20viewBox%3D%270%200%201680%20840%27%3E%0A%20%20%3Cdefs%3E%0A%20%20%20%20%3ClinearGradient%20id%3D%27land%27%20x1%3D%270%27%20y1%3D%270%27%20x2%3D%270%27%20y2%3D%271%27%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%270%27%20stop-color%3D%27%230f2036%27%2F%3E%3Cstop%20offset%3D%271%27%20stop-color%3D%27%230b1728%27%2F%3E%0A%20%20%20%20%3C%2FlinearGradient%3E%0A%20%20%3C%2Fdefs%3E%0A%20%20%3Crect%20width%3D%271680%27%20height%3D%27840%27%20fill%3D%27url(%23land)%27%2F%3E%0A%20%20%3Cellipse%20cx%3D%27871%27%20cy%3D%27596%27%20rx%3D%27120%27%20ry%3D%2784%27%20fill%3D%27%23173d2c%27%20opacity%3D%270.9%27%2F%3E%0A%20%20%3Cellipse%20cx%3D%271309%27%20cy%3D%27574%27%20rx%3D%2796%27%20ry%3D%2760%27%20fill%3D%27%23173d2c%27%20opacity%3D%270.8%27%2F%3E%0A%20%20%3Cline%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%220%22%20y2%3D%22840%22%20stroke%3D%22%23213c5c%22%20stroke-width%3D%221.1%22%20opacity%3D%220.5%22%2F%3E%3Cline%20x1%3D%2296%22%20y1%3D%220%22%20x2%3D%2296%22%20y2%3D%22840%22%20stroke%3D%22%23213c5c%22%20stroke-width%3D%221.1%22%20opacity%3D%220.5%22%2F%3E%3Cline%20x1%3D%22192%22%20y1%3D%220%22%20x2%3D%22192%22%20y2%3D%22840%22%20stroke%3D%22%23213c5c%22%20stroke-width%3D%221.1%22%20opacity%3D%220.5%22%2F%3E%3Cline%20x1%3D%22288%22%20y1%3D%220%22%20x2%3D%22288%22%20y2%3D%22840%22%20stroke%3D%22%23213c5c%22%20stroke-width%3D%221.1%22%20opacity%3D%220.5%22%2F%3E%3Cline%20x1%3D%22384%22%20y1%3D%220%22%20x2%3D%22384%22%20y2%3D%22840%22%20stroke%3D%22%23213c5c%22%20stroke-width%3D%221.1%22%20opacity%3D%220.5%22%2F%3E%3Cline%20x1%3D%22480%22%20y1%3D%220%22%20x2%3D%22480%22%20y2%3D%22840%22%20stroke%3D%22%23213c5c%22%20stroke-width%3D%221.1%22%20opacity%3D%220.5%22%2F%3E%3Cline%20x1%3D%22576%22%20y1%3D%220%22%20x2%3D%22576%22%20y2%3D%22840%22%20stroke%3D%22%23213c5c%22%20stroke-width%3D%221.1%22%20opacity%3D%220.5%22%2F%3E%3Cline%20x1%3D%22672%22%20y1%3D%220%22%20x2%3D%22672%22%20y2%3D%22840%22%20stroke%3D%22%23213c5c%22%20stroke-width%3D%221.1%22%20opacity%3D%220.5%22%2F%3E%3Cline%20x1%3D%22768%22%20y1%3D%220%22%20x2%3D%22768%22%20y2%3D%22840%22%20stroke%3D%22%23213c5c%22%20stroke-width%3D%221.1%22%20opacity%3D%220.5%22%2F%3E%3Cline%20x1%3D%22864%22%20y1%3D%220%22%20x2%3D%22864%22%20y2%3D%22840%22%20stroke%3D%22%23213c5c%22%20stroke-width%3D%221.1%22%20opacity%3D%220.5%22%2F%3E%3Cline%20x1%3D%22960%22%20y1%3D%220%22%20x2%3D%22960%22%20y2%3D%22840%22%20stroke%3D%22%23213c5c%22%20stroke-width%3D%221.1%22%20opacity%3D%220.5%22%2F%3E%3Cline%20x1%3D%221056%22%20y1%3D%220%22%20x2%3D%221056%22%20y2%3D%22840%22%20stroke%3D%22%23213c5c%22%20stroke-width%3D%221.1%22%20opacity%3D%220.5%22%2F%3E%3Cline%20x1%3D%221152%22%20y1%3D%220%22%20x2%3D%221152%22%20y2%3D%22840%22%20stroke%3D%22%23213c5c%22%20stroke-width%3D%221.1%22%20opacity%3D%220.5%22%2F%3E%3Cline%20x1%3D%221248%22%20y1%3D%220%22%20x2%3D%221248%22%20y2%3D%22840%22%20stroke%3D%22%23213c5c%22%20stroke-width%3D%221.1%22%20opacity%3D%220.5%22%2F%3E%3Cline%20x1%3D%221344%22%20y1%3D%220%22%20x2%3D%221344%22%20y2%3D%22840%22%20stroke%3D%22%23213c5c%22%20stroke-width%3D%221.1%22%20opacity%3D%220.5%22%2F%3E%3Cline%20x1%3D%221440%22%20y1%3D%220%22%20x2%3D%221440%22%20y2%3D%22840%22%20stroke%3D%22%23213c5c%22%20stroke-width%3D%221.1%22%20opacity%3D%220.5%22%2F%3E%3Cline%20x1%3D%221536%22%20y1%3D%220%22%20x2%3D%221536%22%20y2%3D%22840%22%20stroke%3D%22%23213c5c%22%20stroke-width%3D%221.1%22%20opacity%3D%220.5%22%2F%3E%3Cline%20x1%3D%221632%22%20y1%3D%220%22%20x2%3D%221632%22%20y2%3D%22840%22%20stroke%3D%22%23213c5c%22%20stroke-width%3D%221.1%22%20opacity%3D%220.5%22%2F%3E%3Cline%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221680%22%20y2%3D%220%22%20stroke%3D%22%23213c5c%22%20stroke-width%3D%221.1%22%20opacity%3D%220.5%22%2F%3E%3Cline%20x1%3D%220%22%20y1%3D%2296%22%20x2%3D%221680%22%20y2%3D%2296%22%20stroke%3D%22%23213c5c%22%20stroke-width%3D%221.1%22%20opacity%3D%220.5%22%2F%3E%3Cline%20x1%3D%220%22%20y1%3D%22192%22%20x2%3D%221680%22%20y2%3D%22192%22%20stroke%3D%22%23213c5c%22%20stroke-width%3D%221.1%22%20opacity%3D%220.5%22%2F%3E%3Cline%20x1%3D%220%22%20y1%3D%22288%22%20x2%3D%221680%22%20y2%3D%22288%22%20stroke%3D%22%23213c5c%22%20stroke-width%3D%221.1%22%20opacity%3D%220.5%22%2F%3E%3Cline%20x1%3D%220%22%20y1%3D%22384%22%20x2%3D%221680%22%20y2%3D%22384%22%20stroke%3D%22%23213c5c%22%20stroke-width%3D%221.1%22%20opacity%3D%220.5%22%2F%3E%3Cline%20x1%3D%220%22%20y1%3D%22480%22%20x2%3D%221680%22%20y2%3D%22480%22%20stroke%3D%22%23213c5c%22%20stroke-width%3D%221.1%22%20opacity%3D%220.5%22%2F%3E%3Cline%20x1%3D%220%22%20y1%3D%22576%22%20x2%3D%221680%22%20y2%3D%22576%22%20stroke%3D%22%23213c5c%22%20stroke-width%3D%221.1%22%20opacity%3D%220.5%22%2F%3E%3Cline%20x1%3D%220%22%20y1%3D%22672%22%20x2%3D%221680%22%20y2%3D%22672%22%20stroke%3D%22%23213c5c%22%20stroke-width%3D%221.1%22%20opacity%3D%220.5%22%2F%3E%3Cline%20x1%3D%220%22%20y1%3D%22768%22%20x2%3D%221680%22%20y2%3D%22768%22%20stroke%3D%22%23213c5c%22%20stroke-width%3D%221.1%22%20opacity%3D%220.5%22%2F%3E%0A%20%20%3Crect%20x%3D%22860%22%20y%3D%22774%22%20width%3D%2293%22%20height%3D%2254%22%20rx%3D%224%22%20fill%3D%22%2316283f%22%20opacity%3D%220.21%22%2F%3E%3Crect%20x%3D%221457%22%20y%3D%2255%22%20width%3D%2287%22%20height%3D%2294%22%20rx%3D%224%22%20fill%3D%22%2316283f%22%20opacity%3D%220.25%22%2F%3E%3Crect%20x%3D%221609%22%20y%3D%2246%22%20width%3D%2258%22%20height%3D%2247%22%20rx%3D%224%22%20fill%3D%22%2316283f%22%20opacity%3D%220.17%22%2F%3E%3Crect%20x%3D%221103%22%20y%3D%22740%22%20width%3D%2242%22%20height%3D%2239%22%20rx%3D%224%22%20fill%3D%22%2316283f%22%20opacity%3D%220.23%22%2F%3E%3Crect%20x%3D%22972%22%20y%3D%22397%22%20width%3D%22106%22%20height%3D%2238%22%20rx%3D%224%22%20fill%3D%22%2316283f%22%20opacity%3D%220.15%22%2F%3E%3Crect%20x%3D%221252%22%20y%3D%22117%22%20width%3D%22120%22%20height%3D%2238%22%20rx%3D%224%22%20fill%3D%22%2316283f%22%20opacity%3D%220.13%22%2F%3E%3Crect%20x%3D%221360%22%20y%3D%22616%22%20width%3D%22104%22%20height%3D%2285%22%20rx%3D%224%22%20fill%3D%22%2316283f%22%20opacity%3D%220.23%22%2F%3E%3Crect%20x%3D%22533%22%20y%3D%22120%22%20width%3D%22106%22%20height%3D%2236%22%20rx%3D%224%22%20fill%3D%22%2316283f%22%20opacity%3D%220.21%22%2F%3E%3Crect%20x%3D%221268%22%20y%3D%22245%22%20width%3D%2274%22%20height%3D%2254%22%20rx%3D%224%22%20fill%3D%22%2316283f%22%20opacity%3D%220.23%22%2F%3E%3Crect%20x%3D%22734%22%20y%3D%22454%22%20width%3D%2290%22%20height%3D%2248%22%20rx%3D%224%22%20fill%3D%22%2316283f%22%20opacity%3D%220.18%22%2F%3E%3Crect%20x%3D%22969%22%20y%3D%22263%22%20width%3D%2266%22%20height%3D%2292%22%20rx%3D%224%22%20fill%3D%22%2316283f%22%20opacity%3D%220.21%22%2F%3E%3Crect%20x%3D%22910%22%20y%3D%22184%22%20width%3D%2292%22%20height%3D%2261%22%20rx%3D%224%22%20fill%3D%22%2316283f%22%20opacity%3D%220.14%22%2F%3E%3Crect%20x%3D%22721%22%20y%3D%22226%22%20width%3D%2293%22%20height%3D%2270%22%20rx%3D%224%22%20fill%3D%22%2316283f%22%20opacity%3D%220.18%22%2F%3E%3Crect%20x%3D%22330%22%20y%3D%2290%22%20width%3D%2247%22%20height%3D%2287%22%20rx%3D%224%22%20fill%3D%22%2316283f%22%20opacity%3D%220.23%22%2F%3E%3Crect%20x%3D%221478%22%20y%3D%22189%22%20width%3D%2294%22%20height%3D%2277%22%20rx%3D%224%22%20fill%3D%22%2316283f%22%20opacity%3D%220.19%22%2F%3E%3Crect%20x%3D%221091%22%20y%3D%22176%22%20width%3D%2275%22%20height%3D%2278%22%20rx%3D%224%22%20fill%3D%22%2316283f%22%20opacity%3D%220.15%22%2F%3E%3Crect%20x%3D%22448%22%20y%3D%22626%22%20width%3D%2295%22%20height%3D%2234%22%20rx%3D%224%22%20fill%3D%22%2316283f%22%20opacity%3D%220.22%22%2F%3E%3Crect%20x%3D%22815%22%20y%3D%22198%22%20width%3D%2278%22%20height%3D%2259%22%20rx%3D%224%22%20fill%3D%22%2316283f%22%20opacity%3D%220.16%22%2F%3E%3Crect%20x%3D%22930%22%20y%3D%2246%22%20width%3D%22115%22%20height%3D%2253%22%20rx%3D%224%22%20fill%3D%22%2316283f%22%20opacity%3D%220.23%22%2F%3E%3Crect%20x%3D%22274%22%20y%3D%22640%22%20width%3D%22101%22%20height%3D%2265%22%20rx%3D%224%22%20fill%3D%22%2316283f%22%20opacity%3D%220.16%22%2F%3E%3Crect%20x%3D%221255%22%20y%3D%22281%22%20width%3D%2259%22%20height%3D%2265%22%20rx%3D%224%22%20fill%3D%22%2316283f%22%20opacity%3D%220.13%22%2F%3E%3Crect%20x%3D%221586%22%20y%3D%22221%22%20width%3D%2277%22%20height%3D%2241%22%20rx%3D%224%22%20fill%3D%22%2316283f%22%20opacity%3D%220.20%22%2F%3E%3Crect%20x%3D%221144%22%20y%3D%22724%22%20width%3D%2293%22%20height%3D%2296%22%20rx%3D%224%22%20fill%3D%22%2316283f%22%20opacity%3D%220.16%22%2F%3E%3Crect%20x%3D%22638%22%20y%3D%22606%22%20width%3D%2260%22%20height%3D%2268%22%20rx%3D%224%22%20fill%3D%22%2316283f%22%20opacity%3D%220.19%22%2F%3E%3Crect%20x%3D%22783%22%20y%3D%22687%22%20width%3D%22124%22%20height%3D%2288%22%20rx%3D%224%22%20fill%3D%22%2316283f%22%20opacity%3D%220.17%22%2F%3E%3Crect%20x%3D%22733%22%20y%3D%22251%22%20width%3D%2292%22%20height%3D%2296%22%20rx%3D%224%22%20fill%3D%22%2316283f%22%20opacity%3D%220.22%22%2F%3E%3Crect%20x%3D%22281%22%20y%3D%22183%22%20width%3D%22120%22%20height%3D%2295%22%20rx%3D%224%22%20fill%3D%22%2316283f%22%20opacity%3D%220.17%22%2F%3E%3Crect%20x%3D%221082%22%20y%3D%22649%22%20width%3D%2244%22%20height%3D%2243%22%20rx%3D%224%22%20fill%3D%22%2316283f%22%20opacity%3D%220.15%22%2F%3E%3Crect%20x%3D%22295%22%20y%3D%22472%22%20width%3D%2289%22%20height%3D%2253%22%20rx%3D%224%22%20fill%3D%22%2316283f%22%20opacity%3D%220.21%22%2F%3E%3Crect%20x%3D%22381%22%20y%3D%22505%22%20width%3D%22122%22%20height%3D%2297%22%20rx%3D%224%22%20fill%3D%22%2316283f%22%20opacity%3D%220.14%22%2F%3E%3Crect%20x%3D%22488%22%20y%3D%22542%22%20width%3D%22114%22%20height%3D%2257%22%20rx%3D%224%22%20fill%3D%22%2316283f%22%20opacity%3D%220.14%22%2F%3E%3Crect%20x%3D%22431%22%20y%3D%22477%22%20width%3D%22116%22%20height%3D%2258%22%20rx%3D%224%22%20fill%3D%22%2316283f%22%20opacity%3D%220.18%22%2F%3E%3Crect%20x%3D%22714%22%20y%3D%22727%22%20width%3D%2290%22%20height%3D%2299%22%20rx%3D%224%22%20fill%3D%22%2316283f%22%20opacity%3D%220.13%22%2F%3E%3Crect%20x%3D%22258%22%20y%3D%22462%22%20width%3D%2292%22%20height%3D%2279%22%20rx%3D%224%22%20fill%3D%22%2316283f%22%20opacity%3D%220.22%22%2F%3E%3Crect%20x%3D%221421%22%20y%3D%22381%22%20width%3D%2292%22%20height%3D%2237%22%20rx%3D%224%22%20fill%3D%22%2316283f%22%20opacity%3D%220.18%22%2F%3E%3Crect%20x%3D%22246%22%20y%3D%22677%22%20width%3D%22114%22%20height%3D%2286%22%20rx%3D%224%22%20fill%3D%22%2316283f%22%20opacity%3D%220.17%22%2F%3E%3Crect%20x%3D%22104%22%20y%3D%22602%22%20width%3D%2248%22%20height%3D%2249%22%20rx%3D%224%22%20fill%3D%22%2316283f%22%20opacity%3D%220.22%22%2F%3E%3Crect%20x%3D%22645%22%20y%3D%22656%22%20width%3D%2292%22%20height%3D%2234%22%20rx%3D%224%22%20fill%3D%22%2316283f%22%20opacity%3D%220.18%22%2F%3E%3Crect%20x%3D%22260%22%20y%3D%22473%22%20width%3D%2256%22%20height%3D%2249%22%20rx%3D%224%22%20fill%3D%22%2316283f%22%20opacity%3D%220.20%22%2F%3E%3Crect%20x%3D%22199%22%20y%3D%22649%22%20width%3D%2268%22%20height%3D%2280%22%20rx%3D%224%22%20fill%3D%22%2316283f%22%20opacity%3D%220.14%22%2F%3E%3Crect%20x%3D%22400%22%20y%3D%2271%22%20width%3D%22129%22%20height%3D%2243%22%20rx%3D%224%22%20fill%3D%22%2316283f%22%20opacity%3D%220.21%22%2F%3E%3Crect%20x%3D%2250%22%20y%3D%2246%22%20width%3D%2279%22%20height%3D%2281%22%20rx%3D%224%22%20fill%3D%22%2316283f%22%20opacity%3D%220.13%22%2F%3E%3Crect%20x%3D%22100%22%20y%3D%22761%22%20width%3D%2250%22%20height%3D%2268%22%20rx%3D%224%22%20fill%3D%22%2316283f%22%20opacity%3D%220.16%22%2F%3E%3Crect%20x%3D%22525%22%20y%3D%22369%22%20width%3D%2253%22%20height%3D%2248%22%20rx%3D%224%22%20fill%3D%22%2316283f%22%20opacity%3D%220.19%22%2F%3E%3Crect%20x%3D%22926%22%20y%3D%22119%22%20width%3D%22128%22%20height%3D%2283%22%20rx%3D%224%22%20fill%3D%22%2316283f%22%20opacity%3D%220.16%22%2F%3E%3Crect%20x%3D%22780%22%20y%3D%2265%22%20width%3D%22111%22%20height%3D%2286%22%20rx%3D%224%22%20fill%3D%22%2316283f%22%20opacity%3D%220.22%22%2F%3E%3Crect%20x%3D%22177%22%20y%3D%22255%22%20width%3D%22106%22%20height%3D%2238%22%20rx%3D%224%22%20fill%3D%22%2316283f%22%20opacity%3D%220.15%22%2F%3E%3Crect%20x%3D%22900%22%20y%3D%22651%22%20width%3D%2263%22%20height%3D%2278%22%20rx%3D%224%22%20fill%3D%22%2316283f%22%20opacity%3D%220.19%22%2F%3E%3Crect%20x%3D%22204%22%20y%3D%22496%22%20width%3D%22117%22%20height%3D%2269%22%20rx%3D%224%22%20fill%3D%22%2316283f%22%20opacity%3D%220.19%22%2F%3E%3Crect%20x%3D%221571%22%20y%3D%22466%22%20width%3D%2287%22%20height%3D%2288%22%20rx%3D%224%22%20fill%3D%22%2316283f%22%20opacity%3D%220.21%22%2F%3E%3Crect%20x%3D%221431%22%20y%3D%22390%22%20width%3D%22119%22%20height%3D%2256%22%20rx%3D%224%22%20fill%3D%22%2316283f%22%20opacity%3D%220.23%22%2F%3E%3Crect%20x%3D%221345%22%20y%3D%22405%22%20width%3D%22126%22%20height%3D%2299%22%20rx%3D%224%22%20fill%3D%22%2316283f%22%20opacity%3D%220.13%22%2F%3E%3Crect%20x%3D%22952%22%20y%3D%2227%22%20width%3D%22103%22%20height%3D%2239%22%20rx%3D%224%22%20fill%3D%22%2316283f%22%20opacity%3D%220.24%22%2F%3E%3Crect%20x%3D%221380%22%20y%3D%2232%22%20width%3D%2241%22%20height%3D%2293%22%20rx%3D%224%22%20fill%3D%22%2316283f%22%20opacity%3D%220.18%22%2F%3E%3Crect%20x%3D%2282%22%20y%3D%22263%22%20width%3D%2249%22%20height%3D%2270%22%20rx%3D%224%22%20fill%3D%22%2316283f%22%20opacity%3D%220.15%22%2F%3E%3Crect%20x%3D%221247%22%20y%3D%22695%22%20width%3D%2278%22%20height%3D%2288%22%20rx%3D%224%22%20fill%3D%22%2316283f%22%20opacity%3D%220.17%22%2F%3E%3Crect%20x%3D%22801%22%20y%3D%2298%22%20width%3D%22113%22%20height%3D%2271%22%20rx%3D%224%22%20fill%3D%22%2316283f%22%20opacity%3D%220.20%22%2F%3E%3Crect%20x%3D%22430%22%20y%3D%227%22%20width%3D%2287%22%20height%3D%2240%22%20rx%3D%224%22%20fill%3D%22%2316283f%22%20opacity%3D%220.15%22%2F%3E%3Crect%20x%3D%22856%22%20y%3D%22773%22%20width%3D%2268%22%20height%3D%2255%22%20rx%3D%224%22%20fill%3D%22%2316283f%22%20opacity%3D%220.19%22%2F%3E%3Crect%20x%3D%221479%22%20y%3D%22692%22%20width%3D%2292%22%20height%3D%2297%22%20rx%3D%224%22%20fill%3D%22%2316283f%22%20opacity%3D%220.20%22%2F%3E%3Crect%20x%3D%22238%22%20y%3D%22378%22%20width%3D%22106%22%20height%3D%2240%22%20rx%3D%224%22%20fill%3D%22%2316283f%22%20opacity%3D%220.24%22%2F%3E%3Crect%20x%3D%22303%22%20y%3D%22604%22%20width%3D%2298%22%20height%3D%2235%22%20rx%3D%224%22%20fill%3D%22%2316283f%22%20opacity%3D%220.22%22%2F%3E%3Crect%20x%3D%22643%22%20y%3D%2230%22%20width%3D%22105%22%20height%3D%2289%22%20rx%3D%224%22%20fill%3D%22%2316283f%22%20opacity%3D%220.15%22%2F%3E%3Crect%20x%3D%22706%22%20y%3D%22467%22%20width%3D%22100%22%20height%3D%2282%22%20rx%3D%224%22%20fill%3D%22%2316283f%22%20opacity%3D%220.15%22%2F%3E%3Crect%20x%3D%221417%22%20y%3D%22755%22%20width%3D%2266%22%20height%3D%2234%22%20rx%3D%224%22%20fill%3D%22%2316283f%22%20opacity%3D%220.14%22%2F%3E%3Crect%20x%3D%221235%22%20y%3D%22690%22%20width%3D%2275%22%20height%3D%2257%22%20rx%3D%224%22%20fill%3D%22%2316283f%22%20opacity%3D%220.14%22%2F%3E%3Crect%20x%3D%221097%22%20y%3D%22252%22%20width%3D%2258%22%20height%3D%2241%22%20rx%3D%224%22%20fill%3D%22%2316283f%22%20opacity%3D%220.19%22%2F%3E%3Crect%20x%3D%221057%22%20y%3D%22777%22%20width%3D%22128%22%20height%3D%2251%22%20rx%3D%224%22%20fill%3D%22%2316283f%22%20opacity%3D%220.25%22%2F%3E%3Crect%20x%3D%22920%22%20y%3D%22633%22%20width%3D%2298%22%20height%3D%2281%22%20rx%3D%224%22%20fill%3D%22%2316283f%22%20opacity%3D%220.21%22%2F%3E%3Crect%20x%3D%22815%22%20y%3D%2280%22%20width%3D%2289%22%20height%3D%2289%22%20rx%3D%224%22%20fill%3D%22%2316283f%22%20opacity%3D%220.16%22%2F%3E%3Crect%20x%3D%221546%22%20y%3D%22489%22%20width%3D%22129%22%20height%3D%2294%22%20rx%3D%224%22%20fill%3D%22%2316283f%22%20opacity%3D%220.14%22%2F%3E%3Crect%20x%3D%221571%22%20y%3D%22499%22%20width%3D%2299%22%20height%3D%2252%22%20rx%3D%224%22%20fill%3D%22%2316283f%22%20opacity%3D%220.15%22%2F%3E%3Crect%20x%3D%22272%22%20y%3D%22580%22%20width%3D%22125%22%20height%3D%2270%22%20rx%3D%224%22%20fill%3D%22%2316283f%22%20opacity%3D%220.13%22%2F%3E%3Crect%20x%3D%221125%22%20y%3D%22632%22%20width%3D%2243%22%20height%3D%2259%22%20rx%3D%224%22%20fill%3D%22%2316283f%22%20opacity%3D%220.14%22%2F%3E%3Crect%20x%3D%22870%22%20y%3D%22120%22%20width%3D%2292%22%20height%3D%2276%22%20rx%3D%224%22%20fill%3D%22%2316283f%22%20opacity%3D%220.19%22%2F%3E%3Crect%20x%3D%221067%22%20y%3D%22235%22%20width%3D%2273%22%20height%3D%2244%22%20rx%3D%224%22%20fill%3D%22%2316283f%22%20opacity%3D%220.14%22%2F%3E%3Crect%20x%3D%22833%22%20y%3D%22632%22%20width%3D%2249%22%20height%3D%2293%22%20rx%3D%224%22%20fill%3D%22%2316283f%22%20opacity%3D%220.23%22%2F%3E%3Crect%20x%3D%221491%22%20y%3D%22151%22%20width%3D%22124%22%20height%3D%2247%22%20rx%3D%224%22%20fill%3D%22%2316283f%22%20opacity%3D%220.18%22%2F%3E%3Crect%20x%3D%22158%22%20y%3D%2266%22%20width%3D%2267%22%20height%3D%2275%22%20rx%3D%224%22%20fill%3D%22%2316283f%22%20opacity%3D%220.18%22%2F%3E%3Crect%20x%3D%221068%22%20y%3D%22504%22%20width%3D%2255%22%20height%3D%22100%22%20rx%3D%224%22%20fill%3D%22%2316283f%22%20opacity%3D%220.13%22%2F%3E%3Crect%20x%3D%22303%22%20y%3D%22101%22%20width%3D%2294%22%20height%3D%2266%22%20rx%3D%224%22%20fill%3D%22%2316283f%22%20opacity%3D%220.21%22%2F%3E%3Crect%20x%3D%221399%22%20y%3D%22502%22%20width%3D%2245%22%20height%3D%2276%22%20rx%3D%224%22%20fill%3D%22%2316283f%22%20opacity%3D%220.20%22%2F%3E%3Crect%20x%3D%22168%22%20y%3D%2284%22%20width%3D%2251%22%20height%3D%2249%22%20rx%3D%224%22%20fill%3D%22%2316283f%22%20opacity%3D%220.13%22%2F%3E%3Crect%20x%3D%22180%22%20y%3D%22349%22%20width%3D%2242%22%20height%3D%2273%22%20rx%3D%224%22%20fill%3D%22%2316283f%22%20opacity%3D%220.13%22%2F%3E%3Crect%20x%3D%22521%22%20y%3D%2288%22%20width%3D%22121%22%20height%3D%2244%22%20rx%3D%224%22%20fill%3D%22%2316283f%22%20opacity%3D%220.25%22%2F%3E%3Crect%20x%3D%22694%22%20y%3D%22671%22%20width%3D%22107%22%20height%3D%2234%22%20rx%3D%224%22%20fill%3D%22%2316283f%22%20opacity%3D%220.15%22%2F%3E%3Crect%20x%3D%221570%22%20y%3D%22356%22%20width%3D%2257%22%20height%3D%2298%22%20rx%3D%224%22%20fill%3D%22%2316283f%22%20opacity%3D%220.22%22%2F%3E%3Crect%20x%3D%221058%22%20y%3D%22503%22%20width%3D%2294%22%20height%3D%2292%22%20rx%3D%224%22%20fill%3D%22%2316283f%22%20opacity%3D%220.17%22%2F%3E%3Crect%20x%3D%22573%22%20y%3D%22781%22%20width%3D%22111%22%20height%3D%2244%22%20rx%3D%224%22%20fill%3D%22%2316283f%22%20opacity%3D%220.24%22%2F%3E%3Crect%20x%3D%22516%22%20y%3D%22449%22%20width%3D%2265%22%20height%3D%2245%22%20rx%3D%224%22%20fill%3D%22%2316283f%22%20opacity%3D%220.21%22%2F%3E%0A%20%20%3Cline%20x1%3D%220%22%20y1%3D%22557%22%20x2%3D%221680%22%20y2%3D%22547%22%20stroke%3D%22%2333507a%22%20stroke-width%3D%223%22%20stroke-dasharray%3D%2214%207%22%20opacity%3D%220.7%22%2F%3E%0A%20%20%3Cline%20x1%3D%220%22%20y1%3D%22230%22%20x2%3D%221680%22%20y2%3D%22230%22%20stroke%3D%22%232f5488%22%20stroke-width%3D%226%22%20opacity%3D%220.85%22%2F%3E%3Cline%20x1%3D%22772%22%20y1%3D%220%22%20x2%3D%22772%22%20y2%3D%22840%22%20stroke%3D%22%232f5488%22%20stroke-width%3D%225%22%20opacity%3D%220.7%22%2F%3E%0A%20%20%3Ctext%20x%3D%271540%27%20y%3D%27222%27%20fill%3D%27%235b7fb0%27%20font-family%3D%27sans-serif%27%20font-size%3D%2720%27%20font-style%3D%27italic%27%20opacity%3D%270.8%27%3EIlica%3C%2Ftext%3E%0A%20%20%3Ctext%20x%3D%2724%27%20y%3D%27820%27%20fill%3D%27%233f5f88%27%20font-family%3D%27sans-serif%27%20font-size%3D%2718%27%20opacity%3D%270.7%27%3EDonji%20grad%20%C2%B7%20Zagreb%3C%2Ftext%3E%0A%3C%2Fsvg%3E",
+    "width": 1680,
+    "height": 840,
+    "maxScale": 6,
+    "overlayOpacity": 1
+  },
+  "theme": {
+    "accent": "#7cc0ff",
+    "player": "#4c9dff",
+    "unlocked": "#4caf7d",
+    "locked": "#5a6478",
+    "reach": "#ffd166"
+  },
+  "unlockRadius": 40,
+  "hideLockedPins": true,
+  "calibration": [
+    {
+      "x": 101.2,
+      "y": 738.3,
+      "lat": 45.8,
+      "lng": 15.945
+    },
+    {
+      "x": 1578.8,
+      "y": 557.5,
+      "lat": 45.8042,
+      "lng": 15.9939
+    }
+  ],
+  "pins": [
+    {
+      "key": "party_flat",
+      "lat": 45.805346,
+      "lng": 15.967427,
+      "icon": "🥂",
+      "label": {
+        "en": "The Party Flat",
+        "hr": "Stan s partyja"
+      },
+      "note": {
+        "en": "Vodnikova. Where Mia was last seen.",
+        "hr": "Vodnikova. Ovdje je Mia zadnji put viđena."
+      },
+      "locked": true,
+      "unlockOnArrive": true
+    },
+    {
+      "key": "mia_home",
+      "lat": 45.8,
+      "lng": 15.945,
+      "icon": "🏠",
+      "label": {
+        "en": "Mia's Home",
+        "hr": "Mijin dom"
+      },
+      "note": {
+        "en": "Trešnjevka. Her mother waits here.",
+        "hr": "Trešnjevka. Ovdje čeka njezina majka."
+      },
+      "locked": true,
+      "unlockOnArrive": true
+    },
+    {
+      "key": "police_station",
+      "lat": 45.8069,
+      "lng": 15.9789,
+      "icon": "🚓",
+      "label": {
+        "en": "Police Station",
+        "hr": "Policijska postaja"
+      },
+      "note": {
+        "en": "Petrinjska. File the report.",
+        "hr": "Petrinjska. Prijavi nestanak."
+      },
+      "locked": true,
+      "unlockOnArrive": true
+    },
+    {
+      "key": "cafe",
+      "lat": 45.8056,
+      "lng": 15.98,
+      "icon": "🎷",
+      "label": {
+        "en": "Bacchus Jazz Bar",
+        "hr": "Bacchus Jazz Bar"
+      },
+      "note": {
+        "en": "Mara knows what Mia left behind.",
+        "hr": "Mara zna što je Mia ostavila."
+      },
+      "locked": true,
+      "unlockOnArrive": true
+    },
+    {
+      "key": "jelacic",
+      "lat": 45.8131,
+      "lng": 15.9775,
+      "icon": "🐎",
+      "label": {
+        "en": "Trg bana Jelačića",
+        "hr": "Trg bana Jelačića"
+      },
+      "note": {
+        "en": "The main square. Everyone passes through.",
+        "hr": "Glavni trg. Svi prolaze ovuda."
+      },
+      "locked": true,
+      "unlockOnArrive": true
+    },
+    {
+      "key": "bus_station",
+      "lat": 45.8042,
+      "lng": 15.9939,
+      "icon": "🚆",
+      "label": {
+        "en": "Glavni kolodvor",
+        "hr": "Glavni kolodvor"
+      },
+      "note": {
+        "en": "Main railway station. A ticket was bought.",
+        "hr": "Glavni kolodvor. Kupljena je karta."
+      },
+      "locked": true,
+      "unlockOnArrive": true
+    },
+    {
+      "key": "maksimir",
+      "lat": 45.8033,
+      "lng": 15.9705,
+      "icon": "🌳",
+      "label": {
+        "en": "Trg Petra Svačića",
+        "hr": "Trg Petra Svačića"
+      },
+      "note": {
+        "en": "The old platana tree. A carved date.",
+        "hr": "Stara platana. Urezani datum."
+      },
+      "locked": true,
+      "unlockOnArrive": true
+    },
+    {
+      "key": "school",
+      "lat": 45.8085,
+      "lng": 15.9672,
+      "icon": "🎓",
+      "label": {
+        "en": "V. gimnazija",
+        "hr": "V. gimnazija"
+      },
+      "note": {
+        "en": "Mia's school. Ask her classmates.",
+        "hr": "Mijina škola. Pitaj razrednike."
+      },
+      "locked": true,
+      "unlockOnArrive": true
+    },
+    {
+      "key": "dolac",
+      "lat": 45.8148,
+      "lng": 15.9773,
+      "icon": "🍎",
+      "label": {
+        "en": "Dolac Market",
+        "hr": "Dolac"
+      },
+      "note": {
+        "en": "The red umbrellas above the square.",
+        "hr": "Crveni suncobrani iznad trga."
+      },
+      "locked": true,
+      "unlockOnArrive": true
+    }
+  ],
+  "start": {
+    "lat": 45.8075,
+    "lng": 15.969,
+    "zoom": 1.1
+  },
+  "autoLocate": true
+};
+  </script>
+  <script>
+/*
+ * map-engine.js — a modular GPS map viewer for Telegram web_app mini-games.
+ * =========================================================================
+ * ONE engine, many games. A game is just an HTML file that:
+ *   1. loads the Telegram Web App SDK,
+ *   2. defines `window.MAP_CONFIG = { ... }`,
+ *   3. includes this script.
+ *
+ * Features
+ *   - Raster or SVG map background (any image), sized to a virtual "world".
+ *   - Optional SVG/PNG overlay layered on top (a different art style per game).
+ *   - "You are here" marker from the real GPS (navigator.geolocation), projected
+ *     onto the map via a 2-point georeference (similarity: translate+rotate+scale).
+ *   - Location pinpoints (POIs) that can be locked/unlocked; unlocked ones are
+ *     tappable and can auto-unlock when the player physically arrives.
+ *   - Pinch / wheel zoom and drag pan, "fit map" and "find me" buttons.
+ *   - Same result contract as the other mini-games: postMessage (emulator) +
+ *     tg.sendData (Telegram) + localStorage fallback.
+ *
+ * The engine builds all of its own DOM into `#mapgame` (or <body>), so a game
+ * file needs almost no markup. See map-builder.html to author configs visually.
+ *
+ * URL params understood: sessionId, userId, lang, unlocked=key1,key2 (force-unlock).
+ */
+(function () {
+  'use strict';
+
+  const tg = window.Telegram ? window.Telegram.WebApp : null;
+  if (tg) { try { tg.ready(); tg.expand(); } catch (e) {} }
+  const haptic = (k) => { try { if (!tg || !tg.HapticFeedback) return;
+    if (k === 'tick') tg.HapticFeedback.selectionChanged();
+    else if (k === 'ok') tg.HapticFeedback.notificationOccurred('success');
+    else if (k === 'err') tg.HapticFeedback.notificationOccurred('error'); } catch (e) {} };
+
+  const CFG = window.MAP_CONFIG || {};
+  const q = new URLSearchParams(location.search);
+
+  /* ---- locale ---- */
+  const DEF = CFG.defaultLang || 'en';
+  let lang = (q.get('lang') ||
+    (tg && tg.initDataUnsafe && tg.initDataUnsafe.user && tg.initDataUnsafe.user.language_code) ||
+    DEF).split('-')[0].toLowerCase();
+  const L = (v) => {
+    if (v == null) return '';
+    if (typeof v === 'string' || typeof v === 'number') return String(v);
+    return v[lang] ?? v[DEF] ?? Object.values(v)[0] ?? '';
+  };
+
+  const sessionId = q.get('sessionId');
+  const userId = (tg && tg.initDataUnsafe && tg.initDataUnsafe.user) ? tg.initDataUnsafe.user.id : q.get('userId');
+  const forcedUnlocked = new Set((q.get('unlocked') || '').split(',').map((s) => s.trim()).filter(Boolean));
+
+  /* ---- theme ---- */
+  const T = Object.assign({
+    bg: '#0c1220', panel: '#12233a', ink: '#e8e6df', muted: '#8b93a6',
+    accent: '#7cc0ff', player: '#4c9dff', locked: '#5a6478', unlocked: '#4caf7d', reach: '#ffd166',
+  }, CFG.theme || {});
+
+  const map = CFG.map || {};
+  const IMG_W = map.width || 1000;
+  const IMG_H = map.height || 1000;
+
+  /* =========================================================================
+   * Georeference: image px  <->  lat/lng, via a 2-point similarity transform.
+   * With two known correspondences (image pixel + real lat/lng) we recover
+   * translation + rotation + uniform scale — enough for any north-agnostic,
+   * not-to-scale stylised map. Uses a local equirectangular projection.
+   * Complex-number form:  world = a * z + b,  where z = x - i*y (y flipped so
+   * "up" is positive to match world-North), world = E + i*N (metres).
+   * ========================================================================= */
+  function buildGeo(cal) {
+    const c = (cal || []).filter((p) => [p.lat, p.lng, p.x, p.y].every((n) => typeof n === 'number' && isFinite(n)));
+    if (c.length < 2) return null;
+    const lat0 = c[0].lat, lng0 = c[0].lng;
+    const mPerLat = 110540, mPerLng = 111320 * Math.cos(lat0 * Math.PI / 180);
+    const toW = (lat, lng) => ({ E: (lng - lng0) * mPerLng, N: (lat - lat0) * mPerLat });
+    const p1 = c[0], p2 = c[1];
+    const w1 = toW(p1.lat, p1.lng), w2 = toW(p2.lat, p2.lng);
+    const z1 = { re: p1.x, im: -p1.y }, z2 = { re: p2.x, im: -p2.y };
+    const dw = { re: w2.E - w1.E, im: w2.N - w1.N };
+    const dz = { re: z2.re - z1.re, im: z2.im - z1.im };
+    const den = dz.re * dz.re + dz.im * dz.im || 1e-9;
+    // a = dw / dz  (complex division)
+    const a = { re: (dw.re * dz.re + dw.im * dz.im) / den, im: (dw.im * dz.re - dw.re * dz.im) / den };
+    const az1 = { re: a.re * z1.re - a.im * z1.im, im: a.re * z1.im + a.im * z1.re };
+    const b = { re: w1.E - az1.re, im: w1.N - az1.im };
+    const aden = a.re * a.re + a.im * a.im || 1e-9;
+    const mPerPx = Math.sqrt(aden);
+    return {
+      mPerPx, pxPerM: 1 / mPerPx,
+      llToXY(lat, lng) {                       // world -> z = (world - b)/a
+        const w = toW(lat, lng);
+        const n = { re: w.E - b.re, im: w.N - b.im };
+        const z = { re: (n.re * a.re + n.im * a.im) / aden, im: (n.im * a.re - n.re * a.im) / aden };
+        return { x: z.re, y: -z.im };
+      },
+      xyToLL(x, y) {                           // world = a*z + b
+        const z = { re: x, im: -y };
+        const az = { re: a.re * z.re - a.im * z.im, im: a.re * z.im + a.im * z.re };
+        const E = az.re + b.re, N = az.im + b.im;
+        return { lat: lat0 + N / mPerLat, lng: lng0 + E / mPerLng };
+      },
+      distM(aLat, aLng, bLat, bLng) {
+        return Math.hypot((bLng - aLng) * mPerLng, (bLat - aLat) * mPerLat);
+      },
+    };
+  }
+  const geo = buildGeo(CFG.calibration);
+
+  // Resolve a pin's world (image) x,y: prefer explicit x/y, else project lat/lng.
+  function pinXY(p) {
+    if (typeof p.x === 'number' && typeof p.y === 'number') return { x: p.x, y: p.y };
+    if (geo && typeof p.lat === 'number' && typeof p.lng === 'number') return geo.llToXY(p.lat, p.lng);
+    return { x: IMG_W / 2, y: IMG_H / 2 };
+  }
+  function pinLL(p) {
+    if (typeof p.lat === 'number' && typeof p.lng === 'number') return { lat: p.lat, lng: p.lng };
+    if (geo && typeof p.x === 'number' && typeof p.y === 'number') return geo.xyToLL(p.x, p.y);
+    return null;
+  }
+
+  /* =========================================================================
+   * DOM scaffold
+   * ========================================================================= */
+  const mount = document.getElementById('mapgame') || document.body;
+  const el = (tag, cls, html) => { const n = document.createElement(tag); if (cls) n.className = cls; if (html != null) n.innerHTML = html; return n; };
+
+  const style = document.createElement('style');
+  style.textContent = `
+    :root{
+      --mg-bg:${T.bg};--mg-panel:${T.panel};--mg-ink:${T.ink};--mg-muted:${T.muted};
+      --mg-accent:${T.accent};--mg-player:${T.player};--mg-locked:${T.locked};--mg-unlocked:${T.unlocked};--mg-reach:${T.reach};
+    }
+    *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+    html,body{height:100%;}
+    body{background:var(--mg-bg);color:var(--mg-ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;overflow:hidden;}
+    #mg-root{position:fixed;inset:0;overflow:hidden;}
+    #mg-viewport{position:absolute;inset:0;overflow:hidden;touch-action:none;cursor:grab;background:var(--mg-bg);}
+    #mg-viewport.drag{cursor:grabbing;}
+    #mg-world{position:absolute;left:0;top:0;transform-origin:0 0;will-change:transform;width:${IMG_W}px;height:${IMG_H}px;}
+    #mg-base,#mg-overlay{position:absolute;left:0;top:0;width:${IMG_W}px;height:${IMG_H}px;display:block;pointer-events:none;user-select:none;-webkit-user-drag:none;}
+    #mg-overlay{opacity:${map.overlayOpacity ?? 1};${map.overlayBlend ? 'mix-blend-mode:' + map.overlayBlend + ';' : ''}}
+    .mg-pin{position:absolute;transform-origin:50% 50%;pointer-events:auto;cursor:pointer;}
+    .mg-pin .body{display:flex;flex-direction:column;align-items:center;transform:translate(-50%,-100%);}
+    .mg-pin .glyph{width:34px;height:34px;border-radius:50% 50% 50% 2px;transform:rotate(45deg);
+      display:flex;align-items:center;justify-content:center;box-shadow:0 3px 8px rgba(0,0,0,.45);border:2px solid rgba(255,255,255,.85);}
+    .mg-pin .glyph>span{transform:rotate(-45deg);font-size:17px;line-height:1;}
+    .mg-pin .tip{width:0;height:0;}
+    .mg-pin .cap{margin-top:5px;font-size:12px;font-weight:700;color:var(--mg-ink);background:rgba(6,10,18,.72);
+      padding:2px 7px;border-radius:7px;white-space:nowrap;box-shadow:0 2px 6px rgba(0,0,0,.4);}
+    .mg-pin.locked .glyph{background:var(--mg-locked);border-color:rgba(255,255,255,.35);}
+    .mg-pin.locked .cap{opacity:.6;}
+    .mg-pin.unlocked .glyph{background:var(--mg-unlocked);}
+    .mg-pin.reach .glyph{background:var(--mg-reach);animation:mg-pulse 1.3s ease-in-out infinite;}
+    @keyframes mg-pulse{0%,100%{box-shadow:0 3px 8px rgba(0,0,0,.45),0 0 0 0 rgba(255,209,102,.55);}50%{box-shadow:0 3px 8px rgba(0,0,0,.45),0 0 0 10px rgba(255,209,102,0);}}
+    #mg-player{position:absolute;transform-origin:50% 50%;pointer-events:none;}
+    #mg-player .dot{width:18px;height:18px;border-radius:50%;background:var(--mg-player);border:3px solid #fff;
+      box-shadow:0 0 0 2px rgba(76,157,255,.5),0 2px 6px rgba(0,0,0,.5);transform:translate(-50%,-50%);}
+    #mg-player .heading{position:absolute;left:50%;top:50%;width:0;height:0;transform:translate(-50%,-50%);}
+    #mg-accuracy{position:absolute;border-radius:50%;background:rgba(76,157,255,.14);border:1px solid rgba(76,157,255,.4);
+      transform:translate(-50%,-50%);pointer-events:none;}
+    .mg-header{position:absolute;top:0;left:0;right:0;padding:14px 16px calc(14px + env(safe-area-inset-top,0));
+      background:linear-gradient(180deg,rgba(6,10,18,.82),rgba(6,10,18,0));pointer-events:none;z-index:5;}
+    .mg-header h1{font-size:16px;font-weight:800;letter-spacing:.2px;}
+    .mg-header .sub{margin-top:3px;font-size:12px;color:var(--mg-muted);max-width:70%;line-height:1.4;}
+    .mg-ctrls{position:absolute;right:12px;bottom:calc(18px + env(safe-area-inset-bottom,0));display:flex;flex-direction:column;gap:9px;z-index:6;}
+    .mg-btn{width:46px;height:46px;border-radius:13px;border:1px solid rgba(255,255,255,.1);background:var(--mg-panel);
+      color:var(--mg-ink);font-size:22px;font-weight:700;display:flex;align-items:center;justify-content:center;
+      box-shadow:0 4px 12px rgba(0,0,0,.4);cursor:pointer;user-select:none;transition:transform .1s,background .15s;}
+    .mg-btn:active{transform:scale(.92);}
+    .mg-btn.find{color:var(--mg-player);font-size:20px;}
+    .mg-btn.find.on{background:var(--mg-player);color:#fff;}
+    .mg-legend{position:absolute;left:12px;bottom:calc(18px + env(safe-area-inset-bottom,0));z-index:6;display:flex;flex-direction:column;gap:5px;
+      background:rgba(6,10,18,.6);padding:8px 10px;border-radius:11px;font-size:11px;color:var(--mg-muted);max-width:44vw;}
+    .mg-legend .row{display:flex;align-items:center;gap:7px;}
+    .mg-legend .sw{width:10px;height:10px;border-radius:3px;flex:0 0 auto;}
+    .mg-sheet{position:absolute;left:0;right:0;bottom:0;z-index:20;transform:translateY(110%);transition:transform .28s cubic-bezier(.2,.8,.2,1);
+      background:var(--mg-panel);border-radius:20px 20px 0 0;padding:20px 20px calc(22px + env(safe-area-inset-bottom,0));
+      box-shadow:0 -12px 40px rgba(0,0,0,.5);border-top:1px solid rgba(255,255,255,.08);}
+    .mg-sheet.show{transform:translateY(0);}
+    .mg-sheet .grip{width:38px;height:4px;border-radius:3px;background:rgba(255,255,255,.25);margin:0 auto 14px;}
+    .mg-sheet .st{display:flex;align-items:center;gap:10px;}
+    .mg-sheet .st .em{font-size:26px;}
+    .mg-sheet h2{font-size:18px;font-weight:800;}
+    .mg-sheet .dist{margin-left:auto;font-size:12px;color:var(--mg-muted);font-variant-numeric:tabular-nums;}
+    .mg-sheet p{margin-top:11px;font-size:14px;color:var(--mg-ink);line-height:1.5;}
+    .mg-sheet .act{margin-top:16px;width:100%;padding:14px;border:none;border-radius:13px;background:var(--mg-unlocked);
+      color:#062015;font-size:15px;font-weight:800;cursor:pointer;}
+    .mg-toast{position:absolute;left:50%;top:64px;transform:translate(-50%,-16px);z-index:30;opacity:0;transition:all .25s;
+      background:rgba(6,10,18,.92);color:var(--mg-ink);padding:9px 15px;border-radius:11px;font-size:13px;
+      box-shadow:0 6px 20px rgba(0,0,0,.5);pointer-events:none;max-width:80vw;text-align:center;}
+    .mg-toast.show{opacity:1;transform:translate(-50%,0);}
+  `;
+  document.head.appendChild(style);
+
+  const root = el('div'); root.id = 'mg-root';
+  const viewport = el('div'); viewport.id = 'mg-viewport';
+  const world = el('div'); world.id = 'mg-world';
+  root.appendChild(viewport); viewport.appendChild(world);
+
+  if (map.image) { const base = el('img'); base.id = 'mg-base'; base.src = map.image; base.alt = 'map'; base.draggable = false; world.appendChild(base); }
+  if (map.overlay) { const ov = el('img'); ov.id = 'mg-overlay'; ov.src = map.overlay; ov.alt = 'overlay'; ov.draggable = false; world.appendChild(ov); }
+
+  const accuracy = el('div'); accuracy.id = 'mg-accuracy'; accuracy.style.display = 'none'; world.appendChild(accuracy);
+  const pinsLayer = el('div'); pinsLayer.id = 'mg-pins'; world.appendChild(pinsLayer);
+  const player = el('div'); player.id = 'mg-player'; player.style.display = 'none';
+  player.appendChild(el('div', 'dot')); world.appendChild(player);
+
+  // header
+  const header = el('div', 'mg-header');
+  header.appendChild(el('h1', null, L(CFG.title) || 'Map'));
+  if (CFG.intro) header.appendChild(el('div', 'sub', L(CFG.intro)));
+  root.appendChild(header);
+
+  // toast
+  const toast = el('div', 'mg-toast'); root.appendChild(toast);
+  let toastT = null;
+  function showToast(msg) { toast.textContent = msg; toast.classList.add('show'); clearTimeout(toastT); toastT = setTimeout(() => toast.classList.remove('show'), 2200); }
+
+  // controls
+  const ctrls = el('div', 'mg-ctrls');
+  const btnFind = el('div', 'mg-btn find', '◎'); btnFind.title = 'Find me';
+  const btnIn = el('div', 'mg-btn', '+');
+  const btnOut = el('div', 'mg-btn', '−');
+  const btnFit = el('div', 'mg-btn', '⤢'); btnFit.title = 'Fit map';
+  ctrls.append(btnFind, btnIn, btnOut, btnFit);
+  root.appendChild(ctrls);
+
+  // bottom sheet (pin detail)
+  const sheet = el('div', 'mg-sheet');
+  sheet.innerHTML = `<div class="grip"></div>
+    <div class="st"><span class="em" id="mg-sh-em">📍</span><h2 id="mg-sh-title"></h2><span class="dist" id="mg-sh-dist"></span></div>
+    <p id="mg-sh-body"></p>`;
+  root.appendChild(sheet);
+  const sheetAct = el('button', 'act'); sheetAct.style.display = 'none'; sheet.appendChild(sheetAct);
+
+  mount.appendChild(root);
+
+  /* =========================================================================
+   * Pins
+   * ========================================================================= */
+  const pins = (CFG.pins || []).map((p, i) => {
+    const node = el('div', 'mg-pin');
+    node.innerHTML = `<div class="body"><div class="glyph"><span>${p.icon || '📍'}</span></div>${
+      (CFG.showLabels ?? true) && (p.label != null) ? `<div class="cap"></div>` : ''}</div>`;
+    const cap = node.querySelector('.cap'); if (cap) cap.textContent = L(p.label);
+    pinsLayer.appendChild(node);
+    const st = { def: p, node, key: p.key || ('pin' + i), unlocked: !p.locked || forcedUnlocked.has(p.key), reached: false };
+    node.addEventListener('click', (e) => { e.stopPropagation(); openPin(st); });
+    return st;
+  });
+  function applyPinState(st) {
+    st.node.classList.toggle('locked', !st.unlocked && !st.reach);
+    st.node.classList.toggle('unlocked', st.unlocked);
+    st.node.classList.toggle('reach', !!st.reach && !st.unlocked);
+    // hide fully-locked pins if the game wants a fog-of-war reveal
+    st.node.style.display = (!st.unlocked && (st.def.hideWhenLocked ?? CFG.hideLockedPins)) ? 'none' : '';
+  }
+
+  /* =========================================================================
+   * View transform (pan / zoom)
+   * ========================================================================= */
+  const view = { tx: 0, ty: 0, scale: 1 };
+  let minScale = 0.2, maxScale = Math.max(2, map.maxScale || 6);
+  function fitScale() { return Math.min(viewport.clientWidth / IMG_W, viewport.clientHeight / IMG_H); }
+  function applyView() {
+    world.style.transform = `translate(${view.tx}px,${view.ty}px) scale(${view.scale})`;
+    const inv = 1 / view.scale;
+    for (const st of pins) { st.node.style.transform = `scale(${inv})`; }
+    player.style.transform = `scale(${inv})`;
+  }
+  function clampScale(s) { return Math.max(minScale, Math.min(maxScale, s)); }
+  // zoom keeping world-point under screen-point (sx,sy) fixed
+  function zoomAt(sx, sy, next) {
+    next = clampScale(next);
+    const wx = (sx - view.tx) / view.scale, wy = (sy - view.ty) / view.scale;
+    view.scale = next; view.tx = sx - wx * next; view.ty = sy - wy * next; applyView();
+  }
+  function centerOnWorld(wx, wy, scale) {
+    if (scale) view.scale = clampScale(scale);
+    view.tx = viewport.clientWidth / 2 - wx * view.scale;
+    view.ty = viewport.clientHeight / 2 - wy * view.scale;
+    applyView();
+  }
+  function fitMap() {
+    const f = fitScale(); minScale = f * 0.85; view.scale = clampScale(f);
+    view.tx = (viewport.clientWidth - IMG_W * view.scale) / 2;
+    view.ty = (viewport.clientHeight - IMG_H * view.scale) / 2;
+    applyView();
+  }
+  function positionPins() { for (const st of pins) { const { x, y } = pinXY(st.def); st.node.style.left = x + 'px'; st.node.style.top = y + 'px'; applyPinState(st); } }
+
+  /* ---- pointer pan / pinch ---- */
+  const pointers = new Map();
+  let panStart = null, pinchStart = null;
+  viewport.addEventListener('pointerdown', (e) => {
+    viewport.setPointerCapture(e.pointerId);
+    pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    viewport.classList.add('drag');
+    if (pointers.size === 1) panStart = { x: e.clientX, y: e.clientY, tx: view.tx, ty: view.ty, moved: 0 };
+    else if (pointers.size === 2) { panStart = null; pinchStart = pinchSnapshot(); }
+  });
+  viewport.addEventListener('pointermove', (e) => {
+    if (!pointers.has(e.pointerId)) return;
+    pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    if (pointers.size >= 2 && pinchStart) {
+      const now = pinchSnapshot();
+      const ratio = now.dist / pinchStart.dist;
+      view.scale = clampScale(pinchStart.scale * ratio);
+      const wx = (pinchStart.midWx), wy = (pinchStart.midWy);
+      view.tx = now.mx - wx * view.scale; view.ty = now.my - wy * view.scale;
+      applyView();
+    } else if (panStart) {
+      view.tx = panStart.tx + (e.clientX - panStart.x);
+      view.ty = panStart.ty + (e.clientY - panStart.y);
+      panStart.moved += Math.abs(e.movementX) + Math.abs(e.movementY);
+      applyView();
+    }
+  });
+  const endPointer = (e) => {
+    pointers.delete(e.pointerId);
+    if (pointers.size < 2) pinchStart = null;
+    if (pointers.size === 1) { const p = [...pointers.values()][0]; panStart = { x: p.x, y: p.y, tx: view.tx, ty: view.ty, moved: 999 }; }
+    if (pointers.size === 0) { viewport.classList.remove('drag'); panStart = null; }
+  };
+  viewport.addEventListener('pointerup', endPointer);
+  viewport.addEventListener('pointercancel', endPointer);
+  function pinchSnapshot() {
+    const [a, b] = [...pointers.values()];
+    const mx = (a.x + b.x) / 2, my = (a.y + b.y) / 2;
+    const dist = Math.hypot(a.x - b.x, a.y - b.y) || 1;
+    return { mx, my, dist, scale: view.scale, midWx: (mx - view.tx) / view.scale, midWy: (my - view.ty) / view.scale };
+  }
+  // tap on empty map closes the sheet
+  viewport.addEventListener('click', () => { if (!panStart || panStart.moved < 6) closeSheet(); });
+
+  // wheel zoom (desktop / emulator)
+  viewport.addEventListener('wheel', (e) => {
+    e.preventDefault();
+    const r = viewport.getBoundingClientRect();
+    zoomAt(e.clientX - r.left, e.clientY - r.top, view.scale * (e.deltaY < 0 ? 1.15 : 1 / 1.15));
+  }, { passive: false });
+
+  btnIn.addEventListener('click', () => zoomAt(viewport.clientWidth / 2, viewport.clientHeight / 2, view.scale * 1.4));
+  btnOut.addEventListener('click', () => zoomAt(viewport.clientWidth / 2, viewport.clientHeight / 2, view.scale / 1.4));
+  btnFit.addEventListener('click', fitMap);
+
+  /* =========================================================================
+   * Pin detail sheet
+   * ========================================================================= */
+  const shTitle = sheet.querySelector('#mg-sh-title'), shBody = sheet.querySelector('#mg-sh-body'),
+        shEm = sheet.querySelector('#mg-sh-em'), shDist = sheet.querySelector('#mg-sh-dist');
+  let openKey = null;
+  function openPin(st) {
+    openKey = st.key;
+    shEm.textContent = st.def.icon || '📍';
+    shTitle.textContent = L(st.def.label) || st.key;
+    shBody.textContent = L(st.def.note) || L(st.def.description) || '';
+    updateSheetDistance();
+    sheetAct.style.display = 'none';
+    if (st.unlocked && st.def.action) {
+      sheetAct.style.display = ''; sheetAct.textContent = L(st.def.action.label) || 'Open';
+      sheetAct.onclick = () => runPinAction(st);
+    }
+    sheet.classList.add('show');
+    emit('pin_tap', { key: st.key, unlocked: st.unlocked });
+  }
+  function closeSheet() { sheet.classList.remove('show'); openKey = null; }
+  function updateSheetDistance() {
+    if (!openKey || !last) { shDist.textContent = ''; return; }
+    const st = pins.find((p) => p.key === openKey); if (!st) return;
+    const ll = pinLL(st.def); if (!ll || !geo) { shDist.textContent = ''; return; }
+    const d = geo.distM(last.lat, last.lng, ll.lat, ll.lng);
+    shDist.textContent = d < 1000 ? Math.round(d) + ' m' : (d / 1000).toFixed(1) + ' km';
+  }
+  function runPinAction(st) {
+    const a = st.def.action || {};
+    emit('pin_action', { key: st.key, action: a.type || 'open' });
+    if (a.type === 'result') { sendResult(Object.assign({ outcome: 'success', pin: st.key }, a.payload || {})); showToast(L(a.toast) || 'Done'); }
+    else if (a.url && tg && tg.openLink) tg.openLink(a.url);
+    else if (a.url) window.open(a.url, '_blank');
+  }
+
+  /* =========================================================================
+   * Result / event contract (matches the other mini-games)
+   * ========================================================================= */
+  function sendResult(payload) {
+    const result = Object.assign({ sessionId, userId, gameId: CFG.gameId || 'map', timestamp: Date.now() }, payload);
+    try { if (window.parent && window.parent !== window) window.parent.postMessage({ type: 'MINIGAME_RESULT', payload: result }, '*'); } catch (e) {}
+    try { if (tg && typeof tg.sendData === 'function') tg.sendData(JSON.stringify(result));
+          else localStorage.setItem((CFG.gameId || 'map') + '_result_latest', JSON.stringify(result)); } catch (e) {}
+    return result;
+  }
+  function emit(type, data) {
+    const ev = Object.assign({ sessionId, userId, gameId: CFG.gameId || 'map', type }, data);
+    try { if (window.parent && window.parent !== window) window.parent.postMessage({ type: 'MINIGAME_EVENT', payload: ev }, '*'); } catch (e) {}
+  }
+
+  /* =========================================================================
+   * Geolocation — the "you are here" marker + arrival detection
+   * ========================================================================= */
+  let last = null, follow = false, watchId = null;
+  const unlockRadius = CFG.unlockRadius || 30; // metres
+
+  function placePlayer(lat, lng, accM) {
+    if (!geo) return;
+    const { x, y } = geo.llToXY(lat, lng);
+    // clamp marker to map so it never floats far outside; flag off-map
+    const cx = Math.max(0, Math.min(IMG_W, x)), cy = Math.max(0, Math.min(IMG_H, y));
+    player.style.left = cx + 'px'; player.style.top = cy + 'px'; player.style.display = '';
+    player.classList.toggle('off', cx !== x || cy !== y);
+    if (accM && geo.pxPerM) {
+      const rpx = Math.max(6, accM * geo.pxPerM);
+      accuracy.style.display = ''; accuracy.style.left = x + 'px'; accuracy.style.top = y + 'px';
+      accuracy.style.width = accuracy.style.height = (rpx * 2) + 'px';
+    }
+  }
+  function onGeo(pos) {
+    last = { lat: pos.coords.latitude, lng: pos.coords.longitude, acc: pos.coords.accuracy };
+    placePlayer(last.lat, last.lng, last.acc);
+    if (follow) centerOnWorld(...Object.values(geo.llToXY(last.lat, last.lng)));
+    checkArrivals();
+    updateSheetDistance();
+    emit('location', { lat: last.lat, lng: last.lng, accuracy: last.acc });
+  }
+  function onGeoErr(err) {
+    btnFind.classList.remove('on'); follow = false;
+    showToast(err && err.code === 1 ? (lang === 'hr' ? 'Lokacija odbijena' : 'Location permission denied')
+                                    : (lang === 'hr' ? 'Lokacija nedostupna' : 'Location unavailable'));
+  }
+  function startGeo() {
+    if (!('geolocation' in navigator)) { showToast(lang === 'hr' ? 'GPS nije podržan' : 'GPS not supported'); return; }
+    if (watchId == null) watchId = navigator.geolocation.watchPosition(onGeo, onGeoErr, { enableHighAccuracy: true, maximumAge: 2000, timeout: 15000 });
+  }
+  function checkArrivals() {
+    if (!last || !geo) return;
+    for (const st of pins) {
+      const ll = pinLL(st.def); if (!ll) continue;
+      const d = geo.distM(last.lat, last.lng, ll.lat, ll.lng);
+      const near = d <= (st.def.radius || unlockRadius);
+      if (near && !st.unlocked && (st.def.unlockOnArrive ?? CFG.unlockOnArrive)) {
+        st.unlocked = true; st.reach = false; applyPinState(st); haptic('ok');
+        showToast((lang === 'hr' ? 'Otključano: ' : 'Unlocked: ') + (L(st.def.label) || st.key));
+        emit('pin_unlocked', { key: st.key });
+        if (st.def.action && st.def.action.type === 'result') runPinAction(st);
+      } else if (near && !st.unlocked) {
+        if (!st.reach) { st.reach = true; applyPinState(st); }
+      } else if (st.reach) { st.reach = false; applyPinState(st); }
+    }
+  }
+  btnFind.addEventListener('click', () => {
+    startGeo(); follow = true; btnFind.classList.add('on');
+    if (last && geo) centerOnWorld(...Object.values(geo.llToXY(last.lat, last.lng)), Math.max(view.scale, map.findZoom || 1.5));
+  });
+  // stop following as soon as the user drags
+  viewport.addEventListener('pointerdown', () => { if (follow) { follow = false; btnFind.classList.remove('on'); } });
+
+  /* =========================================================================
+   * Legend + boot
+   * ========================================================================= */
+  if (CFG.legend !== false) {
+    const lg = el('div', 'mg-legend');
+    lg.innerHTML =
+      `<div class="row"><span class="sw" style="background:var(--mg-player)"></span>${lang === 'hr' ? 'Ti' : 'You'}</div>` +
+      `<div class="row"><span class="sw" style="background:var(--mg-unlocked)"></span>${lang === 'hr' ? 'Otključano' : 'Unlocked'}</div>` +
+      (pins.some((p) => !p.unlocked) ? `<div class="row"><span class="sw" style="background:var(--mg-locked)"></span>${lang === 'hr' ? 'Zaključano' : 'Locked'}</div>` : '');
+    root.appendChild(lg);
+  }
+
+  function boot() {
+    positionPins(); fitMap();
+    // Center priority: ?here=<pinKey> (player's current place, from the bot) › CFG.start › fit.
+    const hereKey = q.get('here');
+    const herePin = hereKey && pins.find((p) => p.key === hereKey);
+    if (herePin) { const { x, y } = pinXY(herePin.def); centerOnWorld(x, y, Math.max(view.scale, map.findZoom || 1.4)); }
+    else if (CFG.start && geo) centerOnWorld(...Object.values(geo.llToXY(CFG.start.lat, CFG.start.lng)), CFG.start.zoom || view.scale);
+    if (CFG.autoLocate ?? true) startGeo();
+  }
+  // wait for the base image to size correctly (natural dims may differ from configured)
+  const baseImg = document.getElementById('mg-base');
+  if (baseImg && !baseImg.complete) baseImg.addEventListener('load', boot, { once: true });
+  boot();
+  window.addEventListener('resize', () => { const s = view.scale; fitMap(); if (s > fitScale()) view.scale = s; applyView(); });
+
+  /* ---- test / host API ---- */
+  window.__mapgame = {
+    view, pins, geo, CFG,
+    setLocation(lat, lng, acc) { onGeo({ coords: { latitude: lat, longitude: lng, accuracy: acc || 12 } }); },
+    unlock(key) { const st = pins.find((p) => p.key === key); if (st) { st.unlocked = true; applyPinState(st); } },
+    fitMap, zoomAt, centerOnWorld, sendResult,
+  };
+})();
+
+  </script>
+</body>
+</html>

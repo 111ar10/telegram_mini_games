@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Departures</title>
+
+  <!-- Telegram Web App SDK (same as the other mini-games in this repo) -->
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+  <!--
+    GENERIC SPLIT-FLAP DEPARTURE/ARRIVALS BOARD  (reusable across games — config-driven, SERVER-AUTHORITATIVE,
+    MODULAR — HŽ Zagreb Glavni kolodvor amber-on-black skin by default, restyleable via params)
+    ---------------------------------------------------------------------------------------------------------
+    A row of train times/destinations/platforms clatter-reveal on load (per-character scramble → settle,
+    staggered like a real split-flap board), with one row optionally flagged as a flashing delay/status line.
+    TWO interchangeable modes, chosen by which param is present — the board itself never decides pass/fail:
+
+      • CHOICE mode — set `options` (JSON array, url-encoded): [{"id":"late","label":"..."}]  (label may be a
+        {en,hr} object). Renders answer buttons under the board; tapping one reports `{ choice: "<id>" }` — the
+        engine validates it exactly like an in-chat choice-puzzle tap (same contract as evidence.html's CHOICE
+        mode). Use this when the puzzle is "which status did you read?".
+
+      • TAP-ROW mode (default, when `options` is absent): tapping any row reports one of its own fields as
+        `{ submission: "<value>" }` (which field is controlled by `reportField`: "platform"|"time"|"dest",
+        default "platform") — the engine checks it like a typed text answer. Use this when the puzzle is
+        "find the right train and report its platform/time".
+
+    Params (URL query, all optional except `rows`):
+      rows        JSON array, url-encoded: [{ "time":"21:10", "type":"Putni", "dest":"...", "platform":"3",
+                    "status":"KASNI ~45", "highlight":true }, ...]  (dest/status/type may be {en,hr} objects;
+                    `status` renders as a flashing amber-red line under that row once it settles; `highlight`
+                    adds a subtle glow so the player's eye finds "her train" among decoys — cosmetic only, the
+                    board's actual displayed content is what matters, not which row glows)
+      options     JSON array (CHOICE mode only): [{"id":"...","label":"..."}]
+      reportField TAP-ROW mode only: "platform" | "time" | "dest" (default "platform")
+      title       header multi-language label, default "ODLAZAK · DEPART · DEPARTURE · ABFAHRT"
+      cols        header column labels "time,type,dest,platform" comma-joined, default "VRIJEME,VLAK,ODREDIŠTE,PERON"
+      tag         italic prompt line under the header, decodeURIComponent      lang  "en" | "hr"
+      sessionId / userId  passed straight back in the result payload
+    Result (Telegram.WebApp.sendData):
+      CHOICE:    { sessionId, userId, gameId:'board', choice, timestamp }
+      TAP-ROW:   { sessionId, userId, gameId:'board', submission, timestamp }
+      give up:   { sessionId, userId, gameId:'board', success:false, outcome:'abandoned', timestamp }
+  -->
+  <style>
+    :root {
+      --bg: #050403; --panel: #0c0906; --amber: #ffb000; --amber-dim: #6b4a00; --amber-glow: rgba(255,176,0,.55);
+      --warn: #ff5a3c; --ink: #e8e6df; --muted: #8b8378; --shadow: rgba(0,0,0,.6);
+      --brass: #c9a24b; --brass-dark: #8a6d2c; --danger: #d9534f; --success: #4caf7d;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    html, body { height: 100%; }
+    body {
+      background: radial-gradient(120% 90% at 50% 0%, #14100a 0%, var(--bg) 65%);
+      color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      display: flex; flex-direction: column; align-items: center; min-height: 100%;
+      padding: 18px 12px 26px; user-select: none;
+    }
+
+    .board {
+      width: 360px; max-width: 96vw; background: var(--panel); border-radius: 8px; border: 1px solid #1c1712;
+      box-shadow: 0 16px 36px var(--shadow), inset 0 0 30px rgba(0,0,0,.5); overflow: hidden;
+    }
+    .boardhead { display: flex; align-items: center; gap: 10px; padding: 10px 12px 8px; border-bottom: 2px solid var(--amber-dim); }
+    .clock { width: 30px; height: 30px; flex: 0 0 auto; }
+    .headtext { flex: 1 1 auto; font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+      font-weight: 800; font-size: 12px; letter-spacing: .5px; color: var(--amber); text-shadow: 0 0 6px var(--amber-glow); text-align: center; }
+    .tag { text-align: center; font-size: 12px; color: var(--muted); font-style: italic; padding: 8px 14px 0; line-height: 1.4; }
+
+    .colhead { display: grid; grid-template-columns: 52px 44px 1fr 44px; gap: 6px; padding: 8px 12px 4px;
+      font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace; font-size: 9px; letter-spacing: 1px;
+      color: var(--amber-dim); text-transform: uppercase; }
+
+    .rows { display: flex; flex-direction: column; }
+    .rowitem { border-top: 1px solid #1c1712; }
+    .rowitem:active { background: rgba(255,176,0,.05); }
+    .flaprow { display: grid; grid-template-columns: 52px 44px 1fr 44px; gap: 6px; align-items: center; padding: 9px 12px; cursor: pointer; }
+    .flaprow.highlight { box-shadow: inset 0 0 0 1px rgba(255,176,0,.35); background: rgba(255,176,0,.04); }
+    .flapcell {
+      font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace; font-weight: 700; font-size: 13px;
+      color: var(--amber); text-shadow: 0 0 5px var(--amber-glow); white-space: nowrap; overflow: hidden; text-overflow: clip;
+      letter-spacing: .3px;
+    }
+    .flapcell.dest { overflow: hidden; text-overflow: ellipsis; }
+    .flapcell .ch { display: inline-block; }
+
+    .statusline {
+      font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace; font-weight: 800; font-size: 11.5px;
+      letter-spacing: .5px; color: var(--warn); text-shadow: 0 0 6px rgba(255,90,60,.6); padding: 0 12px 9px 108px;
+      opacity: 0; transition: opacity .25s;
+    }
+    .statusline.show { opacity: 1; animation: flicker 2.2s infinite; }
+    @keyframes flicker { 0%,88%{opacity:1} 90%{opacity:.35} 92%{opacity:1} 95%{opacity:.5} 97%{opacity:1} }
+
+    .choices { margin-top: 16px; width: 360px; max-width: 96vw; display: flex; flex-direction: column; gap: 8px; }
+    .choice {
+      text-align: left; background: var(--panel); color: var(--ink); border: 1px solid #262019; border-radius: 12px;
+      padding: 13px 15px; font-size: 14px; cursor: pointer; line-height: 1.35;
+    }
+    .choice:active { background: #17130d; }
+
+    .msg { min-height: 20px; margin-top: 14px; font-size: 13px; text-align: center; color: var(--muted); }
+    .giveup { margin-top: 16px; background: none; border: none; color: var(--muted); font-size: 13px; text-decoration: underline; cursor: pointer; }
+
+    .overlay { position: fixed; inset: 0; background: rgba(4,3,2,.88); backdrop-filter: blur(3px);
+      display: none; align-items: center; justify-content: center; z-index: 20; padding: 24px; }
+    .overlay.show { display: flex; }
+    .card { background: var(--panel); border: 1px solid #262019; border-radius: 18px; padding: 28px 24px;
+      text-align: center; max-width: 320px; width: 100%; box-shadow: 0 20px 50px var(--shadow); }
+    .card .emoji { font-size: 42px; } .card h2 { margin: 12px 0 6px; font-size: 20px; color: var(--ink); }
+    .card p { color: var(--muted); font-size: 14px; line-height: 1.5; }
+  </style>
+</head>
+<body>
+  <div class="board">
+    <div class="boardhead">
+      <svg class="clock" viewBox="0 0 40 40" aria-hidden="true">
+        <circle cx="20" cy="20" r="18" fill="#0a0806" stroke="var(--amber-dim)" stroke-width="1.5"/>
+        <line x1="20" y1="20" x2="20" y2="9" stroke="var(--amber)" stroke-width="2" stroke-linecap="round"/>
+        <line x1="20" y1="20" x2="27" y2="23" stroke="var(--amber)" stroke-width="2" stroke-linecap="round"/>
+        <circle cx="20" cy="20" r="1.6" fill="var(--amber)"/>
+      </svg>
+      <div class="headtext" id="headtext">ODLAZAK · DEPART · DEPARTURE · ABFAHRT</div>
+    </div>
+    <div class="tag" id="tag" style="display:none"></div>
+    <div class="colhead" id="colhead"></div>
+    <div class="rows" id="rows"></div>
+  </div>
+
+  <div class="choices" id="choices" style="display:none"></div>
+  <div class="msg" id="msg"></div>
+  <button class="giveup" id="giveup">Give up</button>
+
+  <div class="overlay" id="overlay">
+    <div class="card">
+      <div class="emoji" id="rEmoji">🚉</div>
+      <h2 id="rTitle">Sent</h2>
+      <p id="rBody"></p>
+    </div>
+  </div>
+
+  <script>
+    // ------- Telegram bootstrap (mirrors padlock.html) -------
+    const tg = window.Telegram ? window.Telegram.WebApp : null;
+    if (tg) { tg.ready(); tg.expand(); }
+    const haptic = (kind) => {
+      try {
+        if (!tg || !tg.HapticFeedback) return;
+        if (kind === 'tick') tg.HapticFeedback.selectionChanged();
+        else if (kind === 'ok') tg.HapticFeedback.notificationOccurred('success');
+        else if (kind === 'err') tg.HapticFeedback.notificationOccurred('error');
+      } catch (e) {}
+    };
+
+    // ------- Input params -------
+    const q = new URLSearchParams(window.location.search);
+    const sessionId = q.get('sessionId');
+    const userId = (tg && tg.initDataUnsafe && tg.initDataUnsafe.user) ? tg.initDataUnsafe.user.id : q.get('userId');
+    let lang = (q.get('lang') || (tg && tg.initDataUnsafe && tg.initDataUnsafe.user && tg.initDataUnsafe.user.language_code) || 'en')
+                 .split('-')[0].toLowerCase();
+
+    const STR = {
+      en: { give: 'Give up', sent: 'Sent', sentBody: 'Check the chat for the verdict.',
+            gaveTitle: 'Board unread', gaveBody: 'You look away from the board.',
+            cols: 'TIME,TRAIN,DESTINATION,TRACK' },
+      hr: { give: 'Odustani', sent: 'Poslano', sentBody: 'Provjeri chat za ishod.',
+            gaveTitle: 'Ploča nepročitana', gaveBody: 'Odvojiš pogled od ploče.',
+            cols: 'VRIJEME,VLAK,ODREDIŠTE,PERON' },
+    };
+    const S = STR[lang] || STR.en;
+    function loc(v) { if (v == null) return ''; if (typeof v === 'object') return v[lang] || v.en || Object.values(v)[0] || ''; return String(v); }
+    function pjson(name) { try { const raw = q.get(name); return raw ? JSON.parse(decodeURIComponent(raw)) : null; } catch (e) { return null; } }
+
+    document.documentElement.lang = lang;
+    document.getElementById('headtext').textContent = q.get('title') || 'ODLAZAK · DEPART · DEPARTURE · ABFAHRT';
+    const tagText = q.get('tag');
+    if (tagText) { const t = document.getElementById('tag'); t.style.display = ''; t.textContent = decodeURIComponent(tagText); }
+    document.getElementById('giveup').textContent = S.give;
+
+    const colLabels = (q.get('cols') || S.cols).split(',');
+    const colheadEl = document.getElementById('colhead');
+    colLabels.forEach((c) => { const s = document.createElement('span'); s.textContent = c; colheadEl.appendChild(s); });
+
+    let solved = false;
+
+    // ------- Result reporting (server-authoritative) -------
+    // CHOICE mode reports { choice }, TAP-ROW mode reports { submission } — the engine validates either the
+    // same way it validates an in-chat answer. We never send `success` and never receive which is correct.
+    function send(payload) {
+      const result = { sessionId, userId, gameId: 'board', timestamp: Date.now(), ...payload };
+      console.log('📤 board result', result);
+      try { if (window.parent && window.parent !== window) window.parent.postMessage({ type: 'MINIGAME_RESULT', payload: result }, '*'); } catch (e) {}
+      try {
+        if (tg && typeof tg.sendData === 'function') tg.sendData(JSON.stringify(result));
+        else localStorage.setItem('board_result_latest', JSON.stringify(result));
+      } catch (e) { console.error('sendData failed', e); }
+    }
+    function showOverlay(gaveUp) {
+      document.getElementById('rEmoji').textContent = gaveUp ? '🚫' : '🚉';
+      document.getElementById('rTitle').textContent = gaveUp ? S.gaveTitle : S.sent;
+      document.getElementById('rBody').textContent = gaveUp ? S.gaveBody : S.sentBody;
+      document.getElementById('overlay').classList.add('show');
+    }
+    document.getElementById('giveup').addEventListener('click', () => {
+      if (solved) return;
+      solved = true;
+      send({ success: false, outcome: 'abandoned' });
+      setTimeout(() => showOverlay(true), 200);
+    });
+
+    // ------- Split-flap scramble→settle animation (per character, cascading left→right) -------
+    const FLAP_CHARS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    function flapText(el, target, baseDelay) {
+      el.replaceChildren();
+      const chars = [...target];
+      let maxFinish = baseDelay;
+      chars.forEach((ch, i) => {
+        const span = document.createElement('span'); span.className = 'ch'; span.textContent = ch === ' ' ? ' ' : ch;
+        el.appendChild(span);
+        if (ch === ' ') return; // spaces don't need to shuffle
+        const ticks = 5 + Math.floor(Math.random() * 5);
+        const startAt = baseDelay + i * 18; // cells further right begin shuffling slightly later (the cascading clatter)
+        const finishAt = startAt + ticks * 45;
+        maxFinish = Math.max(maxFinish, finishAt);
+        setTimeout(() => {
+          let n = 0;
+          const iv = setInterval(() => {
+            span.textContent = FLAP_CHARS[Math.floor(Math.random() * FLAP_CHARS.length)];
+            n++;
+            if (n >= ticks) { clearInterval(iv); span.textContent = ch; }
+          }, 45);
+        }, startAt);
+      });
+      return maxFinish;
+    }
+
+    // ------- Render the board rows -------
+    const rows = pjson('rows') || [];
+    const rowsEl = document.getElementById('rows');
+
+    rows.forEach((r, idx) => {
+      const item = document.createElement('div'); item.className = 'rowitem';
+      const flap = document.createElement('div'); flap.className = 'flaprow' + (r.highlight ? ' highlight' : '');
+      const timeCell = document.createElement('div'); timeCell.className = 'flapcell time';
+      const typeCell = document.createElement('div'); typeCell.className = 'flapcell type';
+      const destCell = document.createElement('div'); destCell.className = 'flapcell dest';
+      const platCell = document.createElement('div'); platCell.className = 'flapcell plat';
+      flap.append(timeCell, typeCell, destCell, platCell);
+      item.appendChild(flap);
+
+      let statusEl = null;
+      if (r.status) {
+        statusEl = document.createElement('div'); statusEl.className = 'statusline';
+        item.appendChild(statusEl);
+      }
+      rowsEl.appendChild(item);
+
+      const base = idx * 90;
+      flapText(timeCell, String(r.time || ''), base);
+      flapText(typeCell, loc(r.type) || 'PUTNI', base + 20);
+      flapText(destCell, loc(r.dest) || '', base + 40);
+      const platFinish = flapText(platCell, String(r.platform || ''), base + 60);
+      if (statusEl) {
+        setTimeout(() => { statusEl.textContent = loc(r.status); statusEl.classList.add('show'); }, platFinish + 300);
+      }
+
+      flap.addEventListener('click', () => onRowTap(r));
+    });
+
+    // ------- Mode: CHOICE (options present) vs TAP-ROW (report a field from the tapped row) -------
+    const options = pjson('options');
+    const reportField = q.get('reportField') || 'platform';
+
+    function selectChoice(id) {
+      if (solved) return;
+      solved = true; haptic('ok');
+      send({ choice: id });
+      setTimeout(() => showOverlay(false), 400);
+    }
+    function onRowTap(row) {
+      if (options) return; // CHOICE mode: rows are read-only flavor, the buttons below decide
+      if (solved) return;
+      solved = true; haptic('ok');
+      send({ submission: String(row[reportField] ?? '') });
+      setTimeout(() => showOverlay(false), 400);
+    }
+
+    if (Array.isArray(options) && options.length) {
+      const box = document.getElementById('choices'); box.style.display = '';
+      options.forEach((o) => {
+        const b = document.createElement('button'); b.className = 'choice'; b.textContent = loc(o.label);
+        b.addEventListener('click', () => selectChoice(o.id));
+        box.appendChild(b);
+      });
+    }
+  </script>
+</body>
+</html>

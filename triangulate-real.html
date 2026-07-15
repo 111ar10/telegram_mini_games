@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Triangulate</title>
+
+  <!-- Telegram Web App SDK (same as the other mini-games in this repo) -->
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+  <!--
+    SIGNAL TRIANGULATION MAP — REAL OSM TILES  (SERVER-AUTHORITATIVE)
+    ----------------------------------------------------------------------------------------------
+    The resolved district's NAME is the only thing ever reported — never a client `success` flag.
+    LOCATE reports it as `submission`; the engine checks it against the puzzle's answer server-side
+    (the district itself, e.g. "Glavni kolodvor", is already visible on the map as a labeled pin —
+    nothing about the answer is hidden client-side, only the pass/fail verdict is now server-side).
+
+    Params (URL query, all optional): tol (per-ring lock tolerance), lang
+      sessionId / userId  passed straight back in the result payload
+    Result (Telegram.WebApp.sendData):
+      on LOCATE: { sessionId, userId, gameId:'triangulate', submission, metrics:{adjustments,wrongLocates,residual}, timestamp }
+  -->
+  <style>
+    :root {
+      /* Zagreb park-clock blue map theme (matches clock-zagreb.html) */
+      --bg: #0c1220; --panel: #12233a; --ink: #e8e6df; --muted: #8b93a6;
+      --grid: #24507c; --land: #14304c; --water: #1c6fb0;
+      --a: #7cc0ff; --b: #ffb454; --c: #7bd88f; --lock: #4caf7d; --danger: #d9534f;
+      --shadow: rgba(0,0,0,.5);
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    html, body { height: 100%; }
+    body {
+      background: radial-gradient(120% 90% at 50% 0%, #1a1f28 0%, var(--bg) 65%);
+      color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      display: flex; flex-direction: column; align-items: center; min-height: 100%;
+      padding: 16px 14px 22px; user-select: none;
+    }
+    h1 { font-size: 18px; font-weight: 700; letter-spacing: .3px; }
+    .sub { margin-top: 5px; font-size: 12.5px; color: var(--muted); text-align: center; max-width: 360px; line-height: 1.45; }
+
+    .stage { position: relative; width: 340px; max-width: 92vw; margin-top: 14px; }
+    svg { width: 100%; height: auto; display: block; border-radius: 16px;
+          box-shadow: 0 10px 30px var(--shadow); background: var(--land); touch-action: none; }
+    .ring { fill-opacity: .07; stroke-width: 2.5; }
+    .ring.a { stroke: var(--a); fill: var(--a); } .ring.b { stroke: var(--b); fill: var(--b); } .ring.c { stroke: var(--c); fill: var(--c); }
+    .ring.locked { stroke-dasharray: none; stroke-width: 3.5; }
+    .handle { cursor: grab; }
+    .tower { font-size: 11px; font-weight: 700; }
+    .pill { fill: var(--panel); }
+
+    .meters { width: 340px; max-width: 92vw; margin-top: 12px; display: flex; flex-direction: column; gap: 7px; }
+    .meter { display: flex; align-items: center; gap: 9px; font-size: 12px; }
+    .dot { width: 11px; height: 11px; border-radius: 50%; flex: 0 0 auto; box-shadow: 0 0 0 2px rgba(255,255,255,.06); }
+    .bar { flex: 1; height: 7px; border-radius: 6px; background: #232a34; overflow: hidden; }
+    .bar > i { display: block; height: 100%; width: 0%; border-radius: 6px; transition: width .12s ease; }
+    .sig { width: 30px; flex: 0 0 auto; font-size: 11px; letter-spacing: -2px; text-align: center; }
+    .name { width: 66px; color: var(--muted); }
+    .hint { width: 50px; text-align: right; color: var(--muted); font-variant-numeric: tabular-nums; }
+
+    .locate {
+      margin-top: 16px; width: 340px; max-width: 92vw; padding: 14px; border: none; border-radius: 13px;
+      background: linear-gradient(180deg, #3a4150 0%, #2a303b 100%); color: #6f7686; font-size: 15px; font-weight: 800;
+      letter-spacing: .3px; box-shadow: 0 4px 0 #1a1e26; cursor: not-allowed; transition: all .15s;
+    }
+    .locate.ready { background: linear-gradient(180deg, var(--lock) 0%, #327a56 100%); color: #062015; cursor: pointer; box-shadow: 0 4px 0 #1e4a34; }
+    .locate.ready:active { transform: translateY(3px); box-shadow: none; }
+    .msg { min-height: 18px; margin-top: 12px; font-size: 13px; text-align: center; color: var(--muted); }
+
+    .overlay { position: fixed; inset: 0; background: rgba(10,12,16,.88); backdrop-filter: blur(3px);
+               display: none; align-items: center; justify-content: center; z-index: 20; padding: 24px; }
+    .overlay.show { display: flex; }
+    .card { background: var(--panel); border: 1px solid #333a46; border-radius: 18px; padding: 28px 24px;
+            text-align: center; max-width: 320px; width: 100%; box-shadow: 0 20px 50px var(--shadow); }
+    .card .emoji { font-size: 42px; } .card h2 { margin: 12px 0 6px; font-size: 20px; } .card p { color: var(--muted); font-size: 14px; line-height: 1.5; }
+  </style>
+</head>
+<body>
+  <h1 id="title">Triangulate the last ping</h1>
+  <div class="sub" id="sub"></div>
+
+  <div class="stage">
+    <svg id="map" viewBox="0 0 300 300" aria-label="map">
+      <rect x="0" y="0" width="300" height="300" fill="var(--land)"/>
+      <g id="tiles"></g>                                                    <!-- real OpenStreetMap tiles (built in JS) -->
+      <rect x="0" y="0" width="300" height="300" fill="#0b1a2e" opacity="0.34"/>  <!-- tint toward the theme; keeps streets visible -->
+      <g id="labels" font-size="9"></g>
+      <text x="5" y="295" font-size="6" fill="#fff" opacity="0.7">© OpenStreetMap</text>
+      <!-- rings + towers injected here -->
+      <g id="rings"></g>
+      <g id="towers"></g>
+      <!-- the resolved fix (hidden until solved) -->
+      <g id="fix" opacity="0">
+        <circle cx="150" cy="150" r="7" fill="none" stroke="var(--lock)" stroke-width="2"/>
+        <circle cx="150" cy="150" r="2.5" fill="var(--lock)"/>
+      </g>
+    </svg>
+  </div>
+
+  <div class="meters" id="meters"></div>
+  <button class="locate" id="locate">LOCATE</button>
+  <div class="msg" id="msg"></div>
+
+  <div class="overlay" id="overlay">
+    <div class="card">
+      <div class="emoji" id="rEmoji">📍</div>
+      <h2 id="rTitle">Located</h2>
+      <p id="rBody"></p>
+    </div>
+  </div>
+
+  <script>
+    const tg = window.Telegram ? window.Telegram.WebApp : null;
+    if (tg) { tg.ready(); tg.expand(); }
+    const haptic = (k) => { try { if (!tg||!tg.HapticFeedback) return;
+      if (k==='tick') tg.HapticFeedback.selectionChanged();
+      else if (k==='ok') tg.HapticFeedback.notificationOccurred('success');
+      else if (k==='err') tg.HapticFeedback.notificationOccurred('error'); } catch(e){} };
+
+    const q = new URLSearchParams(location.search);
+    const sessionId = q.get('sessionId');
+    const userId = (tg && tg.initDataUnsafe && tg.initDataUnsafe.user) ? tg.initDataUnsafe.user.id : q.get('userId');
+    const tol = parseFloat(q.get('tol') || '10'); // per-ring lock tolerance (map units)
+    let lang = (q.get('lang') || (tg && tg.initDataUnsafe && tg.initDataUnsafe.user && tg.initDataUnsafe.user.language_code) || 'en')
+                 .split('-')[0].toLowerCase();
+
+    const STR = {
+      en: { title: 'Triangulate the last ping', sub: 'Three towers caught her phone at 09:52 — different signal strengths, each a little inaccurate. Tune every ring until it locks; where they cross is her rough position.',
+            locate: 'LOCATE', need: 'Line up all three signals first.', ready: 'Signals locked — get the fix.',
+            hot: 'closer', cold: 'further', sent: 'Fix sent', sentBody: 'Check the chat for the verdict.',
+            names: ['Tower A','Tower B','Tower C'], sig: { strong: 'strong signal', medium: 'medium signal', weak: 'weak signal' }, station: 'Glavni kolodvor', decoys: ['Trešnjevka','Maksimir','Dolac','Britanski trg'] },
+      hr: { title: 'Trianguliraj zadnji signal', sub: 'Tri odašiljača uhvatila su njezin mobitel u 09:52 — različite jačine signala, svaki pomalo netočan. Namjesti svaki prsten dok ne klikne; gdje se sijeku, ondje je otprilike bila.',
+            locate: 'LOCIRAJ', need: 'Prvo poravnaj sva tri signala.', ready: 'Signali zaključani — izvuci lokaciju.',
+            hot: 'bliže', cold: 'dalje', sent: 'Lokacija poslana', sentBody: 'Provjeri chat za ishod.',
+            names: ['Odašiljač A','Odašiljač B','Odašiljač C'], sig: { strong: 'jak signal', medium: 'srednji signal', weak: 'slab signal' }, station: 'Glavni kolodvor', decoys: ['Trešnjevka','Maksimir','Dolac','Britanski trg'] },
+    };
+    const S = STR[lang] || STR.en;
+    document.documentElement.lang = lang;
+    document.getElementById('title').textContent = S.title;
+    document.getElementById('sub').textContent = S.sub;
+
+    // --- Real map: OpenStreetMap tiles centred on the station (her position = map centre), plus
+    // geographically-correct district pins projected from real lat/lng (Web Mercator, keyless). ---
+    const CENTER = { lat: 45.8043, lng: 15.9784 };            // Glavni kolodvor
+    const Z = 13, IMG = 600, SVGW = 300, SC = SVGW / IMG, WS = 256 * Math.pow(2, Z);
+    const wpx = (lng) => (lng + 180) / 360 * WS;
+    const wpy = (lat) => { const s = Math.sin(lat * Math.PI / 180); return (0.5 - Math.log((1 + s) / (1 - s)) / (4 * Math.PI)) * WS; };
+    const ORX = wpx(CENTER.lng) - IMG / 2, ORY = wpy(CENTER.lat) - IMG / 2;
+    const project = (lat, lng) => ({ x: (wpx(lng) - ORX) * SC, y: (wpy(lat) - ORY) * SC });
+    (function buildTiles() {
+      const g = document.getElementById('tiles'), n = Math.pow(2, Z);
+      for (let tx = Math.floor(ORX / 256); tx <= Math.floor((ORX + IMG) / 256); tx++)
+        for (let ty = Math.floor(ORY / 256); ty <= Math.floor((ORY + IMG) / 256); ty++) {
+          const url = `https://tile.openstreetmap.org/${Z}/${(tx % n + n) % n}/${ty}.png`;
+          const im = mk('image', { x: (tx * 256 - ORX) * SC, y: (ty * 256 - ORY) * SC, width: 256 * SC, height: 256 * SC, href: url });
+          im.setAttributeNS('http://www.w3.org/1999/xlink', 'href', url); // older WebKit fallback
+          g.append(im);
+        }
+    })();
+
+    // Her position = station = map centre. The three towers form a WELL-SPREAD triangle: sectors ~120°
+    // apart (± a little), so they're never collinear → no ambiguous double-overlap. Distances still differ
+    // (near/mid/far → signal strength & radius), and each reading carries a small error, so the rings meet
+    // in a little uncertainty triangle. `t.target` is the noisy radius to match; handlePos keeps the grab
+    // dot on-screen and off the crossing.
+    const rand = (lo, hi) => lo + Math.random() * (hi - lo);
+    const TARGET = { x: 150, y: 150 };
+    const bands = [[52, 74, 'strong'], [86, 108, 'medium'], [120, 144, 'weak']];
+    const cls3 = ['a', 'b', 'c'];
+    const baseAng = Math.random() * Math.PI * 2;                                // random rotation of the whole triangle
+    const towers = bands.map(([lo, hi, sig], i) => {
+      const ang = baseAng + i * (2 * Math.PI / 3) + rand(-0.28, 0.28);          // 120° apart ± ~16°
+      let dist = rand(lo, hi);
+      for (let k = 0; k < 30; k++) {                                            // shrink to stay in-map, keep the bearing
+        const x = TARGET.x + Math.cos(ang) * dist, y = TARGET.y + Math.sin(ang) * dist;
+        if (x > 20 && x < 280 && y > 20 && y < 280) break;
+        dist -= 5;
+      }
+      return { x: TARGET.x + Math.cos(ang) * dist, y: TARGET.y + Math.sin(ang) * dist, cls: cls3[i], sig, dist };
+    });
+    towers.forEach(t => {
+      t.d = Math.hypot(t.x - TARGET.x, t.y - TARGET.y);                                       // exact distance to her
+      t.target = Math.max(16, t.d + rand(-4.5, 4.5));                                          // noisy reading to match
+      t.r = Math.max(18, Math.min(200, t.target + (Math.random() < 0.5 ? -1 : 1) * rand(34, 68))); // start clearly wrong
+    });
+
+    // District pins at their REAL positions (projected), so the map reads correctly. The station is the
+    // answer (her position = map centre); the others are decoys/orientation.
+    const DISTRICTS = [
+      { name: S.station,   lat: 45.8043, lng: 15.9784, key: true }, // Glavni kolodvor (centre)
+      { name: S.decoys[0], lat: 45.8069, lng: 15.9552 },           // Trešnjevka (W)
+      { name: S.decoys[1], lat: 45.8206, lng: 16.0170 },           // Maksimir (NE)
+      { name: S.decoys[2], lat: 45.8145, lng: 15.9773 },           // Dolac (N)
+      { name: S.decoys[3], lat: 45.8106, lng: 15.9669 },           // Britanski trg (NW)
+    ];
+    const labelsG = document.getElementById('labels');
+    DISTRICTS.forEach(p => {
+      const q2 = project(p.lat, p.lng);
+      const dot = mk('circle', { cx: q2.x, cy: q2.y, r: 2.4, fill: p.key ? 'var(--lock)' : '#fff' });
+      const tx = mk('text', { x: q2.x + 4, y: q2.y + 3, fill: '#fff', 'paint-order': 'stroke', stroke: 'rgba(0,0,0,.6)', 'stroke-width': 2.2 });
+      tx.textContent = p.name;
+      labelsG.append(dot, tx);
+    });
+
+    const ringsG = document.getElementById('rings');
+    const towersG = document.getElementById('towers');
+    const metersG = document.getElementById('meters');
+    let adjustments = 0, wrongLocates = 0, solved = false;
+
+    const sigBars = (s) => s === 'strong' ? '▰▰▰' : s === 'medium' ? '▰▰▱' : '▰▱▱';
+    function mk(tag, attrs) {
+      const el = document.createElementNS('http://www.w3.org/2000/svg', tag);
+      for (const k in attrs) el.setAttribute(k, attrs[k]);
+      return el;
+    }
+    // Put the drag handle on the ring toward the map centre AND clamp it inside the 300×300 viewBox,
+    // so a big ring or an edge tower never pushes the grab dot off-screen.
+    function handlePos(t) {
+      // point on the ring toward the map centre, nudged off-centre by t.hOff so the grab dot never lands
+      // on the fix, then clamped inside the 300×300 viewBox so it's always on-screen.
+      const ang = Math.atan2(150 - t.y, 150 - t.x) + (t.hOff || 0) * Math.PI / 180, M = 11;
+      return { x: Math.max(M, Math.min(300 - M, t.x + Math.cos(ang) * t.r)),
+               y: Math.max(M, Math.min(300 - M, t.y + Math.sin(ang) * t.r)) };
+    }
+
+    towers.forEach((t, i) => {
+      t.hOff = [34, -34, 24][i % 3]; // spread the grab dots off the centre-line so none sits on the fix
+      t.ring = mk('circle', { class: `ring ${t.cls}`, cx: t.x, cy: t.y, r: t.r });
+      // handle sits on the ring toward the map centre (kept on-screen by handlePos); drag it to resize
+      const hp0 = handlePos(t);
+      t.handle = mk('circle', { class: 'handle', cx: hp0.x, cy: hp0.y, r: 9, fill: `var(--${t.cls})`, stroke: '#fff', 'stroke-opacity': .55, 'stroke-width': 1 });
+      ringsG.append(t.ring);
+      towersG.append(t.handle);
+      const base = mk('circle', { cx: t.x, cy: t.y, r: 4, fill: `var(--${t.cls})` });
+      const halo = mk('circle', { cx: t.x, cy: t.y, r: 8, fill: 'none', stroke: `var(--${t.cls})`, 'stroke-width': 1, opacity: .5 });
+      towersG.append(halo, base);
+
+      // meter row
+      const row = document.createElement('div'); row.className = 'meter';
+      row.innerHTML = `<span class="dot" style="background:var(--${t.cls})"></span>` +
+        `<span class="sig" title="${S.sig[t.sig]}" style="color:var(--${t.cls})">${sigBars(t.sig)}</span>` +
+        `<span class="name">${S.names[i]}</span><span class="bar"><i style="background:var(--${t.cls})"></i></span>` +
+        `<span class="hint"></span>`;
+      metersG.append(row);
+      t.barFill = row.querySelector('i'); t.hintEl = row.querySelector('.hint'); t.dotEl = row.querySelector('.dot');
+
+      // drag handling
+      let dragging = false;
+      const svg = document.getElementById('map');
+      const toSvg = (e) => { const pt = svg.createSVGPoint(); pt.x = e.clientX; pt.y = e.clientY;
+        return pt.matrixTransform(svg.getScreenCTM().inverse()); };
+      const onMove = (e) => {
+        if (!dragging || solved) return;
+        const p = toSvg(e);
+        const r = Math.max(15, Math.min(210, Math.hypot(p.x - t.x, p.y - t.y)));
+        if (Math.abs(r - t.r) > 0.5) { adjustments++; haptic('tick'); }
+        t.r = r; renderTower(t); updateLocate();
+      };
+      t.handle.addEventListener('pointerdown', (e) => { dragging = true; t.handle.setPointerCapture(e.pointerId); e.preventDefault(); });
+      t.handle.addEventListener('pointermove', onMove);
+      t.handle.addEventListener('pointerup', () => { dragging = false; });
+      t.handle.addEventListener('pointercancel', () => { dragging = false; });
+    });
+
+    function renderTower(t) {
+      t.ring.setAttribute('r', t.r);
+      const hp = handlePos(t);
+      t.handle.setAttribute('cx', hp.x); t.handle.setAttribute('cy', hp.y);
+      const err = Math.abs(t.r - t.target);
+      const locked = err <= tol;
+      t.ring.classList.toggle('locked', locked);
+      // bar fills as you approach this tower's (noisy) reading (100% at lock)
+      const pct = Math.max(0, Math.min(100, 100 - (err / t.target) * 140));
+      t.barFill.style.width = pct + '%';
+      t.dotEl.style.boxShadow = locked ? `0 0 0 2px var(--lock)` : `0 0 0 2px rgba(255,255,255,.06)`;
+      t.hintEl.textContent = locked ? '✓' : (t.r < t.target ? S.hot : S.cold);
+    }
+    towers.forEach(renderTower);
+
+    const locateBtn = document.getElementById('locate');
+    const msgEl = document.getElementById('msg');
+    locateBtn.textContent = S.locate;
+    function allLocked() { return towers.every(t => Math.abs(t.r - t.target) <= tol); }
+    function updateLocate() {
+      const ready = allLocked();
+      locateBtn.classList.toggle('ready', ready);
+      msgEl.textContent = ready ? S.ready : '';
+    }
+    updateLocate();
+
+    // ------- Result reporting (server-authoritative) -------
+    // LOCATE reports the resolved district name as `submission`; the engine validates it. We never send
+    // `success`. The "not aligned yet" gate below is a local completeness check (no answer leaked by it —
+    // the district name is already visible on the map as a label), not a hidden correctness check.
+    function send(payload) {
+      const residual = towers.reduce((s, t) => s + Math.abs(t.r - t.d), 0);
+      const result = { sessionId, userId, gameId: 'triangulate', timestamp: Date.now(),
+        metrics: { adjustments, wrongLocates, residual: Math.round(residual) }, ...payload };
+      console.log('📤 triangulate result', result);
+      try { if (window.parent && window.parent !== window) window.parent.postMessage({ type: 'MINIGAME_RESULT', payload: result }, '*'); } catch (e) {}
+      try {
+        if (tg && typeof tg.sendData === 'function') tg.sendData(JSON.stringify(result));
+        else localStorage.setItem('triangulate_result_latest', JSON.stringify(result));
+      } catch (e) { console.error('sendData failed', e); }
+    }
+
+    locateBtn.addEventListener('click', () => {
+      if (solved) return;
+      if (!allLocked()) { wrongLocates++; haptic('err'); msgEl.textContent = S.need; msgEl.style.color = 'var(--danger)'; return; }
+      solved = true; haptic('ok');
+      const fixG = document.getElementById('fix'); // add an accuracy ring to show the uncertainty area
+      fixG.insertBefore(mk('circle', { cx: 150, cy: 150, r: 11, fill: 'var(--lock)', 'fill-opacity': .14, stroke: 'var(--lock)', 'stroke-width': .8, 'stroke-dasharray': '2.5 2.5' }), fixG.firstChild);
+      fixG.setAttribute('opacity', '1');
+      send({ submission: S.station });
+      const ov = document.getElementById('overlay');
+      document.getElementById('rEmoji').textContent = '📍';
+      document.getElementById('rTitle').textContent = S.sent;
+      document.getElementById('rBody').textContent = S.sentBody;
+      setTimeout(() => ov.classList.add('show'), 600);
+    });
+
+    // test hook
+    window.__triang = { towers, TARGET, tol, lockAll: () => { towers.forEach(t => { t.r = t.target; renderTower(t); }); updateLocate(); } };
+  </script>
+</body>
+</html>

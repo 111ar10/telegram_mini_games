@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Phone</title>
+
+  <!-- Telegram Web App SDK (same as the other mini-games in this repo) -->
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+  <!--
+    GENERIC ANDROID-PHONE SIMULATOR  (reusable across games — config-driven, MODULAR, SERVER-AUTHORITATIVE)
+    ---------------------------------------------------------------------------------------------------------
+    A phone shell (status bar + screen router) with FOUR screens, each independently reachable via `screen=`
+    so a puzzle can deep-link straight into one, or leave it unset to start at a real home screen with an app
+    grid. Distinct from phone.html (which is a single-purpose messaging-inbox picker/reassembler) — this file
+    simulates the DEVICE, not one app.
+
+      • home      — app-icon grid (Phone / Contacts / Messages). Shown when `screen` is unset. Tapping an icon
+                    navigates client-side (no reload) into that screen.
+      • dialer    — numeric keypad + a real, typeable readout (tap the keys OR type on a physical/soft
+                    keyboard — both write into the same field). CALL reports `{ submission: "<digits>" }`.
+      • contacts  — a phonebook list (name + number). Tapping a contact either opens the dialer pre-filled
+                    with their number (default — a "look the number up, then dial" flow), or, if `directCall`
+                    is set, immediately reports `{ submission: "<contact id>" }` — a "who do you call" puzzle
+                    shape instead of a "what number do you dial" one.
+      • messages  — compose a text message. Typed text + SEND reports `{ submission: "<text>" }`
+                    (server-authoritative, same contract as any derived-text puzzle). If `phrases` is given,
+                    tapping one immediately reports `{ choice: "<phrase id>" }` instead (a pick-the-right-line
+                    puzzle, same contract as phone.html's THREADS mode / evidence.html's CHOICE mode) — use
+                    `freeText=false` to hide the typing box and make phrases the only option.
+      • gallery   — photo grid (only shown as a home icon when `gallery` is non-empty). Tap a tile to open a
+                    full-screen viewer (prev/next/close). PURE VIEWER — never reports anything on its own; use
+                    `confirmLabel` (below) if a puzzle needs "I looked, confirmed" as its result. A tile with no
+                    `img` renders as a colored placeholder card (emoji + caption) — lets you seed flavor/decoy
+                    photos before a real image asset exists.
+      confirmLabel  optional, decodeURIComponent: if set, shows a persistent accent CONFIRM button (any screen)
+                    that reports client-trusted `{ success:true, outcome:'confirmed' }` — for non-scored
+                    "examine this and confirm" interactions (e.g. a dead-end prop), same discipline as
+                    evidence.html's CONFIRM mode / torn-note.html's IMAGE mode.
+    As with every other app in this family: the CORRECT number/contact/message is never sent to this page —
+    only phonebook/phrase/gallery data the player is meant to see. The player reports what they actually did;
+    the engine (same path as a typed answer) decides — except `confirmLabel`, which is deliberately client-
+    trusted (there is nothing to validate for a pure "I looked" beat).
+
+    Params (URL query):
+      screen      "home" (default) | "dialer" | "contacts" | "messages" | "gallery"
+      contacts    JSON array, url-encoded: [{"id":"petra","name":"Petra","number":"091 234 5678"}, ...]
+                  used by the contacts screen, as the dialer's contact-tap prefill source, and (optionally,
+                  cosmetic only) as the messages screen's "To:" selector.
+      directCall  contacts screen only: "true" → tapping a contact calls immediately instead of opening the dialer
+      phrases     JSON array, messages screen only: [{"id":"...", "label":"..."}] (label may be a {en,hr} object)
+      freeText    messages screen only: "false" hides the typing box (phrases-only puzzle). Default shown.
+      to          messages screen only: contact id (from `contacts`) or plain text — cosmetic "To:" label
+      gallery     JSON array, url-encoded: [{"id":"p1","img":"https://…","caption":"…"}, ...] — `img` optional;
+                  omit it for a placeholder card (add `"emoji":"🏖️"` to customize the placeholder glyph).
+      confirmLabel  see above (decodeURIComponent; label may not be a {en,hr} object — plain string only)
+      title       header/app title      tag  italic prompt line (decodeURIComponent)      lang  "en" | "hr"
+      sessionId / userId  passed straight back in the result payload
+    Result (Telegram.WebApp.sendData):
+      dialer CALL:            { sessionId, userId, gameId:'android-phone', submission, timestamp }
+      contacts (directCall):  { sessionId, userId, gameId:'android-phone', submission, timestamp }
+      messages (typed) SEND:  { sessionId, userId, gameId:'android-phone', submission, timestamp }
+      messages (phrase tap):  { sessionId, userId, gameId:'android-phone', choice, timestamp }
+      confirmLabel tap:       { sessionId, userId, gameId:'android-phone', success:true, outcome:'confirmed', timestamp }
+      give up:                { sessionId, userId, gameId:'android-phone', success:false, outcome:'abandoned', timestamp }
+  -->
+  <style>
+    :root {
+      --bg: #0b0d10; --device: #14161c; --panel: #1a1d24; --ink: #e8e6df; --muted: #8b90a0;
+      --accent: #34a853; --accent-dark: #1e7a38; --danger: #ea4335; --shadow: rgba(0,0,0,.5);
+      --recv: #262a33; --key: #1e222b;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    html, body { height: 100%; }
+    body {
+      background: radial-gradient(120% 90% at 50% 0%, #191d26 0%, var(--bg) 65%);
+      color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      display: flex; flex-direction: column; align-items: center; min-height: 100%;
+      padding: 18px 14px 24px; user-select: none;
+    }
+
+    .device {
+      width: 360px; max-width: 94vw; height: 78vh; max-height: 660px; margin: 0 auto;
+      background: var(--device); border-radius: 26px; border: 1px solid #262a33;
+      box-shadow: 0 18px 40px var(--shadow), inset 0 1px 0 rgba(255,255,255,.04);
+      display: flex; flex-direction: column; overflow: hidden; position: relative;
+    }
+    .statusbar { display: flex; justify-content: space-between; align-items: center;
+      padding: 9px 16px 4px; font-size: 12px; font-weight: 600; color: var(--ink); flex: 0 0 auto; }
+    .statusbar .icons { display: flex; align-items: center; gap: 4px; opacity: .85; }
+
+    .apphead { flex: 0 0 auto; padding: 6px 14px 10px; text-align: center; position: relative; }
+    .apphead .back {
+      position: absolute; left: 8px; top: 2px; width: 34px; height: 34px; border: none; background: none;
+      color: var(--accent); font-size: 20px; cursor: pointer; display: none; align-items: center; justify-content: center;
+    }
+    .apphead .back.show { display: flex; }
+    .apphead h1 { font-size: 15px; font-weight: 700; }
+    .tag { text-align: center; font-size: 12px; color: var(--muted); font-style: italic; padding: 0 16px 8px; line-height: 1.4; }
+
+    .screen { flex: 1 1 auto; overflow-y: auto; -webkit-overflow-scrolling: touch; display: flex; flex-direction: column; }
+    .screen::-webkit-scrollbar { width: 0; }
+
+    /* Home */
+    .applist { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; padding: 28px 20px; }
+    .appicon { display: flex; flex-direction: column; align-items: center; gap: 7px; cursor: pointer; background: none; border: none; color: var(--ink); }
+    .appicon .glyph { width: 54px; height: 54px; border-radius: 16px; display: flex; align-items: center; justify-content: center; font-size: 24px;
+      background: linear-gradient(160deg, #2a2f3a 0%, #20242d 100%); box-shadow: 0 4px 10px rgba(0,0,0,.35); }
+    .appicon span { font-size: 11px; color: var(--muted); }
+
+    /* Dialer */
+    .readout-wrap { padding: 20px 20px 6px; text-align: center; }
+    .readout { width: 100%; background: none; border: none; color: var(--ink); font-size: 26px; font-weight: 600;
+      text-align: center; font-variant-numeric: tabular-nums; letter-spacing: 1px; outline: none;
+      font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace; }
+    .readout::placeholder { color: var(--muted); font-size: 15px; }
+    .keypad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; padding: 6px 20px; flex: 1 1 auto; align-content: start; }
+    .key {
+      aspect-ratio: 1.6; border: none; border-radius: 14px; background: var(--key); color: var(--ink);
+      font-size: 19px; font-weight: 600; cursor: pointer; transition: background .1s;
+    }
+    .key:active { background: #2a2f3a; }
+    .key .sub { display: block; font-size: 8px; color: var(--muted); letter-spacing: 1px; margin-top: 1px; }
+    .dialbar { display: flex; align-items: center; justify-content: center; gap: 14px; padding: 12px 20px 16px; flex: 0 0 auto; }
+    .backspace { background: none; border: none; color: var(--muted); font-size: 20px; cursor: pointer; width: 44px; height: 44px; }
+    .callbtn {
+      width: 60px; height: 60px; border-radius: 50%; border: none; background: var(--accent); color: #fff;
+      font-size: 24px; cursor: pointer; box-shadow: 0 6px 16px rgba(52,168,83,.4); transition: transform .07s;
+    }
+    .callbtn:active { transform: scale(.94); }
+
+    /* Contacts / rows */
+    .row {
+      display: flex; align-items: center; gap: 11px; padding: 11px 14px; cursor: pointer;
+      border-bottom: 1px solid #1f232b; transition: background .1s;
+    }
+    .row:active { background: #1e222b; }
+    .avatar {
+      width: 40px; height: 40px; border-radius: 50%; flex: 0 0 auto; display: flex; align-items: center;
+      justify-content: center; font-size: 15px; color: #fff; font-weight: 700; box-shadow: inset 0 0 0 1px rgba(255,255,255,.08);
+    }
+    .rowbody { flex: 1 1 auto; min-width: 0; }
+    .rowname { font-size: 14px; font-weight: 700; color: var(--ink); }
+    .rownum { font-size: 12px; color: var(--muted); margin-top: 1px; font-family: ui-monospace, monospace; }
+
+    /* Messages */
+    .msgto { padding: 12px 14px 0; }
+    .chips { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 10px; }
+    .chip { flex: 0 0 auto; padding: 6px 12px; border-radius: 20px; background: var(--recv); color: var(--muted);
+      font-size: 12.5px; cursor: pointer; border: 1px solid transparent; }
+    .chip.active { background: rgba(52,168,83,.16); color: var(--ink); border-color: var(--accent); }
+    .phraselist { display: flex; flex-direction: column; gap: 8px; padding: 4px 14px 10px; }
+    .phrase { text-align: left; background: var(--recv); color: var(--ink); border: 1px solid #2c313c; border-radius: 12px;
+      padding: 11px 13px; font-size: 13.5px; cursor: pointer; line-height: 1.35; }
+    .phrase:active { background: #20242d; }
+    .composebar { margin-top: auto; display: flex; align-items: flex-end; gap: 8px; padding: 10px 12px; border-top: 1px solid #22262f; }
+    .composeinput { flex: 1 1 auto; background: var(--recv); border: 1px solid #2c313c; border-radius: 18px; color: var(--ink);
+      font-size: 13.5px; padding: 10px 14px; resize: none; max-height: 80px; font-family: inherit; outline: none; }
+    .sendbtn { flex: 0 0 auto; width: 38px; height: 38px; border-radius: 50%; border: none; background: var(--accent);
+      color: #fff; font-size: 16px; cursor: pointer; }
+    .sendbtn:active { transform: scale(.94); }
+
+    /* Gallery */
+    .gallerygrid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; padding: 14px; }
+    .gtile { position: relative; aspect-ratio: 1; border-radius: 11px; overflow: hidden; cursor: pointer;
+      background: linear-gradient(160deg, #2a2f3a 0%, #20242d 100%); border: none; padding: 0; }
+    .gtile img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .gtile .glyph { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 26px; }
+    .gtile .cap { position: absolute; left: 0; right: 0; bottom: 0; padding: 3px 5px 4px; font-size: 9px; color: #fff;
+      background: linear-gradient(0deg, rgba(0,0,0,.65), transparent); text-align: left; }
+
+    .lightbox { position: absolute; inset: 0; background: rgba(6,7,10,.94); z-index: 15;
+      display: none; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
+    .lightbox.show { display: flex; }
+    .lightbox .lbclose { position: absolute; top: 10px; right: 12px; background: none; border: none; color: var(--muted); font-size: 22px; cursor: pointer; }
+    .lightbox .lbimg { max-width: 100%; max-height: 60%; border-radius: 10px; object-fit: contain; }
+    .lightbox .lbglyph { font-size: 64px; width: 100%; max-width: 220px; aspect-ratio: 1; border-radius: 16px;
+      background: linear-gradient(160deg, #2a2f3a 0%, #20242d 100%); display: flex; align-items: center; justify-content: center; }
+    .lightbox .lbcap { margin-top: 14px; color: var(--ink); font-size: 13px; text-align: center; max-width: 260px; }
+    .lightbox .lbnav { display: flex; align-items: center; gap: 30px; margin-top: 16px; }
+    .lightbox .lbnav button { background: none; border: none; color: var(--ink); font-size: 26px; cursor: pointer; }
+
+    .footerbar { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+    .confirmbtn { margin-top: 14px; padding: 10px 22px; border-radius: 20px; border: none; cursor: pointer;
+      background: linear-gradient(180deg, var(--accent), var(--accent-dark)); color: #fff; font-size: 13.5px; font-weight: 700; }
+    .confirmbtn:active { transform: scale(.97); }
+
+    .giveup { margin-top: 16px; background: none; border: none; color: var(--muted); font-size: 13px; text-decoration: underline; cursor: pointer; }
+
+    .overlay { position: fixed; inset: 0; background: rgba(6,7,10,.88); backdrop-filter: blur(3px);
+      display: none; align-items: center; justify-content: center; z-index: 20; padding: 24px; }
+    .overlay.show { display: flex; }
+    .card { background: var(--panel); border: 1px solid #333a46; border-radius: 18px; padding: 28px 24px;
+      text-align: center; max-width: 320px; width: 100%; box-shadow: 0 20px 50px var(--shadow); }
+    .card .emoji { font-size: 42px; } .card h2 { margin: 12px 0 6px; font-size: 20px; } .card p { color: var(--muted); font-size: 14px; line-height: 1.5; }
+  </style>
+</head>
+<body>
+  <div class="device">
+    <div class="statusbar">
+      <span>9:41</span>
+      <span class="icons">
+        <svg width="16" height="10" viewBox="0 0 16 10"><rect x="0" y="6" width="2.5" height="4" fill="currentColor"/><rect x="4.5" y="4" width="2.5" height="6" fill="currentColor"/><rect x="9" y="2" width="2.5" height="8" fill="currentColor"/><rect x="13.5" y="0" width="2.5" height="10" fill="currentColor"/></svg>
+        <svg width="20" height="11" viewBox="0 0 20 11"><rect x="0.5" y="0.5" width="17" height="10" rx="2.5" stroke="currentColor" fill="none"/><rect x="2" y="2" width="13" height="7" rx="1" fill="currentColor"/><rect x="18" y="3.5" width="1.5" height="4" rx="0.5" fill="currentColor"/></svg>
+      </span>
+    </div>
+    <div class="apphead">
+      <button class="back" id="back" aria-label="back">‹</button>
+      <h1 id="apptitle">Phone</h1>
+    </div>
+    <div class="tag" id="tag" style="display:none"></div>
+
+    <div class="screen" id="screen"></div>
+
+    <div class="lightbox" id="lightbox">
+      <button class="lbclose" id="lbclose">✕</button>
+      <div id="lbmedia"></div>
+      <div class="lbcap" id="lbcap"></div>
+      <div class="lbnav">
+        <button id="lbprev">‹</button>
+        <button id="lbnext">›</button>
+      </div>
+    </div>
+
+    <div class="footerbar">
+      <button class="confirmbtn" id="confirmbtn" style="display:none">Confirm</button>
+      <button class="giveup" id="giveup">Give up</button>
+    </div>
+  </div>
+
+  <div class="overlay" id="overlay">
+    <div class="card">
+      <div class="emoji" id="rEmoji">📱</div>
+      <h2 id="rTitle">Sent</h2>
+      <p id="rBody"></p>
+    </div>
+  </div>
+
+  <script>
+    // ------- Telegram bootstrap (mirrors padlock.html) -------
+    const tg = window.Telegram ? window.Telegram.WebApp : null;
+    if (tg) { tg.ready(); tg.expand(); }
+    const haptic = (kind) => {
+      try {
+        if (!tg || !tg.HapticFeedback) return;
+        if (kind === 'tick') tg.HapticFeedback.selectionChanged();
+        else if (kind === 'ok') tg.HapticFeedback.notificationOccurred('success');
+        else if (kind === 'err') tg.HapticFeedback.notificationOccurred('error');
+      } catch (e) {}
+    };
+
+    // ------- Input params -------
+    const q = new URLSearchParams(window.location.search);
+    const sessionId = q.get('sessionId');
+    const userId = (tg && tg.initDataUnsafe && tg.initDataUnsafe.user) ? tg.initDataUnsafe.user.id : q.get('userId');
+    let lang = (q.get('lang') || (tg && tg.initDataUnsafe && tg.initDataUnsafe.user && tg.initDataUnsafe.user.language_code) || 'en')
+                 .split('-')[0].toLowerCase();
+
+    const STR = {
+      en: { title: 'Phone', give: 'Give up', call: 'Phone', contacts: 'Contacts', messages: 'Messages', gallery: 'Gallery',
+            sent: 'Sent', sentBody: 'Check the chat for the verdict.', to: 'To',
+            typeMsg: 'Type a message…', noContacts: 'No contacts.', confirmed: 'Confirmed', confirmedBody: 'Noted.',
+            gaveTitle: 'Screen locked', gaveBody: 'You put the phone down.' },
+      hr: { title: 'Telefon', give: 'Odustani', call: 'Telefon', contacts: 'Kontakti', messages: 'Poruke', gallery: 'Galerija',
+            sent: 'Poslano', sentBody: 'Provjeri chat za ishod.', to: 'Za',
+            typeMsg: 'Upiši poruku…', noContacts: 'Nema kontakata.', confirmed: 'Potvrđeno', confirmedBody: 'Zabilježeno.',
+            gaveTitle: 'Zaključan zaslon', gaveBody: 'Odložiš telefon.' },
+    };
+    const S = STR[lang] || STR.en;
+    function loc(v) { if (v == null) return ''; if (typeof v === 'object') return v[lang] || v.en || Object.values(v)[0] || ''; return String(v); }
+    function pjson(name) { try { const raw = q.get(name); return raw ? JSON.parse(decodeURIComponent(raw)) : null; } catch (e) { return null; } }
+
+    document.documentElement.lang = lang;
+    document.getElementById('giveup').textContent = S.give;
+    const tagText = q.get('tag');
+    if (tagText) { const t = document.getElementById('tag'); t.style.display = ''; t.textContent = decodeURIComponent(tagText); }
+
+    const contacts = pjson('contacts') || [];
+    const phrases = pjson('phrases');
+    const directCall = q.get('directCall') === 'true';
+    const freeText = q.get('freeText') !== 'false';
+    const gallery = pjson('gallery') || [];
+    const confirmLabelRaw = q.get('confirmLabel');
+    const confirmLabel = confirmLabelRaw ? decodeURIComponent(confirmLabelRaw) : null;
+
+    let solved = false;
+
+    // ------- Result reporting (server-authoritative) -------
+    // Every action reports what the player actually did (dialed digits / contact id / typed text / picked
+    // phrase id) — never `success`, and this page never receives the correct number/contact/message.
+    // `confirmLabel` is the one deliberate exception (client-trusted "I looked" beat, see header doc).
+    function send(payload) {
+      const result = { sessionId, userId, gameId: 'android-phone', timestamp: Date.now(), ...payload };
+      console.log('📤 android-phone result', result);
+      try { if (window.parent && window.parent !== window) window.parent.postMessage({ type: 'MINIGAME_RESULT', payload: result }, '*'); } catch (e) {}
+      try {
+        if (tg && typeof tg.sendData === 'function') tg.sendData(JSON.stringify(result));
+        else localStorage.setItem('android-phone_result_latest', JSON.stringify(result));
+      } catch (e) { console.error('sendData failed', e); }
+    }
+    function showOverlay(kind) {
+      document.getElementById('rEmoji').textContent = kind === 'gaveUp' ? '🔒' : kind === 'confirmed' ? '✅' : '📱';
+      document.getElementById('rTitle').textContent = kind === 'gaveUp' ? S.gaveTitle : kind === 'confirmed' ? S.confirmed : S.sent;
+      document.getElementById('rBody').textContent = kind === 'gaveUp' ? S.gaveBody : kind === 'confirmed' ? S.confirmedBody : S.sentBody;
+      document.getElementById('overlay').classList.add('show');
+    }
+    document.getElementById('giveup').addEventListener('click', () => {
+      if (solved) return;
+      solved = true;
+      send({ success: false, outcome: 'abandoned' });
+      setTimeout(() => showOverlay('gaveUp'), 200);
+    });
+    if (confirmLabel) {
+      const cbtn = document.getElementById('confirmbtn');
+      cbtn.style.display = '';
+      cbtn.textContent = confirmLabel;
+      cbtn.addEventListener('click', () => {
+        if (solved) return;
+        solved = true; haptic('ok');
+        send({ success: true, outcome: 'confirmed' });
+        setTimeout(() => showOverlay('confirmed'), 300);
+      });
+    }
+
+    // ------- Avatar color (deterministic per id) -------
+    const PALETTE = ['#c9744b', '#4b7ec9', '#4bab7a', '#a25bd1', '#c94b8e', '#b8964b', '#4bb0c9'];
+    function colorFor(id) {
+      let h = 0; for (let i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) >>> 0;
+      return PALETTE[h % PALETTE.length];
+    }
+
+    // ------- Screen router -------
+    const screenEl = document.getElementById('screen');
+    const backBtn = document.getElementById('back');
+    let dialerPrefill = '';
+
+    function showScreen(node, { title, showBack }) {
+      screenEl.replaceChildren(node);
+      document.getElementById('apptitle').textContent = title;
+      backBtn.classList.toggle('show', !!showBack);
+      backBtn.onclick = showBack ? () => renderHome() : null;
+    }
+
+    // ------- HOME -------
+    function renderHome() {
+      const grid = document.createElement('div'); grid.className = 'applist';
+      const apps = [
+        { icon: '📞', label: S.call, go: renderDialer },
+        { icon: '👤', label: S.contacts, go: renderContacts },
+        { icon: '💬', label: S.messages, go: renderMessages },
+      ];
+      if (gallery.length) apps.push({ icon: '🖼️', label: S.gallery, go: renderGallery });
+      apps.forEach((a) => {
+        const btn = document.createElement('button'); btn.className = 'appicon';
+        const g = document.createElement('div'); g.className = 'glyph'; g.textContent = a.icon;
+        const lb = document.createElement('span'); lb.textContent = a.label;
+        btn.append(g, lb);
+        btn.addEventListener('click', () => a.go());
+        grid.appendChild(btn);
+      });
+      showScreen(grid, { title: S.title, showBack: false });
+    }
+
+    // ------- GALLERY (pure viewer — never reports on its own) -------
+    function renderGallery() {
+      const grid = document.createElement('div'); grid.className = 'gallerygrid';
+      gallery.forEach((g, i) => {
+        const tile = document.createElement('button'); tile.className = 'gtile'; tile.type = 'button';
+        if (g.img) {
+          const img = document.createElement('img'); img.src = g.img; img.loading = 'lazy'; tile.appendChild(img);
+        } else {
+          const glyph = document.createElement('div'); glyph.className = 'glyph'; glyph.textContent = g.emoji || '🖼️'; tile.appendChild(glyph);
+        }
+        if (g.caption) { const cap = document.createElement('div'); cap.className = 'cap'; cap.textContent = loc(g.caption); tile.appendChild(cap); }
+        tile.addEventListener('click', () => openLightbox(i));
+        grid.appendChild(tile);
+      });
+      showScreen(grid, { title: S.gallery, showBack: true });
+    }
+
+    let lbIndex = 0;
+    function renderLightbox() {
+      const g = gallery[lbIndex];
+      const media = document.getElementById('lbmedia');
+      media.replaceChildren();
+      if (g.img) { const img = document.createElement('img'); img.className = 'lbimg'; img.src = g.img; media.appendChild(img); }
+      else { const glyph = document.createElement('div'); glyph.className = 'lbglyph'; glyph.textContent = g.emoji || '🖼️'; media.appendChild(glyph); }
+      document.getElementById('lbcap').textContent = g.caption ? loc(g.caption) : '';
+    }
+    function openLightbox(i) {
+      lbIndex = i; renderLightbox();
+      document.getElementById('lightbox').classList.add('show');
+    }
+    document.getElementById('lbclose').addEventListener('click', () => document.getElementById('lightbox').classList.remove('show'));
+    document.getElementById('lbprev').addEventListener('click', () => { lbIndex = (lbIndex - 1 + gallery.length) % gallery.length; renderLightbox(); haptic('tick'); });
+    document.getElementById('lbnext').addEventListener('click', () => { lbIndex = (lbIndex + 1) % gallery.length; renderLightbox(); haptic('tick'); });
+
+    // ------- DIALER -------
+    function renderDialer() {
+      const wrap = document.createElement('div'); wrap.style.display = 'flex'; wrap.style.flexDirection = 'column'; wrap.style.flex = '1';
+      const readoutWrap = document.createElement('div'); readoutWrap.className = 'readout-wrap';
+      const input = document.createElement('input');
+      input.className = 'readout'; input.type = 'tel'; input.inputMode = 'tel'; input.placeholder = '';
+      input.value = dialerPrefill; dialerPrefill = '';
+      readoutWrap.appendChild(input);
+
+      const pad = document.createElement('div'); pad.className = 'keypad';
+      const keys = [['1', ''], ['2', 'ABC'], ['3', 'DEF'], ['4', 'GHI'], ['5', 'JKL'], ['6', 'MNO'], ['7', 'PQRS'], ['8', 'TUV'], ['9', 'WXYZ'], ['*', ''], ['0', '+'], ['#', '']];
+      keys.forEach(([k, sub]) => {
+        const b = document.createElement('button'); b.className = 'key'; b.type = 'button';
+        b.innerHTML = k + (sub ? `<span class="sub">${sub}</span>` : '');
+        // Deliberately NOT calling input.focus() here: on a real device this would pop the software
+        // keyboard over the custom keypad on every tap. Typing still works fully — the field just doesn't
+        // grab focus (and the keyboard) until the player deliberately taps into it themselves.
+        b.addEventListener('click', () => { input.value += k; haptic('tick'); });
+        pad.appendChild(b);
+      });
+
+      const bar = document.createElement('div'); bar.className = 'dialbar';
+      const back = document.createElement('button'); back.className = 'backspace'; back.type = 'button'; back.textContent = '⌫';
+      back.addEventListener('click', () => { input.value = input.value.slice(0, -1); haptic('tick'); });
+      const call = document.createElement('button'); call.className = 'callbtn'; call.type = 'button'; call.textContent = '📞';
+      call.addEventListener('click', () => {
+        if (solved) return;
+        solved = true; haptic('ok');
+        send({ submission: input.value });
+        setTimeout(() => showOverlay('sent'), 400);
+      });
+      bar.append(back, call);
+
+      wrap.append(readoutWrap, pad, bar);
+      showScreen(wrap, { title: S.call, showBack: true });
+      // no auto-focus on entry either, for the same reason — landing on this screen shouldn't pop the
+      // keyboard unasked; the player can tap the readout directly whenever they want to type.
+    }
+
+    // ------- CONTACTS -------
+    function renderContacts() {
+      const list = document.createElement('div');
+      if (!contacts.length) { const empty = document.createElement('div'); empty.className = 'tag'; empty.textContent = S.noContacts; list.appendChild(empty); }
+      contacts.forEach((c) => {
+        const row = document.createElement('div'); row.className = 'row';
+        const av = document.createElement('div'); av.className = 'avatar'; av.style.background = c.color || colorFor(c.id);
+        av.textContent = (loc(c.name)[0] || '?').toUpperCase();
+        const body = document.createElement('div'); body.className = 'rowbody';
+        const name = document.createElement('div'); name.className = 'rowname'; name.textContent = loc(c.name);
+        const num = document.createElement('div'); num.className = 'rownum'; num.textContent = c.number || '';
+        body.append(name, num);
+        row.append(av, body);
+        row.addEventListener('click', () => {
+          if (directCall) {
+            if (solved) return;
+            solved = true; haptic('ok');
+            send({ submission: c.id });
+            setTimeout(() => showOverlay('sent'), 400);
+          } else {
+            dialerPrefill = c.number || '';
+            renderDialer();
+          }
+        });
+        list.appendChild(row);
+      });
+      showScreen(list, { title: S.contacts, showBack: true });
+    }
+
+    // ------- MESSAGES -------
+    function renderMessages() {
+      const wrap = document.createElement('div'); wrap.style.display = 'flex'; wrap.style.flexDirection = 'column'; wrap.style.flex = '1';
+
+      let activeContact = null;
+      const toParam = q.get('to');
+      if (contacts.length) activeContact = contacts.find((c) => c.id === toParam) || contacts[0];
+
+      if (contacts.length > 1) {
+        const toWrap = document.createElement('div'); toWrap.className = 'msgto';
+        const label = document.createElement('div'); label.className = 'tag'; label.style.padding = '0 0 4px'; label.style.textAlign = 'left'; label.textContent = S.to + ':';
+        const chips = document.createElement('div'); chips.className = 'chips';
+        contacts.forEach((c) => {
+          const chip = document.createElement('div'); chip.className = 'chip' + (c.id === activeContact.id ? ' active' : '');
+          chip.textContent = loc(c.name);
+          chip.addEventListener('click', () => { activeContact = c; [...chips.children].forEach((el) => el.classList.remove('active')); chip.classList.add('active'); });
+          chips.appendChild(chip);
+        });
+        toWrap.append(label, chips);
+        wrap.appendChild(toWrap);
+      } else if (activeContact) {
+        const label = document.createElement('div'); label.className = 'msgto tag'; label.style.textAlign = 'left';
+        label.textContent = S.to + ': ' + loc(activeContact.name);
+        wrap.appendChild(label);
+      }
+
+      if (Array.isArray(phrases) && phrases.length) {
+        const list = document.createElement('div'); list.className = 'phraselist';
+        phrases.forEach((ph) => {
+          const b = document.createElement('button'); b.className = 'phrase'; b.textContent = loc(ph.label);
+          b.addEventListener('click', () => {
+            if (solved) return;
+            solved = true; haptic('ok');
+            send({ choice: ph.id });
+            setTimeout(() => showOverlay('sent'), 400);
+          });
+          list.appendChild(b);
+        });
+        wrap.appendChild(list);
+      }
+
+      if (freeText) {
+        const bar = document.createElement('div'); bar.className = 'composebar';
+        const ta = document.createElement('textarea'); ta.className = 'composeinput'; ta.rows = 1; ta.placeholder = S.typeMsg;
+        const send_ = document.createElement('button'); send_.className = 'sendbtn'; send_.textContent = '➤';
+        send_.addEventListener('click', () => {
+          if (solved) return;
+          const text = ta.value.trim(); if (!text) return;
+          solved = true; haptic('ok');
+          send({ submission: text });
+          setTimeout(() => showOverlay('sent'), 400);
+        });
+        bar.append(ta, send_);
+        wrap.appendChild(bar);
+      }
+
+      showScreen(wrap, { title: S.messages, showBack: true });
+    }
+
+    // ------- Boot: deep-link straight into a screen if `screen` is set, else show the home grid -------
+    const initial = q.get('screen');
+    if (initial === 'dialer') renderDialer();
+    else if (initial === 'contacts') renderContacts();
+    else if (initial === 'messages') renderMessages();
+    else if (initial === 'gallery') renderGallery();
+    else renderHome();
+
+    // test hook
+    window.__androidPhone = { renderHome, renderDialer, renderContacts, renderMessages, renderGallery, openLightbox };
+  </script>
+</body>
+</html>

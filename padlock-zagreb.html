@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Padlock</title>
+
+  <!-- Telegram Web App SDK (same as the other mini-games in this repo) -->
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+  <!--
+    GENERIC COMBINATION PADLOCK  (reusable across games — config-driven, SERVER-AUTHORITATIVE)
+    ----------------------------------------------------------------------------------------------
+    The code is NEVER passed here. PULL reports whatever the dials currently show as `submission`;
+    the engine checks it against the puzzle's answer server-side (same path as an in-chat text answer).
+
+    Params (URL query, all optional):
+      digits   number of dials, default 4 (structural — not a secret)
+      lang     "en" | "hr" (else Telegram user lang)      tag  italic subtitle line (decodeURIComponent)
+      sessionId / userId  passed straight back in the result payload
+    Result (Telegram.WebApp.sendData):
+      on PULL:    { sessionId, userId, gameId:'padlock', submission, timestamp }
+      on give up: { sessionId, userId, gameId:'padlock', success:false, outcome:'abandoned', timestamp }
+  -->
+  <style>
+    :root {
+      --bg: #14161c;
+      --bg2: #1d2129;
+      --ink: #e8e6df;
+      --muted: #8b90a0;
+      --brass: #c9a24b;
+      --brass-dark: #8a6d2c;
+      --steel: #b9c0cc;
+      --steel-dark: #6b7280;
+      --danger: #d9534f;
+      --success: #4caf7d;
+      --reel: #f4efe4;
+      --reel-ink: #23262e;
+      --shadow: rgba(0,0,0,.45);
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    html, body { height: 100%; }
+    body {
+      background: radial-gradient(120% 90% at 50% 0%, #232833 0%, var(--bg) 60%);
+      color: var(--ink);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      display: flex; flex-direction: column; align-items: center;
+      min-height: 100%; padding: 22px 18px 28px;
+      user-select: none;
+    }
+    header { text-align: center; margin-bottom: 6px; }
+    h1 { font-size: 20px; font-weight: 700; letter-spacing: .3px; }
+    .tag {
+      margin-top: 8px; font-size: 13px; color: var(--muted); line-height: 1.4;
+      max-width: 340px; font-style: italic;
+    }
+
+    /* Padlock body */
+    .lock {
+      margin: 26px auto 8px; width: 300px; max-width: 86vw;
+      display: flex; flex-direction: column; align-items: center;
+    }
+    .shackle {
+      width: 150px; height: 92px; margin-bottom: -14px; position: relative; z-index: 1;
+      border: 16px solid var(--steel);
+      border-bottom: none;
+      border-radius: 78px 78px 0 0;
+      background: transparent;
+      box-shadow: inset 0 3px 4px rgba(255,255,255,.25), 0 3px 6px var(--shadow);
+      transform: translateY(0); transition: transform .5s cubic-bezier(.2,1.3,.4,1), border-color .3s;
+    }
+    .lock.open .shackle { transform: translateY(-46px) translateX(30px) rotate(14deg); border-color: var(--success); }
+    .body {
+      width: 260px; max-width: 84vw; border-radius: 20px; z-index: 2;
+      /* Zagreb park-clock blue (matches clock-zagreb.html) */
+      background: linear-gradient(160deg, #2b86d8 0%, #14538f 100%);
+      border: 1px solid #0f4472;
+      box-shadow: 0 12px 30px var(--shadow), inset 0 1px 0 rgba(255,255,255,.18);
+      padding: 22px 16px 18px;
+    }
+    .brandrow { display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; padding: 0 6px; }
+    .brand { font-size: 11px; letter-spacing: 3px; color: var(--brass); text-transform: uppercase; }
+    .attempts { font-size: 11px; color: var(--muted); }
+
+    /* Dials */
+    .dials { display: flex; gap: 10px; justify-content: center; }
+    .dial { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+    .arrow {
+      width: 46px; height: 30px; border: none; border-radius: 8px; cursor: pointer;
+      background: #2f3542; color: var(--steel); font-size: 15px; line-height: 1;
+      box-shadow: 0 2px 0 #1a1e26; transition: transform .06s, background .15s;
+    }
+    .arrow:active { transform: translateY(2px); box-shadow: none; background: #3a4150; }
+    .window {
+      position: relative; width: 46px; height: 78px; border-radius: 8px; overflow: hidden;
+      background: var(--reel);
+      box-shadow: inset 0 8px 10px -6px rgba(0,0,0,.55), inset 0 -8px 10px -6px rgba(0,0,0,.55), 0 1px 0 rgba(255,255,255,.06);
+      touch-action: none;
+    }
+    .window::before, .window::after {
+      content:""; position:absolute; left:0; right:0; height: 1px; background: rgba(0,0,0,.18); z-index: 3;
+    }
+    .window::before { top: 26px; } .window::after { top: 52px; }
+    .reel { position: absolute; left: 0; right: 0; top: 0; text-align: center; will-change: transform; }
+    .reel span {
+      display: block; height: 26px; line-height: 26px; font-size: 22px; font-weight: 700;
+      color: var(--reel-ink); font-variant-numeric: tabular-nums;
+    }
+    .reel span.mid { color: #000; }
+
+    .pull {
+      margin-top: 20px; width: 100%; padding: 15px; border: none; border-radius: 14px; cursor: pointer;
+      background: linear-gradient(180deg, var(--brass) 0%, var(--brass-dark) 100%);
+      color: #221a06; font-size: 16px; font-weight: 800; letter-spacing: .4px;
+      box-shadow: 0 4px 0 #5c4a1f, 0 8px 18px var(--shadow); transition: transform .07s, box-shadow .07s;
+    }
+    .pull:active { transform: translateY(3px); box-shadow: 0 1px 0 #5c4a1f; }
+    .lock.shake { animation: shake .4s; }
+    @keyframes shake {
+      10%,90%{transform:translateX(-2px)} 20%,80%{transform:translateX(4px)}
+      30%,50%,70%{transform:translateX(-8px)} 40%,60%{transform:translateX(8px)}
+    }
+
+    .msg { min-height: 20px; margin-top: 16px; font-size: 14px; text-align: center; }
+    .msg.err { color: var(--danger); } .msg.ok { color: var(--success); }
+    .giveup {
+      margin-top: 22px; background: none; border: none; color: var(--muted);
+      font-size: 13px; text-decoration: underline; cursor: pointer;
+    }
+
+    /* Result overlay */
+    .overlay {
+      position: fixed; inset: 0; background: rgba(10,12,16,.86); backdrop-filter: blur(3px);
+      display: none; align-items: center; justify-content: center; z-index: 20; padding: 24px;
+    }
+    .overlay.show { display: flex; }
+    .card {
+      background: var(--bg2); border: 1px solid #333a46; border-radius: 18px;
+      padding: 28px 24px; text-align: center; max-width: 320px; width: 100%;
+      box-shadow: 0 20px 50px var(--shadow);
+    }
+    .card .emoji { font-size: 44px; } .card h2 { margin: 12px 0 6px; font-size: 20px; }
+    .card p { color: var(--muted); font-size: 14px; line-height: 1.5; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1 id="title">Padlock</h1>
+    <div class="tag" id="tag"></div>
+  </header>
+
+  <div class="lock" id="lock">
+    <div class="shackle"></div>
+    <div class="body">
+      <div class="brandrow">
+        <span class="brand">ZAGREB · SEC</span>
+        <span class="attempts" id="attempts"></span>
+      </div>
+      <div class="dials" id="dials"></div>
+      <button class="pull" id="pull">PULL</button>
+    </div>
+  </div>
+
+  <div class="msg" id="msg"></div>
+  <button class="giveup" id="giveup">Give up</button>
+
+  <div class="overlay" id="overlay">
+    <div class="card">
+      <div class="emoji" id="rEmoji">🔓</div>
+      <h2 id="rTitle">Unlocked</h2>
+      <p id="rBody"></p>
+    </div>
+  </div>
+
+  <script>
+    // ------- Telegram bootstrap (mirrors hanoi.html) -------
+    const tg = window.Telegram ? window.Telegram.WebApp : null;
+    if (tg) { tg.ready(); tg.expand(); }
+    const haptic = (kind) => {
+      try {
+        if (!tg || !tg.HapticFeedback) return;
+        if (kind === 'tick') tg.HapticFeedback.selectionChanged();
+        else if (kind === 'ok') tg.HapticFeedback.notificationOccurred('success');
+        else if (kind === 'err') tg.HapticFeedback.notificationOccurred('error');
+      } catch (e) {}
+    };
+
+    // ------- Input params -------
+    const q = new URLSearchParams(window.location.search);
+    const sessionId = q.get('sessionId');
+    const userId = (tg && tg.initDataUnsafe && tg.initDataUnsafe.user) ? tg.initDataUnsafe.user.id : q.get('userId');
+    const N = Math.max(1, parseInt(q.get('digits') || '4', 10));
+
+    // language: explicit ?lang, else Telegram user language, else en
+    let lang = (q.get('lang') || (tg && tg.initDataUnsafe && tg.initDataUnsafe.user && tg.initDataUnsafe.user.language_code) || 'en')
+                 .split('-')[0].toLowerCase();
+
+    const STR = {
+      en: { title: 'Padlock', pull: 'PULL', give: 'Give up',
+            sent: 'Sent', sentBody: 'Check the chat for the verdict.',
+            gaveTitle: 'Left locked', gaveBody: 'You step back from the lock.' },
+      hr: { title: 'Lokot', pull: 'POVUCI', give: 'Odustani',
+            sent: 'Poslano', sentBody: 'Provjeri chat za ishod.',
+            gaveTitle: 'Ostalo zaključano', gaveBody: 'Odmakneš se od lokota.' },
+    };
+    const S = STR[lang] || STR.en;
+
+    document.documentElement.lang = lang;
+    document.getElementById('title').textContent = S.title;
+    document.getElementById('pull').textContent = S.pull;
+    document.getElementById('giveup').textContent = S.give;
+    const tagText = q.get('tag');
+    if (tagText) document.getElementById('tag').textContent = decodeURIComponent(tagText);
+
+    // ------- Dials -------
+    const digits = new Array(N).fill(0);
+    let solved = false;
+    const dialsEl = document.getElementById('dials');
+
+    function mod10(n) { return ((n % 10) + 10) % 10; }
+
+    function makeDial(i) {
+      const wrap = document.createElement('div'); wrap.className = 'dial';
+      const up = document.createElement('button'); up.className = 'arrow'; up.textContent = '▲';
+      const win = document.createElement('div'); win.className = 'window';
+      const reel = document.createElement('div'); reel.className = 'reel';
+      // five cells: prev2, prev, mid, next, next2
+      for (let k = 0; k < 5; k++) { const s = document.createElement('span'); reel.appendChild(s); }
+      win.appendChild(reel);
+      const down = document.createElement('button'); down.className = 'arrow'; down.textContent = '▼';
+      wrap.append(up, win, down);
+      dialsEl.appendChild(wrap);
+
+      function render() {
+        const d = digits[i];
+        const cells = reel.children;
+        cells[0].textContent = mod10(d - 2); cells[0].className = '';
+        cells[1].textContent = mod10(d - 1); cells[1].className = '';
+        cells[2].textContent = d;          cells[2].className = 'mid';
+        cells[3].textContent = mod10(d + 1); cells[3].className = '';
+        cells[4].textContent = mod10(d + 2); cells[4].className = '';
+        reel.style.transform = 'translateY(-26px)'; // center the active digit between the guide lines
+      }
+      function step(delta) {
+        if (solved) return;
+        digits[i] = mod10(digits[i] + delta);
+        render(); haptic('tick');
+      }
+      up.addEventListener('click', () => step(1));
+      down.addEventListener('click', () => step(-1));
+      // vertical swipe on the window
+      let startY = null;
+      win.addEventListener('pointerdown', (e) => { startY = e.clientY; win.setPointerCapture(e.pointerId); });
+      win.addEventListener('pointermove', (e) => {
+        if (startY === null) return;
+        const dy = e.clientY - startY;
+        if (Math.abs(dy) >= 24) { step(dy < 0 ? 1 : -1); startY = e.clientY; }
+      });
+      win.addEventListener('pointerup', () => { startY = null; });
+      win.addEventListener('pointercancel', () => { startY = null; });
+      win.addEventListener('wheel', (e) => { e.preventDefault(); step(e.deltaY < 0 ? 1 : -1); }, { passive: false });
+      render();
+    }
+    for (let i = 0; i < N; i++) makeDial(i);
+
+    // ------- Result reporting (server-authoritative) -------
+    // PULL reports the dialed digits as `submission`; the engine validates them. We never send `success`
+    // and never receive the code. `abandon` uses the legacy client-trusted shape only to bow out.
+    function send(payload) {
+      const result = {
+        sessionId: sessionId,
+        userId: userId,
+        gameId: 'padlock',
+        timestamp: Date.now(),
+        ...payload,
+      };
+      console.log('📤 padlock result', result);
+      // also post to an embedding parent (the game-studio emulator popup); no-op / ignored inside real Telegram
+      try { if (window.parent && window.parent !== window) window.parent.postMessage({ type: 'MINIGAME_RESULT', payload: result }, '*'); } catch (e) {}
+      try {
+        if (tg && typeof tg.sendData === 'function') {
+          tg.sendData(JSON.stringify(result)); // Telegram auto-closes the WebApp after this
+        } else {
+          localStorage.setItem('padlock_result_latest', JSON.stringify(result)); // browser test mode
+        }
+      } catch (e) { console.error('sendData failed', e); }
+    }
+
+    function showOverlay(gaveUp) {
+      const ov = document.getElementById('overlay');
+      document.getElementById('rEmoji').textContent = gaveUp ? '🔒' : '🗝️';
+      document.getElementById('rTitle').textContent = gaveUp ? S.gaveTitle : S.sent;
+      document.getElementById('rBody').textContent = gaveUp ? S.gaveBody : S.sentBody;
+      ov.classList.add('show');
+    }
+
+    document.getElementById('pull').addEventListener('click', () => {
+      if (solved) return;
+      solved = true; // one submission per open; a wrong verdict re-launches the mini-game from chat
+      haptic('ok');
+      send({ submission: digits.join('') });
+      setTimeout(() => showOverlay(false), 500);
+    });
+
+    document.getElementById('giveup').addEventListener('click', () => {
+      if (solved) return;
+      solved = true;
+      send({ success: false, outcome: 'abandoned' });
+      setTimeout(() => showOverlay(true), 200);
+    });
+  </script>
+</body>
+</html>

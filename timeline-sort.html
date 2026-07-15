@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Timeline</title>
+
+  <!-- Telegram Web App SDK (same as the other mini-games in this repo) -->
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+  <!--
+    GENERIC TIMELINE RECONSTRUCTION  (reusable across games — config-driven, SERVER-AUTHORITATIVE)
+    ---------------------------------------------------------------------------------------------------------
+    A scrambled pool of event cards (some real, some decoys) + N empty ordered slots (earliest at top). Drag
+    cards from the pool into the slots in what you believe is chronological order; a card can be dragged back
+    out or swapped for another at any time. CONFIRM enables once every slot is filled (with ANY card — the app
+    never checks itself, same discipline as every other app in this family). Reports the slots' card ids, in
+    slot order, for the engine to validate — exactly like a typed answer. Decoy cards that never get placed are
+    simply left in the pool; the app doesn't need to know which cards are "real".
+
+    Params (URL query):
+      cards    JSON array, url-encoded (REQUIRED): [{"id":"voicemail","icon":"📞","label":"The voicemail"}, ...]
+               label may be a {en,hr} object. Include MORE cards than `slots` to seed decoy/distractor cards —
+               they just sit in the pool, unused, never part of the reported submission.
+      slots    how many ordered slots to fill, default = min(cards.length, 4)
+      title    header title      tag  italic prompt line (decodeURIComponent)      lang  "en" | "hr"
+      sessionId / userId  passed straight back in the result payload
+    Result (Telegram.WebApp.sendData):
+      on CONFIRM: { sessionId, userId, gameId:'timeline-sort', submission:"<id>,<id>,...", timestamp }
+      give up:    { sessionId, userId, gameId:'timeline-sort', success:false, outcome:'abandoned', timestamp }
+  -->
+  <style>
+    :root {
+      --bg: #0b0d10; --panel: #14161c; --panel2: #1a1d24; --ink: #e8e6df; --muted: #8b90a0;
+      --brass: #c9a24b; --brass-dark: #8a6d2c; --shadow: rgba(0,0,0,.55); --success: #4caf7d; --border: #2c313c;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    html, body { height: 100%; }
+    body {
+      background: radial-gradient(120% 90% at 50% 0%, #191c22 0%, var(--bg) 65%);
+      color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      display: flex; flex-direction: column; align-items: center; min-height: 100%;
+      padding: 18px 14px 26px; user-select: none;
+    }
+    header { text-align: center; margin-bottom: 4px; }
+    h1 { font-size: 18px; font-weight: 700; }
+    .tag { margin-top: 6px; font-size: 12.5px; color: var(--muted); font-style: italic; max-width: 360px; line-height: 1.4; }
+
+    .board { width: 340px; max-width: 94vw; margin-top: 14px; }
+    .endpoint { font-size: 10.5px; letter-spacing: 1.5px; color: var(--muted); text-transform: uppercase; padding: 2px 4px; }
+    .endpoint.early { text-align: left; } .endpoint.late { text-align: right; margin-top: 2px; }
+
+    .slots { display: flex; flex-direction: column; gap: 8px; }
+    .slot {
+      display: flex; align-items: center; gap: 10px; min-height: 52px; border-radius: 12px;
+      border: 1.5px dashed rgba(255,255,255,.18); background: rgba(255,255,255,.02); padding: 6px 10px;
+      transition: border-color .15s, background .15s;
+    }
+    .slot.filled { border-style: solid; border-color: var(--border); background: var(--panel2); }
+    .slotbadge { flex: 0 0 auto; width: 22px; height: 22px; border-radius: 50%; background: var(--panel2);
+      border: 1px solid var(--border); display: flex; align-items: center; justify-content: center;
+      font-size: 11px; font-weight: 700; color: var(--muted); }
+    .slotbody { flex: 1 1 auto; min-width: 0; display: flex; align-items: center; }
+    .slotempty { font-size: 12px; color: var(--muted); font-style: italic; }
+
+    .poolwrap { margin-top: 20px; width: 340px; max-width: 94vw; }
+    .poollabel { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
+    .pool { display: flex; flex-wrap: wrap; gap: 8px; min-height: 46px; }
+
+    .card {
+      display: flex; align-items: center; gap: 8px; padding: 9px 12px; border-radius: 11px;
+      background: var(--panel2); border: 1px solid var(--border); cursor: grab; touch-action: none;
+      box-shadow: 0 3px 8px rgba(0,0,0,.3); font-size: 12.5px; color: var(--ink);
+    }
+    .card:active { cursor: grabbing; }
+    .card .icon { font-size: 16px; flex: 0 0 auto; }
+    .card .label { white-space: nowrap; }
+    .slotbody .card { width: 100%; box-shadow: none; background: none; border: none; padding: 4px 0; }
+
+    .confirm {
+      margin-top: 20px; width: 300px; max-width: 88vw; padding: 14px; border: none; border-radius: 13px;
+      background: linear-gradient(180deg, var(--brass) 0%, var(--brass-dark) 100%); color: #221a06; font-size: 15px;
+      font-weight: 800; letter-spacing: .3px; box-shadow: 0 4px 0 #5c4a1f, 0 8px 18px var(--shadow);
+      cursor: pointer; opacity: 0; pointer-events: none; transition: opacity .3s, transform .07s, box-shadow .07s;
+    }
+    .confirm.ready { opacity: 1; pointer-events: auto; }
+    .confirm:active { transform: translateY(3px); box-shadow: 0 1px 0 #5c4a1f; }
+
+    .msg { min-height: 18px; margin-top: 12px; font-size: 13px; text-align: center; color: var(--muted); }
+    .giveup { margin-top: 10px; background: none; border: none; color: var(--muted); font-size: 13px; text-decoration: underline; cursor: pointer; }
+
+    .overlay { position: fixed; inset: 0; background: rgba(6,7,9,.88); backdrop-filter: blur(3px);
+      display: none; align-items: center; justify-content: center; z-index: 30; padding: 24px; }
+    .overlay.show { display: flex; }
+    .card2 { background: var(--panel); border: 1px solid var(--border); border-radius: 18px; padding: 28px 24px;
+      text-align: center; max-width: 320px; width: 100%; box-shadow: 0 20px 50px var(--shadow); }
+    .card2 .emoji { font-size: 42px; } .card2 h2 { margin: 12px 0 6px; font-size: 20px; } .card2 p { color: var(--muted); font-size: 14px; line-height: 1.5; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1 id="title">Timeline</h1>
+    <div class="tag" id="tag" style="display:none"></div>
+  </header>
+
+  <div class="board">
+    <div class="endpoint early" id="earlyLabel">Earliest</div>
+    <div class="slots" id="slots"></div>
+    <div class="endpoint late" id="lateLabel">Latest</div>
+  </div>
+
+  <div class="poolwrap">
+    <div class="poollabel" id="poolLabel">Pool</div>
+    <div class="pool" id="pool"></div>
+  </div>
+
+  <button class="confirm" id="confirm">CONFIRM</button>
+  <div class="msg" id="msg"></div>
+  <button class="giveup" id="giveup">Give up</button>
+
+  <div class="overlay" id="overlay">
+    <div class="card2">
+      <div class="emoji" id="rEmoji">🗓️</div>
+      <h2 id="rTitle">Sent</h2>
+      <p id="rBody"></p>
+    </div>
+  </div>
+
+  <script>
+    // ------- Telegram bootstrap (mirrors torn-note.html) -------
+    const tg = window.Telegram ? window.Telegram.WebApp : null;
+    if (tg) { tg.ready(); tg.expand(); }
+    const haptic = (kind) => {
+      try {
+        if (!tg || !tg.HapticFeedback) return;
+        if (kind === 'tick') tg.HapticFeedback.selectionChanged();
+        else if (kind === 'ok') tg.HapticFeedback.notificationOccurred('success');
+        else if (kind === 'err') tg.HapticFeedback.notificationOccurred('error');
+      } catch (e) {}
+    };
+
+    const q = new URLSearchParams(window.location.search);
+    const sessionId = q.get('sessionId');
+    const userId = (tg && tg.initDataUnsafe && tg.initDataUnsafe.user) ? tg.initDataUnsafe.user.id : q.get('userId');
+    let lang = (q.get('lang') || (tg && tg.initDataUnsafe && tg.initDataUnsafe.user && tg.initDataUnsafe.user.language_code) || 'en')
+                 .split('-')[0].toLowerCase();
+
+    const STR = {
+      en: { title: 'Timeline', give: 'Give up', confirm: 'CONFIRM', early: 'Earliest', late: 'Latest', pool: 'Unplaced cards',
+            sent: 'Sent', sentBody: 'Check the chat for the verdict.',
+            gaveTitle: 'Left scattered', gaveBody: 'You leave the cards where they lie.' },
+      hr: { title: 'Vremenska crta', give: 'Odustani', confirm: 'POTVRDI', early: 'Najranije', late: 'Najkasnije', pool: 'Nepostavljene kartice',
+            sent: 'Poslano', sentBody: 'Provjeri chat za ishod.',
+            gaveTitle: 'Ostalo razbacano', gaveBody: 'Ostaviš kartice kako jesu.' },
+    };
+    const S = STR[lang] || STR.en;
+    document.documentElement.lang = lang;
+    document.getElementById('title').textContent = q.get('title') ? decodeURIComponent(q.get('title')) : S.title;
+    document.getElementById('confirm').textContent = S.confirm;
+    document.getElementById('giveup').textContent = S.give;
+    document.getElementById('earlyLabel').textContent = S.early;
+    document.getElementById('lateLabel').textContent = S.late;
+    document.getElementById('poolLabel').textContent = S.pool;
+    const tagText = q.get('tag');
+    if (tagText) { const t = document.getElementById('tag'); t.style.display = ''; t.textContent = decodeURIComponent(tagText); }
+
+    function loc(v) { if (v == null) return ''; if (typeof v === 'object') return v[lang] || v.en || Object.values(v)[0] || ''; return String(v); }
+    function pjson(name) { try { const raw = q.get(name); return raw ? JSON.parse(decodeURIComponent(raw)) : null; } catch (e) { return null; } }
+
+    const allCards = pjson('cards') || [];
+    const N = Math.max(2, Math.min(allCards.length, parseInt(q.get('slots') || String(Math.min(allCards.length, 4)), 10)));
+
+    let solved = false;
+
+    // ------- Result reporting (server-authoritative, same discipline as torn-note.html) -------
+    function send(payload) {
+      const result = { sessionId, userId, gameId: 'timeline-sort', timestamp: Date.now(), ...payload };
+      console.log('📤 timeline-sort result', result);
+      try { if (window.parent && window.parent !== window) window.parent.postMessage({ type: 'MINIGAME_RESULT', payload: result }, '*'); } catch (e) {}
+      try {
+        if (tg && typeof tg.sendData === 'function') tg.sendData(JSON.stringify(result));
+        else localStorage.setItem('timeline-sort_result_latest', JSON.stringify(result));
+      } catch (e) { console.error('sendData failed', e); }
+    }
+    function showOverlay(gaveUp) {
+      document.getElementById('rEmoji').textContent = gaveUp ? '🗑️' : '🗓️';
+      document.getElementById('rTitle').textContent = gaveUp ? S.gaveTitle : S.sent;
+      document.getElementById('rBody').textContent = gaveUp ? S.gaveBody : S.sentBody;
+      document.getElementById('overlay').classList.add('show');
+    }
+    document.getElementById('giveup').addEventListener('click', () => {
+      if (solved) return;
+      solved = true;
+      send({ success: false, outcome: 'abandoned' });
+      setTimeout(() => showOverlay(true), 200);
+    });
+    document.getElementById('confirm').addEventListener('click', () => {
+      if (solved) return;
+      solved = true; haptic('ok');
+      send({ submission: slotContent.join(',') });
+      setTimeout(() => showOverlay(false), 400);
+    });
+
+    // ------- Build cards (scrambled pool order) -------
+    function shuffle(arr) {
+      const a = arr.slice();
+      for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; }
+      return a;
+    }
+    const pool = document.getElementById('pool');
+    const slotsEl = document.getElementById('slots');
+    const slotContent = new Array(N).fill(null); // slotContent[i] = card id or null
+    const cardEls = {}; // id -> element
+    const slotBodyEls = []; // index -> .slotbody element
+    const slotEls = []; // index -> .slot element
+
+    for (let i = 0; i < N; i++) {
+      const slot = document.createElement('div'); slot.className = 'slot';
+      const badge = document.createElement('div'); badge.className = 'slotbadge'; badge.textContent = i + 1;
+      const body = document.createElement('div'); body.className = 'slotbody';
+      const empty = document.createElement('div'); empty.className = 'slotempty'; empty.textContent = '···';
+      body.appendChild(empty);
+      slot.append(badge, body);
+      slotsEl.appendChild(slot);
+      slotEls.push(slot); slotBodyEls.push(body);
+    }
+
+    function makeCard(c) {
+      const el = document.createElement('div'); el.className = 'card'; el.dataset.id = c.id;
+      const icon = document.createElement('span'); icon.className = 'icon'; icon.textContent = c.icon || '🗂️';
+      const label = document.createElement('span'); label.className = 'label'; label.textContent = loc(c.label);
+      el.append(icon, label);
+      bindDrag(el, c.id);
+      return el;
+    }
+    shuffle(allCards).forEach((c) => { const el = makeCard(c); cardEls[c.id] = el; pool.appendChild(el); });
+
+    function updateSlotVisual(i) {
+      const body = slotBodyEls[i];
+      const hasCard = slotContent[i] != null;
+      slotEls[i].classList.toggle('filled', hasCard);
+      body.innerHTML = '';
+      if (hasCard) body.appendChild(cardEls[slotContent[i]]);
+      else { const empty = document.createElement('div'); empty.className = 'slotempty'; empty.textContent = '···'; body.appendChild(empty); }
+    }
+    function updateConfirm() {
+      document.getElementById('confirm').classList.toggle('ready', slotContent.every((v) => v != null));
+    }
+    function slotIndexOf(id) { return slotContent.indexOf(id); }
+
+    function nearestSlotIndex(clientX, clientY) {
+      for (let i = 0; i < slotEls.length; i++) {
+        const r = slotEls[i].getBoundingClientRect();
+        const pad = 10;
+        if (clientX >= r.left - pad && clientX <= r.right + pad && clientY >= r.top - pad && clientY <= r.bottom + pad) return i;
+      }
+      return -1;
+    }
+
+    function bindDrag(el, id) {
+      let dragging = false, startX = 0, startY = 0, baseLeft = 0, baseTop = 0, w = 0, h = 0;
+      el.addEventListener('pointerdown', (e) => {
+        if (solved) return;
+        dragging = true; el.setPointerCapture(e.pointerId);
+        const r = el.getBoundingClientRect();
+        w = r.width; h = r.height; baseLeft = r.left; baseTop = r.top;
+        startX = e.clientX; startY = e.clientY;
+        el.style.position = 'fixed'; el.style.left = baseLeft + 'px'; el.style.top = baseTop + 'px';
+        el.style.width = w + 'px'; el.style.zIndex = 50; el.style.boxShadow = '0 10px 20px rgba(0,0,0,.5)';
+        const j = slotIndexOf(id);
+        if (j !== -1) { slotContent[j] = null; updateSlotVisual(j); updateConfirm(); }
+      });
+      el.addEventListener('pointermove', (e) => {
+        if (!dragging) return;
+        el.style.left = (baseLeft + (e.clientX - startX)) + 'px';
+        el.style.top = (baseTop + (e.clientY - startY)) + 'px';
+      });
+      function finish(e) {
+        if (!dragging) return;
+        dragging = false;
+        const hit = nearestSlotIndex(e.clientX, e.clientY);
+        el.style.position = ''; el.style.left = ''; el.style.top = ''; el.style.width = ''; el.style.zIndex = ''; el.style.boxShadow = '';
+        if (hit !== -1) {
+          const occupant = slotContent[hit];
+          if (occupant && occupant !== id) { pool.appendChild(cardEls[occupant]); }
+          slotContent[hit] = id;
+          updateSlotVisual(hit);
+          haptic('tick');
+        } else {
+          pool.appendChild(el);
+        }
+        updateConfirm();
+      }
+      el.addEventListener('pointerup', finish);
+      el.addEventListener('pointercancel', finish);
+    }
+
+    // test hook (mirrors the rest of the family)
+    window.__timeline = {
+      slotContent, cardEls,
+      place: (id, i) => {
+        const j = slotIndexOf(id); if (j !== -1) slotContent[j] = null;
+        const occupant = slotContent[i]; if (occupant && occupant !== id) pool.appendChild(cardEls[occupant]);
+        slotContent[i] = id; updateSlotVisual(i); updateConfirm();
+      },
+      confirm: () => document.getElementById('confirm').click(),
+    };
+  </script>
+</body>
+</html>

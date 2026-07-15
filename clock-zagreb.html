@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Set the Clock — Zagreb</title>
+
+  <!-- Telegram Web App SDK (same as the other mini-games in this repo) -->
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+  <!--
+    GENERIC SET-THE-CLOCK — ZAGREB PARK-CLOCK SKIN  (config-driven, SERVER-AUTHORITATIVE)
+    ----------------------------------------------------------------------------------------------
+    The target time is NEVER passed here. CONFIRM reports whatever the hands currently show as
+    `submission` (e.g. "12:00"); the engine checks it against the puzzle's answer server-side.
+
+    Params (URL query, all optional): lang, label (face text, "|" = two lines, default "Zagreb"),
+      caseColor/caseColor2/faceColor/handColor/markerColor/labelColor (hex, # optional)
+      sessionId / userId  passed straight back in the result payload
+    Result (Telegram.WebApp.sendData):
+      on CONFIRM: { sessionId, userId, gameId:'clock', submission, timestamp }
+  -->
+  <style>
+    :root {
+      --bg: #0f1218;
+      /* themeable via URL params (see script): the Zagreb park-clock look by default */
+      --case: #2b86d8; --case2: #14538f; --face: #eef1ec; --hand: #14161a; --marker: #14161a; --label: #14161a;
+      --accent: #c9a24b; --ok: #4caf7d; --danger: #d9534f; --muted: #8b90a0; --shadow: rgba(0,0,0,.5);
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    html, body { height: 100%; }
+    body {
+      background: radial-gradient(120% 90% at 50% 0%, #1a1f28 0%, var(--bg) 65%);
+      color: #e8e6df; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      display: flex; flex-direction: column; align-items: center; min-height: 100%;
+      padding: 20px 16px 26px; user-select: none;
+    }
+    h1 { font-size: 19px; font-weight: 700; }
+    .sub { margin-top: 6px; font-size: 12.5px; color: var(--muted); text-align: center; max-width: 340px; line-height: 1.45; }
+    .time { margin-top: 14px; font-size: 30px; font-weight: 800; font-variant-numeric: tabular-nums; letter-spacing: 1px; color: var(--accent); }
+
+    svg { width: 320px; max-width: 86vw; height: auto; display: block; margin-top: 8px;
+          filter: drop-shadow(0 12px 26px var(--shadow)); touch-action: none; }
+    .hand { cursor: grab; }
+    .knob { cursor: grab; }
+    .flabel { fill: var(--label); font-weight: 700; text-anchor: middle; dominant-baseline: middle;
+              font-family: "Helvetica Neue", Arial, sans-serif; }
+
+    .confirm {
+      margin-top: 20px; width: 300px; max-width: 82vw; padding: 14px; border: none; border-radius: 13px;
+      background: linear-gradient(180deg, var(--accent) 0%, #8a6d2c 100%); color: #221a06; font-size: 16px; font-weight: 800;
+      letter-spacing: .4px; box-shadow: 0 4px 0 #5c4a1f, 0 8px 18px var(--shadow); cursor: pointer; transition: transform .07s, box-shadow .07s;
+    }
+    .confirm:active { transform: translateY(3px); box-shadow: 0 1px 0 #5c4a1f; }
+    .msg { min-height: 18px; margin-top: 14px; font-size: 13.5px; text-align: center; color: var(--muted); }
+    .msg.err { color: var(--danger); } .msg.ok { color: var(--ok); }
+
+    .overlay { position: fixed; inset: 0; background: rgba(10,12,16,.88); backdrop-filter: blur(3px);
+               display: none; align-items: center; justify-content: center; z-index: 20; padding: 24px; }
+    .overlay.show { display: flex; }
+    .card { background: #171b22; border: 1px solid #333a46; border-radius: 18px; padding: 28px 24px;
+            text-align: center; max-width: 320px; width: 100%; box-shadow: 0 20px 50px var(--shadow); }
+    .card .emoji { font-size: 42px; } .card h2 { margin: 12px 0 6px; font-size: 20px; } .card p { color: var(--muted); font-size: 14px; line-height: 1.5; }
+  </style>
+</head>
+<body>
+  <h1 id="title">Set the clock</h1>
+  <div class="sub" id="sub"></div>
+  <div class="time" id="time">--:--</div>
+
+  <svg id="clock" viewBox="0 0 200 200" aria-label="clock">
+    <defs>
+      <linearGradient id="caseGrad" x1="0" y1="0" x2="0.35" y2="1">
+        <stop offset="0" stop-color="var(--case)"/>
+        <stop offset="1" stop-color="var(--case2)"/>
+      </linearGradient>
+    </defs>
+    <!-- faceted blue case -->
+    <polygon id="case" fill="url(#caseGrad)" stroke="rgba(0,0,0,.25)" stroke-width="0.5"/>
+    <polygon id="caseHi" fill="rgba(255,255,255,.14)"/>
+    <!-- white dial -->
+    <circle cx="100" cy="100" r="79" fill="rgba(0,0,0,.25)"/>
+    <circle cx="100" cy="100" r="76" fill="var(--face)"/>
+    <g id="dots"></g>
+    <g id="batons"></g>
+    <text id="flabel" class="flabel"></text>
+    <g id="hourHand" class="hand"><polygon points="100,109 94.5,100 97,64 100,52 103,64 105.5,100" fill="var(--hand)"/><polygon points="100,64 102.4,71 100,78 97.6,71" fill="var(--face)"/></g>
+    <g id="minuteHand" class="hand"><polygon points="100,109 96,100 98,42 100,32 102,42 104,100" fill="var(--hand)"/><polygon points="100,44 102.2,50 100,56 97.8,50" fill="var(--face)"/></g>
+    <circle cx="100" cy="100" r="5.5" fill="var(--hand)"/>
+    <circle cx="100" cy="100" r="2" fill="var(--face)"/>
+    <circle id="hourKnob" class="knob" r="12" fill="transparent"/>
+    <circle id="minuteKnob" class="knob" r="11" fill="transparent"/>
+  </svg>
+
+  <button class="confirm" id="confirm">CONFIRM</button>
+  <div class="msg" id="msg"></div>
+
+  <div class="overlay" id="overlay">
+    <div class="card">
+      <div class="emoji" id="rEmoji">🔔</div>
+      <h2 id="rTitle">Right on the hour</h2>
+      <p id="rBody"></p>
+    </div>
+  </div>
+
+  <script>
+    const tg = window.Telegram ? window.Telegram.WebApp : null;
+    if (tg) { tg.ready(); tg.expand(); }
+    const haptic = (k) => { try { if (!tg||!tg.HapticFeedback) return;
+      if (k==='tick') tg.HapticFeedback.selectionChanged();
+      else if (k==='ok') tg.HapticFeedback.notificationOccurred('success');
+      else if (k==='err') tg.HapticFeedback.notificationOccurred('error'); } catch(e){} };
+
+    const q = new URLSearchParams(location.search);
+    const sessionId = q.get('sessionId');
+    const userId = (tg && tg.initDataUnsafe && tg.initDataUnsafe.user) ? tg.initDataUnsafe.user.id : q.get('userId');
+    let lang = (q.get('lang') || (tg && tg.initDataUnsafe && tg.initDataUnsafe.user && tg.initDataUnsafe.user.language_code) || 'en')
+                 .split('-')[0].toLowerCase();
+
+    // --- Themeable colors (URL params override the CSS defaults). Accept #hex without the '#'. ---
+    const col = (v) => v && /^#?[0-9a-fA-F]{3,8}$/.test(v) ? (v[0] === '#' ? v : '#' + v) : null;
+    const setVar = (name, param) => { const c = col(q.get(param)); if (c) document.documentElement.style.setProperty(name, c); };
+    setVar('--case', 'caseColor'); setVar('--case2', 'caseColor2'); setVar('--face', 'faceColor');
+    setVar('--hand', 'handColor'); setVar('--marker', 'markerColor'); setVar('--label', 'labelColor');
+
+    // --- Face label (default "Zagreb"); use "|" to split into two lines ---
+    const labelText = (q.get('label') != null ? q.get('label') : 'Zagreb');
+
+    const STR = {
+      en: { title: 'Set the clock', sub: 'Under the clock on the square. Drag the hands to the hour the cannon names, then confirm.',
+            confirm: 'CONFIRM', sent: 'Sent', sentBody: 'Check the chat for the verdict.' },
+      hr: { title: 'Namjesti sat', sub: 'Pod satom na trgu. Povuci kazaljke na sat koji top objavljuje, pa potvrdi.',
+            confirm: 'POTVRDI', sent: 'Poslano', sentBody: 'Provjeri chat za ishod.' },
+    };
+    const S = STR[lang] || STR.en;
+    document.documentElement.lang = lang;
+    document.getElementById('title').textContent = S.title;
+    document.getElementById('sub').textContent = S.sub;
+    document.getElementById('confirm').textContent = S.confirm;
+
+    function mk(tag, attrs) { const e = document.createElementNS('http://www.w3.org/2000/svg', tag);
+      for (const k in attrs) e.setAttribute(k, attrs[k]); return e; }
+    function polar(angleDeg, len) { const a = angleDeg * Math.PI / 180;
+      return { x: 100 + len * Math.sin(a), y: 100 - len * Math.cos(a) }; }
+
+    // faceted octagonal case
+    (function buildCase() {
+      const R = 97, pts = [];
+      for (let i = 0; i < 8; i++) { const a = (22.5 + i * 45) * Math.PI / 180; pts.push([100 + R * Math.cos(a), 100 + R * Math.sin(a)]); }
+      document.getElementById('case').setAttribute('points', pts.map(p => p.map(n => n.toFixed(1)).join(',')).join(' '));
+      // top-left facet highlight (subtle 3D)
+      document.getElementById('caseHi').setAttribute('points', [pts[5], pts[6], pts[7], [100,100]].map(p => p.map(n => n.toFixed(1)).join(',')).join(' '));
+    })();
+
+    // minute dots (outer track) + tapered hour batons (inner)
+    const dotsG = document.getElementById('dots'), batonsG = document.getElementById('batons');
+    for (let i = 0; i < 60; i++) {
+      if (i % 5 === 0) continue; // hour slots get a baton instead of a dot
+      const p = polar(i * 6, 71); dotsG.append(mk('circle', { cx: p.x, cy: p.y, r: 0.9, fill: 'var(--marker)' }));
+    }
+    for (let h = 0; h < 12; h++) {
+      const a = h * 30, rad = a * Math.PI / 180;
+      const px = Math.cos(rad), py = Math.sin(rad); // unit perpendicular to the radial direction
+      const rOut = 73, rIn = 55, wo = 3.4, wi = 1.6; // tapered baton: wider at the rim, narrower inside
+      const A = polar(a, rOut), B = polar(a, rIn);
+      const pts = [
+        [A.x + px * wo, A.y + py * wo], [A.x - px * wo, A.y - py * wo],
+        [B.x - px * wi, B.y - py * wi], [B.x + px * wi, B.y + py * wi],
+      ];
+      batonsG.append(mk('polygon', { points: pts.map(p => p.map(n => n.toFixed(1)).join(',')).join(' '), fill: 'var(--marker)' }));
+    }
+
+    // face label (one or two lines), placed below center like the real dial's maintainer line
+    (function buildLabel() {
+      const el = document.getElementById('flabel');
+      const lines = labelText.split('|').map(s => s.trim()).filter(Boolean);
+      if (!lines.length) return;
+      el.setAttribute('x', '100');
+      el.setAttribute('y', String(130));
+      el.setAttribute('font-size', lines.length > 1 ? '8.5' : (labelText.length > 10 ? '9' : '12'));
+      el.setAttribute('letter-spacing', '0.5');
+      lines.forEach((ln, i) => { const t = mk('tspan', { x: '100', dy: i === 0 ? '0' : '10' }); t.textContent = ln; el.append(t); });
+    })();
+
+    // state
+    let hourAngle = 300, minuteAngle = 30, solved = false;
+    const hourHand = document.getElementById('hourHand'), minuteHand = document.getElementById('minuteHand');
+    const hourKnob = document.getElementById('hourKnob'), minuteKnob = document.getElementById('minuteKnob');
+    const svg = document.getElementById('clock'), timeEl = document.getElementById('time'), msgEl = document.getElementById('msg');
+
+    function render() {
+      hourHand.setAttribute('transform', `rotate(${hourAngle} 100 100)`);
+      minuteHand.setAttribute('transform', `rotate(${minuteAngle} 100 100)`);
+      const hp = polar(hourAngle, 52), mp = polar(minuteAngle, 72);
+      hourKnob.setAttribute('cx', hp.x); hourKnob.setAttribute('cy', hp.y);
+      minuteKnob.setAttribute('cx', mp.x); minuteKnob.setAttribute('cy', mp.y);
+      const minute = (Math.round(minuteAngle / 6) % 60 + 60) % 60;
+      let hour = Math.floor(((hourAngle % 360) + 360) % 360 / 30) % 12; if (hour === 0) hour = 12;
+      timeEl.textContent = `${hour}:${String(minute).padStart(2, '0')}`;
+    }
+
+    function angleFromEvent(e) {
+      const pt = svg.createSVGPoint(); pt.x = e.clientX; pt.y = e.clientY;
+      const p = pt.matrixTransform(svg.getScreenCTM().inverse());
+      let deg = Math.atan2(p.x - 100, -(p.y - 100)) * 180 / Math.PI;
+      return (deg + 360) % 360;
+    }
+    function bindHand(knob, setter, snap) {
+      let dragging = false;
+      knob.addEventListener('pointerdown', (e) => { dragging = true; knob.setPointerCapture(e.pointerId); e.preventDefault(); });
+      knob.addEventListener('pointermove', (e) => { if (!dragging || solved) return;
+        let deg = angleFromEvent(e); deg = Math.round(deg / snap) * snap; setter(deg); haptic('tick'); render(); });
+      knob.addEventListener('pointerup', () => { dragging = false; });
+      knob.addEventListener('pointercancel', () => { dragging = false; });
+    }
+    bindHand(minuteKnob, (d) => { minuteAngle = d; }, 6);
+    bindHand(hourKnob, (d) => { hourAngle = d; }, 30);
+    render();
+
+    // ------- Result reporting (server-authoritative) -------
+    // CONFIRM reports whatever the hands show as `submission`; the engine validates it. We never send
+    // `success` and never receive the target time.
+    function send(payload) {
+      const result = { sessionId, userId, gameId: 'clock', timestamp: Date.now(), ...payload };
+      console.log('📤 clock result', result);
+      try { if (window.parent && window.parent !== window) window.parent.postMessage({ type: 'MINIGAME_RESULT', payload: result }, '*'); } catch (e) {}
+      try {
+        if (tg && typeof tg.sendData === 'function') tg.sendData(JSON.stringify(result));
+        else localStorage.setItem('clock_result_latest', JSON.stringify(result));
+      } catch (e) { console.error('sendData failed', e); }
+    }
+
+    document.getElementById('confirm').addEventListener('click', () => {
+      if (solved) return;
+      solved = true; // one submission per open; a wrong verdict re-launches the mini-game from chat
+      haptic('ok'); msgEl.textContent = '';
+      send({ submission: timeEl.textContent });
+      const ov = document.getElementById('overlay');
+      document.getElementById('rEmoji').textContent = '🔔';
+      document.getElementById('rTitle').textContent = S.sent;
+      document.getElementById('rBody').textContent = S.sentBody;
+      setTimeout(() => ov.classList.add('show'), 450);
+    });
+
+    window.__clock = { set: (h, m) => { hourAngle = (h % 12) * 30; minuteAngle = m * 6; render(); } };
+  </script>
+</body>
+</html>
