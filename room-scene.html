@@ -46,6 +46,10 @@
       inventory   Inline alternative to `scene.inventory` — JSON array of item defs the hotspots
                   reference: [{ id, label:{en,hr}, icon:"🗝️" }]
       finalHotspot  optional — hotspot id whose successful OPEN/COMBINE auto-submits `{choice:id}`
+      dots        optional, default true — pulsing marker on every hotspot before it's tapped (an
+                  assist). Set `dots=false` for a genuine "search the room" feel: no markers, the
+                  puzzle's own hints text is the only guidance on where to look. Every tap still gets
+                  a brief ripple regardless of this setting, so blind mode doesn't feel unresponsive.
       title / tag   cosmetic header text (decodeURIComponent)
       lang / sessionId / userId  same as every other app here
     Result (Telegram.WebApp.sendData):
@@ -81,6 +85,15 @@
     }
     .hotspot.done .dot { background: #6d7885; box-shadow: 0 0 0 4px rgba(109,120,133,.2); animation: none; opacity: .55; }
     @keyframes pulse { 0%,100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.25); opacity: .75; } }
+    /* Tap acknowledgement — shown on every hotspot tap regardless of whether the marker dot is on,
+       so a "blind search" scene (dots=false) still feels responsive without giving away hotspots
+       in advance. */
+    .tapfx {
+      position: absolute; top: 50%; left: 50%; width: 16px; height: 16px; margin: -8px 0 0 -8px;
+      border-radius: 50%; background: rgba(255,216,138,.55); opacity: 0; pointer-events: none;
+    }
+    .hotspot.tapped .tapfx { animation: tapripple .45s ease-out; }
+    @keyframes tapripple { 0% { opacity: .8; transform: scale(.4); } 100% { opacity: 0; transform: scale(2.6); } }
 
     .tray { display: flex; gap: 8px; padding: 8px 12px; overflow-x: auto; min-height: 44px; }
     .trayItem {
@@ -223,6 +236,11 @@
     let bg = '', hotspots = [], inventory = [], invById = {}, revealedBy = {};
     const finalHotspot = q.get('finalHotspot') || null;
     if (!finalHotspot) document.getElementById('openSubmit').style.display = '';
+    // Marker dots pinpoint every hotspot before the player taps anything — a deliberate assist, on
+    // by default. Set `dots=false` for a genuine "search the room" feel (no marker; a puzzle's own
+    // hints text is then the only guidance toward WHERE to look, same as any in-chat text puzzle).
+    // Every tap still gets a brief ripple regardless, so blind mode doesn't feel unresponsive.
+    const showDots = q.get('dots') !== 'false';
 
     async function loadScene() {
       const sceneParam = q.get('scene');
@@ -279,8 +297,12 @@
           el.style.left = (h.x * 100) + '%'; el.style.top = (h.y * 100) + '%';
           el.style.width = (h.w * 100) + '%'; el.style.height = (h.h * 100) + '%';
         }
-        const dot = document.createElement('div'); dot.className = 'dot'; el.appendChild(dot);
-        el.addEventListener('click', () => onTap(h));
+        if (showDots) { const dot = document.createElement('div'); dot.className = 'dot'; el.appendChild(dot); }
+        const fx = document.createElement('div'); fx.className = 'tapfx'; el.appendChild(fx);
+        el.addEventListener('click', () => {
+          el.classList.remove('tapped'); void el.offsetWidth; el.classList.add('tapped');
+          onTap(h);
+        });
         stage.appendChild(el);
         hotspotEls[h.id] = el;
       }
