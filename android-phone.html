@@ -11,19 +11,45 @@
   <!--
     GENERIC ANDROID-PHONE SIMULATOR  (reusable across games — config-driven, MODULAR, SERVER-AUTHORITATIVE)
     ---------------------------------------------------------------------------------------------------------
-    A phone shell (status bar + screen router) with FOUR screens, each independently reachable via `screen=`
+    A phone shell (status bar + screen router) with EIGHT screens, each independently reachable via `screen=`
     so a puzzle can deep-link straight into one, or leave it unset to start at a real home screen with an app
     grid. Distinct from phone.html (which is a single-purpose messaging-inbox picker/reassembler) — this file
     simulates the DEVICE, not one app.
 
-      • home      — app-icon grid (Phone / Contacts / Messages). Shown when `screen` is unset. Tapping an icon
-                    navigates client-side (no reload) into that screen.
+    TWO WAYS TO USE IT.
+      (1) Fixed mode — no `apps` param: the original Phone / Contacts / Messages (+ Gallery) grid. Every
+          caller that predates the catalog keeps working byte-for-byte.
+      (2) Catalog mode — pass `apps`: YOU author the device. The grid is your app list, in your order, and
+          `owned` says which of them the player has actually opened. The rest render dimmed with a padlock.
+          `owned` is meant to be fed the engine's `{{items}}` token, so the page draws the player's REAL
+          phone rather than a fixed set piece. See docs/GAME-TYPES-AND-MINIGAMES.md §11.3.
+
+      • home      — app-icon grid. Shown when `screen` is unset. Tapping an icon navigates client-side (no
+                    reload). A locked icon opens its passcode screen if this launch is the one asking for it
+                    (`lockApp`), otherwise it just shakes: seeing a door you cannot open yet is the point.
+      • list      — rows of "icon / primary / secondary / timestamp". ONE shape for every list a phone has —
+                    a call log, a drafts folder, a search history, a calendar. A row carrying `body` is
+                    tappable and opens as a note (back returns to the list, not to home).
+      • note      — a single document: optional `meta` line above pre-wrapped body text.
+      • thread    — ONE SMS conversation, read-only: left/right bubbles, optional per-message time, date
+                    dividers, and a dashed "ghost" bubble for a message that was typed and never sent.
+                    The conversation you READ, as against `messages`, which is the one you WRITE. Reports
+                    nothing on its own — pair with `confirmLabel` for an "I read it" beat. A `list` row may
+                    carry a `thread` too, which makes one list app a whole SMS inbox: conversations → bubbles.
+      • player    — a voice-memo player: play button, waveform, running time, and a `transcript` that
+                    reveals line by line AS IT PLAYS. Deliberately paced — a recording you have to sit
+                    through lands differently from a wall of text you skim in a second.
+      • lock      — passcode entry for ONE app (`lockApp`). Reports `{ submission: "<typed>" }`; the page
+                    never receives the passcode. Text or numeric keyboard via the app's `lockMode`.
       • dialer    — numeric keypad + a real, typeable readout (tap the keys OR type on a physical/soft
                     keyboard — both write into the same field). CALL reports `{ submission: "<digits>" }`.
-      • contacts  — a phonebook list (name + number). Tapping a contact either opens the dialer pre-filled
-                    with their number (default — a "look the number up, then dial" flow), or, if `directCall`
-                    is set, immediately reports `{ submission: "<contact id>" }` — a "who do you call" puzzle
-                    shape instead of a "what number do you dial" one.
+      • contacts  — a phonebook list (name + number). Tapping a contact opens the dialer pre-filled with
+                    their number (default — a "look the number up, then dial" flow); or, if the contact has
+                    a `note`, opens that note instead, which makes the screen a phonebook you READ rather
+                    than one you dial from; or, if `directCall` is set, immediately reports
+                    `{ submission: "<contact id>" }` — a "who do you call" puzzle shape instead of a
+                    "what number do you dial" one. A catalog app may carry its own `contacts` array, the
+                    same way a gallery app carries its own roll.
       • messages  — compose a text message. Typed text + SEND reports `{ submission: "<text>" }`
                     (server-authoritative, same contract as any derived-text puzzle). If `phrases` is given,
                     tapping one immediately reports `{ choice: "<phrase id>" }` instead (a pick-the-right-line
@@ -44,8 +70,33 @@
     trusted (there is nothing to validate for a pure "I looked" beat).
 
     Params (URL query):
-      screen      "home" (default) | "dialer" | "contacts" | "messages" | "gallery"
-      contacts    JSON array, url-encoded: [{"id":"petra","name":"Petra","number":"091 234 5678"}, ...]
+      screen      "home" (default) | "dialer" | "contacts" | "messages" | "gallery" | an app id from `apps`
+      config      URL (normally a bare filename beside this file) of a JSON object whose keys stand in for
+                  any param below — real JSON, not url-encoded strings. A param spelled out in the URL WINS
+                  over the file, so ONE hosted device catalog serves every launch that differs only by
+                  `lockApp` / `screen` / `owned`. That is how a multi-app phone stays under the 2048-char
+                  URL ceiling `content:check` warns at. Same contract as phone.html / board.html /
+                  org-chart.html. NOTE: with `config` the page renders only once the fetch resolves, and
+                  the file must be deployed BEFORE a puzzle is repointed at it.
+      apps        JSON array, url-encoded — the device's app catalog, drawn in order:
+                    [{"id":"dnevnik_poziva","icon":"📞","label":{"hr":"Pozivi","en":"Calls"},
+                      "screen":"list","rows":[{"icon":"☎️","primary":"…","secondary":"…","meta":"21:40",
+                                              "body":"…optional, makes the row tappable…"}]},
+                     {"id":"glasovna","icon":"🎙","label":"…","screen":"player","seconds":41,
+                      "transcript":["line one","line two"]},
+                     {"id":"galerija","icon":"🖼","label":"…","screen":"gallery","gallery":[…]}]
+                  `screen` per app: list | note | player | thread | gallery | dialer | contacts | messages.
+                  An app may carry its own `gallery`, `contacts` or `thread` array; `list` rows may carry
+                  `body` (opens a note) or `thread` (opens bubbles).
+                  Every label/primary/secondary/meta/body/transcript entry may be a {en,hr} object.
+      owned       Comma-separated app ids the player has unlocked — feed it `{{items}}`. Anything not in
+                  the list renders locked. Omit in fixed mode.
+      lockApp     App id THIS launch is asking the passcode for. That icon opens the lock screen (and the
+                  page boots straight into it); every other locked app only shakes. One launch reports one
+                  submission, so it can only ever ask about one lock.
+      lockPrompt  decodeURIComponent — the line shown on that lock screen (or per-app `lockPrompt`).
+      contacts    JSON array, url-encoded: [{"id":"petra","name":"Petra","number":"091 234 5678",
+                                            "note":"…optional; makes the row open as a note…"}, ...]
                   used by the contacts screen, as the dialer's contact-tap prefill source, and (optionally,
                   cosmetic only) as the messages screen's "To:" selector.
       directCall  contacts screen only: "true" → tapping a contact calls immediately instead of opening the dialer
@@ -62,6 +113,7 @@
       contacts (directCall):  { sessionId, userId, gameId:'android-phone', submission, timestamp }
       messages (typed) SEND:  { sessionId, userId, gameId:'android-phone', submission, timestamp }
       messages (phrase tap):  { sessionId, userId, gameId:'android-phone', choice, timestamp }
+      lock screen UNLOCK:     { sessionId, userId, gameId:'android-phone', submission, timestamp }
       confirmLabel tap:       { sessionId, userId, gameId:'android-phone', success:true, outcome:'confirmed', timestamp }
       give up:                { sessionId, userId, gameId:'android-phone', success:false, outcome:'abandoned', timestamp }
   -->
@@ -108,6 +160,69 @@
     .appicon .glyph { width: 54px; height: 54px; border-radius: 16px; display: flex; align-items: center; justify-content: center; font-size: 24px;
       background: linear-gradient(160deg, #2a2f3a 0%, #20242d 100%); box-shadow: 0 4px 10px rgba(0,0,0,.35); }
     .appicon span { font-size: 11px; color: var(--muted); }
+    /* A locked app is SHOWN, not hidden — seeing what you can't open yet is the whole motivation. */
+    .appicon.locked .glyph { opacity: .32; filter: grayscale(1); }
+    .appicon.locked span { opacity: .5; }
+    .appicon .lockbadge { position: absolute; right: -5px; bottom: -3px; font-size: 14px; line-height: 1;
+      filter: none; opacity: 1; text-shadow: 0 1px 3px rgba(0,0,0,.8); }
+    .appicon .iconwrap { position: relative; display: block; line-height: 0; }
+    @keyframes shake { 10%, 90% { transform: translateX(-2px); } 30%, 70% { transform: translateX(4px); } 50% { transform: translateX(-4px); } }
+    .appicon.shaking { animation: shake .4s ease; }
+
+    /* List screen — one shape for a call log, a drafts folder, a search history, a calendar */
+    .rowlist { display: flex; flex-direction: column; padding: 6px 0 18px; }
+    .row { display: flex; align-items: flex-start; gap: 12px; padding: 11px 16px; text-align: left;
+      background: none; border: none; border-bottom: 1px solid rgba(255,255,255,.05); color: var(--ink); width: 100%; }
+    .row .rglyph { flex: 0 0 34px; height: 34px; border-radius: 10px; display: flex; align-items: center; justify-content: center;
+      font-size: 16px; background: var(--panel); }
+    .row .rbody { flex: 1 1 auto; min-width: 0; }
+    .row .rprimary { font-size: 14px; font-weight: 600; }
+    .row .rsecondary { font-size: 12px; color: var(--muted); margin-top: 2px; word-break: break-word; }
+    .row .rmeta { flex: 0 0 auto; font-size: 11px; color: var(--muted); padding-top: 3px; }
+    .row.tap { cursor: pointer; }
+    .row.tap:active { background: rgba(255,255,255,.04); }
+
+    /* Note / document screen */
+    .note { padding: 18px 18px 26px; font-size: 14px; line-height: 1.62; white-space: pre-wrap; word-break: break-word; }
+    .note .nmeta { font-size: 11px; color: var(--muted); margin-bottom: 12px; }
+
+    /* Thread (an SMS conversation, read-only) */
+    .thread { display: flex; flex-direction: column; gap: 7px; padding: 14px 12px 20px; }
+    .threadsep { align-self: center; font-size: 10.5px; color: var(--muted); padding: 8px 0 3px; letter-spacing: .03em; }
+    .bubblerow { display: flex; }
+    .bubblerow.them { justify-content: flex-start; }
+    .bubblerow.me { justify-content: flex-end; }
+    .bubble { max-width: 78%; padding: 9px 12px 7px; border-radius: 16px; font-size: 14px; line-height: 1.5;
+      word-break: break-word; white-space: pre-wrap; }
+    .bubblerow.them .bubble { background: var(--recv); color: var(--ink); border-bottom-left-radius: 5px; }
+    .bubblerow.me .bubble { background: var(--accent-dark); color: #fff; border-bottom-right-radius: 5px; }
+    .bubble .btime { display: block; margin-top: 4px; font-size: 10px; color: var(--muted); text-align: right;
+      font-variant-numeric: tabular-nums; }
+    .bubblerow.me .bubble .btime { color: rgba(255,255,255,.62); }
+    .bubble.unsent { border: 1px dashed #4a5262; background: none; color: var(--muted); }
+
+    /* Voice-memo player */
+    .player { padding: 26px 20px; display: flex; flex-direction: column; align-items: center; gap: 16px; }
+    .player .playbtn { width: 74px; height: 74px; border-radius: 50%; border: none; cursor: pointer; font-size: 28px;
+      background: var(--accent); color: #fff; box-shadow: 0 6px 18px rgba(0,0,0,.4); }
+    .player .playbtn:disabled { background: var(--key); }
+    .wave { display: flex; align-items: center; justify-content: center; gap: 3px; height: 42px; width: 100%; }
+    .wave i { display: block; width: 3px; border-radius: 2px; background: var(--key); transition: background .15s, height .15s; }
+    .wave i.on { background: var(--accent); }
+    .player .elapsed { font-variant-numeric: tabular-nums; font-size: 13px; color: var(--muted); }
+    .transcript { width: 100%; font-size: 14px; line-height: 1.6; white-space: pre-wrap; min-height: 3.2em; }
+    .transcript .pending { color: transparent; }
+
+    /* Passcode screen for one locked app */
+    .lockwrap { padding: 26px 22px; display: flex; flex-direction: column; align-items: center; gap: 14px; text-align: center; }
+    .lockwrap .bigglyph { font-size: 40px; }
+    .lockwrap .prompt { font-size: 13px; color: var(--muted); line-height: 1.55; }
+    .lockinput { width: 100%; text-align: center; font-size: 19px; letter-spacing: .04em; padding: 12px 10px; border-radius: 12px;
+      border: 1px solid #2f3542; background: var(--panel); color: var(--ink); }
+    .lockinput:focus { outline: none; border-color: var(--accent); }
+    .unlockbtn { width: 100%; padding: 13px; border-radius: 12px; border: none; cursor: pointer; font-size: 15px; font-weight: 600;
+      background: var(--accent); color: #fff; }
+    .unlockbtn:disabled { background: var(--key); color: var(--muted); }
 
     /* Dialer */
     .readout-wrap { padding: 20px 20px 6px; text-align: center; }
@@ -187,6 +302,7 @@
     .confirmbtn:active { transform: scale(.97); }
 
     .giveup { margin-top: 16px; background: none; border: none; color: var(--muted); font-size: 13px; text-decoration: underline; cursor: pointer; }
+    .hintMsg { min-height: 16px; margin-top: 6px; font-size: 12.5px; text-align: center; color: var(--muted); width: 100%; }
 
     .overlay { position: fixed; inset: 0; background: rgba(6,7,10,.88); backdrop-filter: blur(3px);
       display: none; align-items: center; justify-content: center; z-index: 20; padding: 24px; }
@@ -226,6 +342,8 @@
     <div class="footerbar">
       <button class="confirmbtn" id="confirmbtn" style="display:none">Confirm</button>
       <button class="giveup" id="giveup">Give up</button>
+      <button class="giveup" id="hintBtn" style="display:none">💡 Hint</button>
+      <div class="hintMsg" id="hintMsg"></div>
     </div>
   </div>
 
@@ -238,6 +356,9 @@
   </div>
 
   <script>
+  // Wrapped in an async IIFE purely so the hosted `config` fetch below can be awaited before
+  // any param is read. Nothing else about the scoping changed; `window.__androidPhone` is still the hook.
+  (async () => {
     // ------- Telegram bootstrap (mirrors padlock.html) -------
     const tg = window.Telegram ? window.Telegram.WebApp : null;
     if (tg) { tg.ready(); tg.expand(); }
@@ -252,6 +373,27 @@
 
     // ------- Input params -------
     const q = new URLSearchParams(window.location.search);
+
+    // ------- Hosted config (MINIGAMES.md -> "Keep launch URLs small") -------
+    // Same contract as phone.html / board.html / org-chart.html: `config` names a JSON file (normally a
+    // bare filename beside this app) whose keys stand in for URL params. A param spelled out in the URL
+    // WINS over the file, so one hosted device catalog can serve every launch that differs only by
+    // `lockApp` / `screen` / `owned`. That split is what keeps an 8-app phone under the 2048-char URL
+    // ceiling `content:check` warns at. Values in the file are real JSON, not url-encoded strings.
+    const configParam = q.get('config');
+    if (configParam) {
+      const configUrl = new URL(configParam, window.location.href).href;
+      try {
+        const res = await fetch(configUrl);
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        for (const [k, v] of Object.entries(await res.json())) {
+          if (q.has(k)) continue;
+          q.set(k, typeof v === 'string' ? v : encodeURIComponent(JSON.stringify(v)));
+        }
+      } catch (e) {
+        console.error('config: failed to load', configUrl, e);
+      }
+    }
     const sessionId = q.get('sessionId');
     const userId = (tg && tg.initDataUnsafe && tg.initDataUnsafe.user) ? tg.initDataUnsafe.user.id : q.get('userId');
     let lang = (q.get('lang') || (tg && tg.initDataUnsafe && tg.initDataUnsafe.user && tg.initDataUnsafe.user.language_code) || 'en')
@@ -261,11 +403,15 @@
       en: { title: 'Phone', give: 'Give up', call: 'Phone', contacts: 'Contacts', messages: 'Messages', gallery: 'Gallery',
             sent: 'Sent', sentBody: 'Check the chat for the verdict.', to: 'To',
             typeMsg: 'Type a message…', noContacts: 'No contacts.', confirmed: 'Confirmed', confirmedBody: 'Noted.',
-            gaveTitle: 'Screen locked', gaveBody: 'You put the phone down.' },
+            gaveTitle: 'Screen locked', gaveBody: 'You put the phone down.',
+            unlock: 'Unlock', locked: 'Locked',
+            hint: '💡 Hint', noMoreHints: '💡 No more hints' },
       hr: { title: 'Telefon', give: 'Odustani', call: 'Telefon', contacts: 'Kontakti', messages: 'Poruke', gallery: 'Galerija',
             sent: 'Poslano', sentBody: 'Provjeri chat za ishod.', to: 'Za',
             typeMsg: 'Upiši poruku…', noContacts: 'Nema kontakata.', confirmed: 'Potvrđeno', confirmedBody: 'Zabilježeno.',
-            gaveTitle: 'Zaključan zaslon', gaveBody: 'Odložiš telefon.' },
+            gaveTitle: 'Zaključan zaslon', gaveBody: 'Odložiš telefon.',
+            unlock: 'Otključaj', locked: 'Zaključano',
+            hint: '💡 Savjet', noMoreHints: '💡 Nema više savjeta' },
     };
     const S = STR[lang] || STR.en;
     function loc(v) { if (v == null) return ''; if (typeof v === 'object') return v[lang] || v.en || Object.values(v)[0] || ''; return String(v); }
@@ -275,6 +421,36 @@
     document.getElementById('giveup').textContent = S.give;
     const tagText = q.get('tag');
     if (tagText) { const t = document.getElementById('tag'); t.style.display = ''; t.textContent = decodeURIComponent(tagText); }
+
+    // ------- In-app hints (optional; duplicated from the puzzle's own hints) -------
+    const hints = pjson('hints') || [];
+    let hintsRevealed = 0;
+    const hintMsgEl = document.getElementById('hintMsg');
+    const hintBtn = document.getElementById('hintBtn');
+    if (hints.length) {
+      hintBtn.style.display = '';
+      hintBtn.textContent = `${S.hint} (${hints.length})`;
+      hintBtn.addEventListener('click', () => {
+        const h = hints[Math.min(hintsRevealed, hints.length - 1)];
+        hintsRevealed = Math.min(hintsRevealed + 1, hints.length);
+        hintBtn.textContent = hintsRevealed >= hints.length ? S.noMoreHints : `${S.hint} (${hints.length - hintsRevealed} left)`;
+        hintMsgEl.textContent = loc(h);
+      });
+    }
+
+    // ------- Content-authored app catalog (optional) -------
+    // `apps` is the phone's own home screen: the STATIC catalog of what this device has. `owned` is the
+    // DYNAMIC half — the engine interpolates `{{items}}` into it, so the grid renders the player's real
+    // device with everything they haven't opened yet greyed out and padlocked. Splitting it this way is
+    // what keeps the catalog authorable: ownership changes every launch, the icons never do.
+    const apps = pjson('apps') || [];
+    const owned = new Set((q.get('owned') || '').split(',').map((s) => s.trim()).filter(Boolean));
+    // When a lock puzzle launched this page, `lockApp` names the app it is asking about — that one app
+    // opens a passcode screen; every other locked app just shakes. One launch reports one submission,
+    // so it can only ever be asking about one lock.
+    const lockApp = q.get('lockApp') || null;
+    const lockPromptRaw = q.get('lockPrompt');
+    const lockPrompt = lockPromptRaw ? decodeURIComponent(lockPromptRaw) : null;
 
     const contacts = pjson('contacts') || [];
     const phrases = pjson('phrases');
@@ -291,7 +467,7 @@
     // phrase id) — never `success`, and this page never receives the correct number/contact/message.
     // `confirmLabel` is the one deliberate exception (client-trusted "I looked" beat, see header doc).
     function send(payload) {
-      const result = { sessionId, userId, gameId: 'android-phone', timestamp: Date.now(), ...payload };
+      const result = { sessionId, userId, gameId: 'android-phone', timestamp: Date.now(), metrics: { hintsUsed: hintsRevealed }, ...payload };
       console.log('📤 android-phone result', result);
       try { if (window.parent && window.parent !== window) window.parent.postMessage({ type: 'MINIGAME_RESULT', payload: result }, '*'); } catch (e) {}
       try {
@@ -343,29 +519,211 @@
     }
 
     // ------- HOME -------
+    // Two modes. With no `apps` param this is the original fixed grid (Phone / Contacts / Messages,
+    // plus Gallery when there are photos) — every existing caller keeps working untouched. With `apps`
+    // it becomes the authored device: the catalog, drawn in order, dimmed where `owned` says the player
+    // has not opened it yet.
     function renderHome() {
       const grid = document.createElement('div'); grid.className = 'applist';
-      const apps = [
-        { icon: '📞', label: S.call, go: renderDialer },
-        { icon: '👤', label: S.contacts, go: renderContacts },
-        { icon: '💬', label: S.messages, go: renderMessages },
-      ];
-      if (gallery.length) apps.push({ icon: '🖼️', label: S.gallery, go: renderGallery });
-      apps.forEach((a) => {
-        const btn = document.createElement('button'); btn.className = 'appicon';
+      const entries = apps.length
+        ? apps.map((a) => ({
+            icon: a.icon || '📱',
+            label: loc(a.label) || a.id,
+            locked: !owned.has(a.id),
+            go: () => openApp(a),
+          }))
+        : [
+            { icon: '📞', label: S.call, go: renderDialer },
+            { icon: '👤', label: S.contacts, go: renderContacts },
+            { icon: '💬', label: S.messages, go: renderMessages },
+            ...(gallery.length ? [{ icon: '🖼️', label: S.gallery, go: () => renderGallery() }] : []),
+          ];
+      entries.forEach((a) => {
+        const btn = document.createElement('button'); btn.className = 'appicon' + (a.locked ? ' locked' : '');
+        const wrap = document.createElement('span'); wrap.className = 'iconwrap';
         const g = document.createElement('div'); g.className = 'glyph'; g.textContent = a.icon;
+        wrap.appendChild(g);
+        if (a.locked) { const lk = document.createElement('span'); lk.className = 'lockbadge'; lk.textContent = '🔒'; wrap.appendChild(lk); }
         const lb = document.createElement('span'); lb.textContent = a.label;
-        btn.append(g, lb);
-        btn.addEventListener('click', () => a.go());
+        btn.append(wrap, lb);
+        btn.addEventListener('click', () => {
+          if (!a.locked) return a.go();
+          a.go(); // openApp decides: passcode screen for THIS launch's lock, a shake for the rest
+          if (!btn.classList.contains('shaking')) return;
+        });
         grid.appendChild(btn);
       });
       showScreen(grid, { title: S.title, showBack: false });
+      homeGrid = grid;
+    }
+    let homeGrid = null;
+
+    /** Route a tap on a catalog app: open its screen, ask for its passcode, or refuse. */
+    function openApp(a) {
+      if (!owned.has(a.id)) {
+        if (lockApp && a.id === lockApp) return renderLock(a);
+        haptic('err');
+        const btn = homeGrid && homeGrid.children[apps.indexOf(a)];
+        if (btn) { btn.classList.remove('shaking'); void btn.offsetWidth; btn.classList.add('shaking'); }
+        return;
+      }
+      switch (a.screen) {
+        case 'list': return renderList(a);
+        case 'note': return renderNote(a);
+        case 'player': return renderPlayer(a);
+        case 'gallery': return renderGallery(a.gallery || gallery, loc(a.label) || S.gallery);
+        case 'thread': return renderThread(a.thread, loc(a.label) || S.messages, renderHome);
+        case 'dialer': return renderDialer();
+        case 'contacts': return renderContacts(a.contacts, loc(a.label) || S.contacts);
+        case 'messages': return renderMessages();
+        default: return renderNote(a);
+      }
+    }
+
+    // ------- LIST -------
+    // One screen shape for every "rows of text with a timestamp" app a phone has: the call log, the
+    // drafts folder, the search history, the calendar. A row with a `body` opens as a note.
+    function renderList(a) {
+      const wrap = document.createElement('div'); wrap.className = 'rowlist';
+      (a.rows || []).forEach((r) => {
+        const tappable = !!(r.body || r.rows || r.thread);
+        const row = document.createElement(tappable ? 'button' : 'div');
+        row.className = 'row' + (tappable ? ' tap' : '');
+        if (tappable) row.type = 'button';
+        const g = document.createElement('div'); g.className = 'rglyph'; g.textContent = r.icon || '•';
+        const body = document.createElement('div'); body.className = 'rbody';
+        const p = document.createElement('div'); p.className = 'rprimary'; p.textContent = loc(r.primary);
+        body.appendChild(p);
+        if (r.secondary) { const s2 = document.createElement('div'); s2.className = 'rsecondary'; s2.textContent = loc(r.secondary); body.appendChild(s2); }
+        row.append(g, body);
+        if (r.meta) { const m = document.createElement('div'); m.className = 'rmeta'; m.textContent = loc(r.meta); row.appendChild(m); }
+        if (tappable) row.addEventListener('click', () => {
+          // A conversation row opens as bubbles; anything else opens as a document. Same list shape either
+          // way — which is what lets one `list` app be a call log, a drafts folder OR an SMS inbox.
+          if (r.thread) renderThread(r.thread, loc(r.primary), () => renderList(a));
+          else renderNote({ label: r.primary, meta: r.meta, body: r.body }, a);
+        });
+        wrap.appendChild(row);
+      });
+      showScreen(wrap, { title: loc(a.label) || S.title, showBack: true });
+    }
+
+    // ------- NOTE / document -------
+    function renderNote(a, parent) {
+      const wrap = document.createElement('div'); wrap.className = 'note';
+      if (a.meta) { const m = document.createElement('div'); m.className = 'nmeta'; m.textContent = loc(a.meta); wrap.appendChild(m); }
+      const b = document.createElement('div'); b.textContent = loc(a.body); wrap.appendChild(b);
+      showScreen(wrap, { title: loc(a.label) || S.title, showBack: true });
+      // A note reached from somewhere other than home goes BACK there, not to the grid: from a list row
+      // to its list, from a contact card to the phonebook. `parent` is either the app to re-render or a
+      // plain function for callers whose "back" isn't a list.
+      if (typeof parent === 'function') backBtn.onclick = parent;
+      else if (parent) backBtn.onclick = () => renderList(parent);
+    }
+
+    // ------- THREAD (one SMS conversation, read-only) -------
+    // A conversation you READ, as distinct from the `messages` screen, which is a conversation you WRITE.
+    // Reports nothing on its own — pair it with `confirmLabel` when a puzzle needs an "I read it" beat.
+    // Entries: { from: "me" | "them", text, time } and { sep: "…" } for a date divider. An entry marked
+    // `unsent: true` draws as a dashed ghost bubble — the message that was typed and never sent.
+    function renderThread(entries, title, back) {
+      const wrap = document.createElement('div'); wrap.className = 'thread';
+      (entries || []).forEach((m) => {
+        if (m.sep) {
+          const sep = document.createElement('div'); sep.className = 'threadsep'; sep.textContent = loc(m.sep);
+          wrap.appendChild(sep); return;
+        }
+        const row = document.createElement('div');
+        row.className = 'bubblerow ' + (m.from === 'me' ? 'me' : 'them');
+        const b = document.createElement('div'); b.className = 'bubble' + (m.unsent ? ' unsent' : '');
+        const txt = document.createElement('div'); txt.textContent = loc(m.text); b.appendChild(txt);
+        if (m.time) { const tm = document.createElement('span'); tm.className = 'btime'; tm.textContent = loc(m.time); b.appendChild(tm); }
+        row.appendChild(b); wrap.appendChild(row);
+      });
+      showScreen(wrap, { title: title || S.messages, showBack: true });
+      if (typeof back === 'function') backBtn.onclick = back;
+    }
+
+    // ------- PLAYER (voice memo) -------
+    // Deliberately paced: the transcript reveals line by line as it "plays", because a recording you
+    // have to sit through lands differently from a wall of text you can skim in a second.
+    function renderPlayer(a) {
+      const wrap = document.createElement('div'); wrap.className = 'player';
+      const btn = document.createElement('button'); btn.className = 'playbtn'; btn.textContent = '▶';
+      const wave = document.createElement('div'); wave.className = 'wave';
+      const BARS = 44;
+      for (let i = 0; i < BARS; i++) {
+        const bar = document.createElement('i');
+        // A fixed pseudo-random profile, so the waveform looks like audio and not like a bar chart.
+        bar.style.height = `${8 + ((Math.sin(i * 1.7) + Math.sin(i * 0.6)) + 2) * 8}px`;
+        wave.appendChild(bar);
+      }
+      const elapsed = document.createElement('div'); elapsed.className = 'elapsed';
+      const lines = Array.isArray(a.transcript) ? a.transcript : (a.transcript ? [a.transcript] : []);
+      // `seconds` is the recording's FICTIONAL length — what the counter shows. `playSeconds` is how
+      // long the player actually sits there, capped by default: a 0:41 memo that really takes 41
+      // seconds to get through is honest and unplayable inside a Telegram sheet. The counter still
+      // runs 0:00 → 0:41, just faster than real time.
+      const total = Number(a.seconds) || Math.max(6, lines.length * 3);
+      const playFor = Number(a.playSeconds) || Math.min(total, 14);
+      const fmt = (s) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
+      elapsed.textContent = `0:00 / ${fmt(total)}`;
+      const tr = document.createElement('div'); tr.className = 'transcript';
+      const spans = lines.map((l) => { const s = document.createElement('div'); s.className = 'pending'; s.textContent = loc(l); tr.appendChild(s); return s; });
+      wrap.append(btn, wave, elapsed, tr);
+
+      let t = 0, timer = null;
+      btn.addEventListener('click', () => {
+        if (timer) return;
+        haptic('tick');
+        timer = setInterval(() => {
+          t += 0.25;
+          const frac = Math.min(1, t / playFor);
+          elapsed.textContent = `${fmt(frac * total)} / ${fmt(total)}`;
+          wave.querySelectorAll('i').forEach((bar, i) => bar.classList.toggle('on', i / BARS <= frac));
+          // First line lands early — a blank screen for the opening third reads as a broken player,
+          // not as suspense.
+          spans.forEach((s, i) => { if (frac >= (i + 0.35) / spans.length) s.classList.remove('pending'); });
+          if (frac >= 1) { clearInterval(timer); timer = null; btn.textContent = '↻'; spans.forEach((s) => s.classList.remove('pending')); t = 0; }
+        }, 250);
+      });
+      showScreen(wrap, { title: loc(a.label) || S.title, showBack: true });
+    }
+
+    // ------- LOCK (passcode for one app) -------
+    // Server-authoritative like every other input here: the page never receives the passcode, it reports
+    // what the player typed and the engine grades it exactly as it would a typed in-chat answer.
+    function renderLock(a) {
+      const wrap = document.createElement('div'); wrap.className = 'lockwrap';
+      const glyph = document.createElement('div'); glyph.className = 'bigglyph'; glyph.textContent = a.icon || '🔒';
+      const prompt = document.createElement('div'); prompt.className = 'prompt';
+      prompt.textContent = lockPrompt || loc(a.lockPrompt) || '';
+      const input = document.createElement('input'); input.className = 'lockinput'; input.type = 'text';
+      input.autocomplete = 'off'; input.autocapitalize = 'none'; input.spellcheck = false;
+      input.inputMode = a.lockMode === 'numeric' ? 'numeric' : 'text';
+      const go = document.createElement('button'); go.className = 'unlockbtn'; go.textContent = S.unlock; go.disabled = true;
+      input.addEventListener('input', () => { go.disabled = !input.value.trim(); });
+      input.addEventListener('keydown', (e) => { if (e.key === 'Enter' && !go.disabled) go.click(); });
+      go.addEventListener('click', () => {
+        if (solved) return;
+        const text = input.value.trim(); if (!text) return;
+        solved = true; haptic('ok');
+        send({ submission: text });
+        setTimeout(() => showOverlay('sent'), 300);
+      });
+      wrap.append(glyph, prompt, input, go);
+      showScreen(wrap, { title: loc(a.label) || S.title, showBack: true });
+      setTimeout(() => input.focus(), 60);
     }
 
     // ------- GALLERY (pure viewer — never reports on its own) -------
-    function renderGallery() {
+    // A catalog app may carry its OWN roll (`renderGallery(a.gallery, …)`); with no arguments this is
+    // the top-level `gallery` param, exactly as before.
+    let shownGallery = gallery;
+    function renderGallery(roll, title) {
+      shownGallery = Array.isArray(roll) && roll.length ? roll : gallery;
       const grid = document.createElement('div'); grid.className = 'gallerygrid';
-      gallery.forEach((g, i) => {
+      shownGallery.forEach((g, i) => {
         const tile = document.createElement('button'); tile.className = 'gtile'; tile.type = 'button';
         if (g.img) {
           const img = document.createElement('img'); img.src = g.img; img.loading = 'lazy'; tile.appendChild(img);
@@ -376,12 +734,12 @@
         tile.addEventListener('click', () => openLightbox(i));
         grid.appendChild(tile);
       });
-      showScreen(grid, { title: S.gallery, showBack: true });
+      showScreen(grid, { title: title || S.gallery, showBack: true });
     }
 
     let lbIndex = 0;
     function renderLightbox() {
-      const g = gallery[lbIndex];
+      const g = shownGallery[lbIndex];
       const media = document.getElementById('lbmedia');
       media.replaceChildren();
       if (g.img) { const img = document.createElement('img'); img.className = 'lbimg'; img.src = g.img; media.appendChild(img); }
@@ -393,8 +751,8 @@
       document.getElementById('lightbox').classList.add('show');
     }
     document.getElementById('lbclose').addEventListener('click', () => document.getElementById('lightbox').classList.remove('show'));
-    document.getElementById('lbprev').addEventListener('click', () => { lbIndex = (lbIndex - 1 + gallery.length) % gallery.length; renderLightbox(); haptic('tick'); });
-    document.getElementById('lbnext').addEventListener('click', () => { lbIndex = (lbIndex + 1) % gallery.length; renderLightbox(); haptic('tick'); });
+    document.getElementById('lbprev').addEventListener('click', () => { lbIndex = (lbIndex - 1 + shownGallery.length) % shownGallery.length; renderLightbox(); haptic('tick'); });
+    document.getElementById('lbnext').addEventListener('click', () => { lbIndex = (lbIndex + 1) % shownGallery.length; renderLightbox(); haptic('tick'); });
 
     // ------- DIALER -------
     function renderDialer() {
@@ -436,10 +794,15 @@
     }
 
     // ------- CONTACTS -------
-    function renderContacts() {
+    // A catalog app may carry its OWN phonebook (`a.contacts`), exactly as a gallery app carries its own
+    // roll; with no argument this is the top-level `contacts` param, as before. A contact with a `note`
+    // opens that note instead of dialling — which turns the screen from "look the number up and call it"
+    // into a phonebook you READ, the shape a found phone actually wants.
+    function renderContacts(roll, title) {
+      const book = Array.isArray(roll) && roll.length ? roll : contacts;
       const list = document.createElement('div');
-      if (!contacts.length) { const empty = document.createElement('div'); empty.className = 'tag'; empty.textContent = S.noContacts; list.appendChild(empty); }
-      contacts.forEach((c) => {
+      if (!book.length) { const empty = document.createElement('div'); empty.className = 'tag'; empty.textContent = S.noContacts; list.appendChild(empty); }
+      book.forEach((c) => {
         const row = document.createElement('div'); row.className = 'row';
         const av = document.createElement('div'); av.className = 'avatar'; av.style.background = c.color || colorFor(c.id);
         av.textContent = (loc(c.name)[0] || '?').toUpperCase();
@@ -454,6 +817,8 @@
             solved = true; haptic('ok');
             send({ submission: c.id });
             setTimeout(() => showOverlay('sent'), 400);
+          } else if (c.note) {
+            renderNote({ label: c.name, meta: c.number, body: c.note }, () => renderContacts(roll, title));
           } else {
             dialerPrefill = c.number || '';
             renderDialer();
@@ -461,7 +826,7 @@
         });
         list.appendChild(row);
       });
-      showScreen(list, { title: S.contacts, showBack: true });
+      showScreen(list, { title: title || S.contacts, showBack: true });
     }
 
     // ------- MESSAGES -------
@@ -523,16 +888,31 @@
       showScreen(wrap, { title: S.messages, showBack: true });
     }
 
-    // ------- Boot: deep-link straight into a screen if `screen` is set, else show the home grid -------
+    // ------- Boot -------
+    // `screen` deep-links into one screen, as before. With an `apps` catalog the home grid IS the point,
+    // so the default lands there; and when a lock puzzle launched us (`lockApp`) we go straight to that
+    // app's passcode screen — the player already knows which door they are at, and making them hunt for
+    // the icon first would be friction, not atmosphere. Back still returns to the grid.
     const initial = q.get('screen');
+    const lockTarget = lockApp ? apps.find((a) => a.id === lockApp) : null;
     if (initial === 'dialer') renderDialer();
     else if (initial === 'contacts') renderContacts();
     else if (initial === 'messages') renderMessages();
     else if (initial === 'gallery') renderGallery();
-    else renderHome();
+    else if (initial === 'home' || !initial) { renderHome(); if (lockTarget && !owned.has(lockTarget.id)) renderLock(lockTarget); }
+    else {
+      // `screen` may also name a catalog app id — a puzzle that wants to open straight into one.
+      const target = apps.find((a) => a.id === initial);
+      if (target) openApp(target); else renderHome();
+    }
 
     // test hook
-    window.__androidPhone = { renderHome, renderDialer, renderContacts, renderMessages, renderGallery, openLightbox };
+    window.__androidPhone = {
+      renderHome, renderDialer, renderContacts, renderMessages, renderGallery, openLightbox,
+      renderList, renderNote, renderPlayer, renderLock, renderThread, openApp,
+      state: () => ({ apps, owned: [...owned], lockApp }),
+    };
+  })();
   </script>
 </body>
 </html>
