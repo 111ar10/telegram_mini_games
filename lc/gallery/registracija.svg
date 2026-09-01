@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="1000" viewBox="0 0 1000 1000" role="img">
+
+  <defs>
+    <filter id="hand"><feGaussianBlur stdDeviation="1.5"/></filter>
+    <filter id="glassblur"><feGaussianBlur stdDeviation="8"/></filter>
+    <filter id="grain3">
+      <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="3" seed="23" result="n"/>
+      <feColorMatrix in="n" type="saturate" values="0" result="g"/>
+      <feComponentTransfer in="g" result="g2"><feFuncA type="linear" slope="0.22"/></feComponentTransfer>
+      <feBlend in="SourceGraphic" in2="g2" mode="multiply"/></filter>
+    <linearGradient id="body" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#434a54"/><stop offset="48%" stop-color="#262b32"/>
+      <stop offset="100%" stop-color="#14171b"/></linearGradient>
+    <linearGradient id="sheen" x1="0" y1="0" x2="1" y2="0.7">
+      <stop offset="0%" stop-color="#eaf0ff" stop-opacity="0.28"/>
+      <stop offset="32%" stop-color="#eaf0ff" stop-opacity="0.04"/>
+      <stop offset="60%" stop-color="#eaf0ff" stop-opacity="0.14"/>
+      <stop offset="100%" stop-color="#eaf0ff" stop-opacity="0.02"/></linearGradient>
+    <radialGradient id="vig3" cx="50%" cy="52%" r="66%">
+      <stop offset="42%" stop-color="#000" stop-opacity="0"/>
+      <stop offset="100%" stop-color="#000" stop-opacity="0.70"/></radialGradient>
+  </defs>
+  <rect width="1000" height="1000" fill="#090b0e"/>
+  <g filter="url(#glassblur)" opacity="0.85">
+    <rect y="90" width="1000" height="330" fill="#2b313a"/>
+    <rect y="90" width="1000" height="130" fill="#3b4351"/>
+    <circle cx="180" cy="205" r="46" fill="#c8b98a" opacity="0.45"/>
+    <circle cx="822" cy="182" r="32" fill="#b9c9d8" opacity="0.32"/>
+  </g>
+  <g filter="url(#hand)">
+    <rect y="360" width="1000" height="640" fill="url(#body)"/>
+    <ellipse cx="500" cy="372" rx="450" ry="18" fill="#000" opacity="0.4"/>
+    <rect x="192" y="452" width="616" height="152" rx="14" fill="#000" opacity="0.5"/>
+    <rect x="200" y="460" width="600" height="136" rx="11" fill="#f4f5f3" stroke="#98a0a8" stroke-width="3"/>
+    <rect x="200" y="460" width="68" height="136" rx="11" fill="#123f8d"/>
+    <rect x="256" y="460" width="12" height="136" fill="#123f8d"/>
+    <g fill="#f0c419">
+      <circle cx="234" cy="496" r="3.4"/><circle cx="246" cy="505" r="3.4"/><circle cx="246" cy="521" r="3.4"/>
+      <circle cx="234" cy="530" r="3.4"/><circle cx="222" cy="521" r="3.4"/><circle cx="222" cy="505" r="3.4"/>
+    </g>
+    <text x="234" y="578" font-family="Liberation Sans, Arial, sans-serif" font-size="28" font-weight="700"
+          fill="#f4f5f3" text-anchor="middle">HR</text>
+    <text x="292" y="562" font-family="Liberation Sans, Arial, sans-serif" font-size="64" font-weight="700"
+          fill="#15171a" letter-spacing="1">ZG</text>
+    <g transform="translate(372 500)">
+      <rect width="34" height="34" fill="#f4f5f3"/>
+      <g fill="#c8102e">
+        <rect x="0" y="0" width="11.3" height="11.3"/><rect x="22.6" y="0" width="11.3" height="11.3"/>
+        <rect x="11.3" y="11.3" width="11.3" height="11.3"/>
+        <rect x="0" y="22.6" width="11.3" height="11.3"/><rect x="22.6" y="22.6" width="11.3" height="11.3"/>
+      </g>
+    </g>
+    <text x="424" y="562" font-family="Liberation Sans, Arial, sans-serif" font-size="64" font-weight="700"
+          fill="#15171a" letter-spacing="1">4182-CR</text>
+    <rect y="648" width="1000" height="352" fill="#000" opacity="0.32"/>
+    <rect x="150" y="672" width="700" height="6" rx="3" fill="#4c535d" opacity="0.5"/>
+  </g>
+  <rect width="1000" height="1000" fill="url(#sheen)"/>
+  <g opacity="0.28">
+    <path d="M0 720 L 380 200 L 486 200 L 106 720 Z" fill="#eaf0ff" opacity="0.24"/>
+    <path d="M170 790 L 496 280 L 546 280 L 220 790 Z" fill="#eaf0ff" opacity="0.14"/>
+  </g>
+  <g fill="#dfe8f5" opacity="0.20">
+    <circle cx="128" cy="186" r="7"/><circle cx="163" cy="238" r="4"/><circle cx="96" cy="282" r="5"/>
+    <circle cx="888" cy="322" r="6"/><circle cx="928" cy="388" r="4"/><circle cx="846" cy="248" r="3"/>
+    <circle cx="742" cy="140" r="5"/><circle cx="255" cy="112" r="4"/>
+  </g>
+  <rect width="1000" height="1000" fill="url(#vig3)"/>
+  <rect width="1000" height="1000" filter="url(#grain3)" fill="#8b929c" opacity="0.12"/>
+
+</svg>
