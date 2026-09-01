@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Org chart</title>
+
+  <!-- Telegram Web App SDK (same as the other mini-games in this repo) -->
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+  <!--
+    ORGANISATIONAL CHART  (game-agnostic — config-driven, SERVER-AUTHORITATIVE, skinnable)
+    ---------------------------------------------------------------------------------------------------------
+    A chart of departments and one case to file. Tap a department to file the case there. Most departments
+    DEFLECT: each carries a visible rule ("anything tagged `bird` goes to Airspace"), and the case animates
+    along the chain, hop by hop, until it reaches a department that has no rule matching any of its tags —
+    or until it enters a LOOP, which is the point. Two departments that deflect to each other cannot be
+    escaped by filing harder; the case has to be RECLASSIFIED (a limited number of tag swaps) so the chain
+    can terminate somewhere.
+    So the player is doing three things a message-and-buttons UI can't give them: reading a graph, watching a
+    traversal to see WHY it went where it went, and editing the thing being routed to change the route.
+
+    Reuse examples: routing a complaint through a helpdesk, a parcel through a sorting office, a patient
+    through triage, a bug through an engineering org, a soul through an afterlife bureaucracy.
+
+    Params (URL query):
+      depts        JSON array, url-encoded (REQUIRED, 3–8 entries):
+                   [{"id":"kabinet","icon":"🗄","label":"Cabinet Office",
+                     "rule":{"tag":"bird","to":"zracni"},"note":"..."}]
+                   `label`/`note`/`rule.note` may be {en,hr} objects. A dept with NO `rule` is a terminus:
+                   it accepts anything that reaches it. Several may be termini.
+      caseItem     JSON object, url-encoded (REQUIRED):
+                   {"icon":"📄","label":"Case 8-C","tags":["bird","outdoors"]}
+      tagPool      JSON array, url-encoded (REQUIRED when `reclass` > 0): the tags a reclassification may
+                   swap IN — [{"id":"civil_servant","label":"Airborne civil servant"}]. `label` may be {en,hr}.
+                   `tagPool` is ALSO the label table for display: any tag without an entry here renders as
+                   its raw id (`bird` rather than "A bird"), in the case's chips and in every rule line. So
+                   list the case's OWN starting tags here too — a pool entry the player can't swap to is
+                   harmless, an unlabelled id in the middle of a rule looks like a bug.
+      reclass      integer, how many tag swaps the player may make (default 0 = none). Each swap replaces one
+                   of the case's current tags with one from `tagPool`.
+      maxHops      safety cap on a single traversal before it is declared a loop (default 8)
+      title        header title      tag  italic prompt line (decodeURIComponent)      lang  "en" | "hr"
+      hints        JSON array of localized strings → "💡 Hint" button (see MINIGAMES.md shared conventions)
+      skin         "noir" (default) | "forest" | "paper" | "tech"; individual overrides:
+                   bg,bg2,panel,panel2,ink,muted,accent,accent2,btnInk,border (hex, with or without "#")
+      config       URL (normally a bare filename beside this file) of a JSON object whose keys stand in for any
+                   of the params above — the way to keep a launch URL short when `depts` carries a whole chart.
+                   A param spelled out in the URL wins over the file. NOTE: with `config` the chart renders only
+                   once the fetch resolves, so a headless hook must wait for content rather than read the DOM
+                   on load.
+      sessionId / userId  passed straight back in the result payload
+    NOTE ON SECRECY: the rules, the tags and the tag pool are all things the player reads off the screen, so
+    they ride in params exactly as MINIGAMES.md allows. Which department is the intended terminus is NEVER
+    sent — it is derivable only by traversing, and the engine validates the answer.
+    Result (Telegram.WebApp.sendData):
+      on FILE (a department accepted):
+        { sessionId, userId, gameId:'org-chart',
+          submission:"<deptId>",                       // where the case came to rest
+          metrics:{ hops, deflections, loops, reclassUsed, tags:"<final,tag,list>", hintsUsed },
+          timestamp }
+        `metrics.tags` is in the case's ORIGINAL tag order with swaps applied in place, so a puzzle that
+        wants to check the reclassification too can match it as a stable string.
+      give up: { sessionId, userId, gameId:'org-chart', success:false, outcome:'abandoned', timestamp }
+    Test hook: window.__orgChart = { file(deptId), reclassify(oldTag, newTagId), state, confirmable, submit() }
+  -->
+  <style>
+    :root {
+      --bg: #0b0d10; --bg2: #191c22; --panel: #14161c; --panel2: #1a1d24; --ink: #e8e6df; --muted: #8b90a0;
+      --accent: #c9a24b; --accent2: #8a6d2c; --btnink: #221a06; --border: #2c313c; --shadow: rgba(0,0,0,.55);
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    html, body { height: 100%; }
+    body {
+      background: radial-gradient(120% 90% at 50% 0%, var(--bg2) 0%, var(--bg) 65%);
+      color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      display: flex; flex-direction: column; align-items: center; min-height: 100%;
+      padding: 14px 12px 24px; user-select: none;
+    }
+    header { text-align: center; }
+    h1 { font-size: 18px; font-weight: 700; }
+    .tag { margin-top: 5px; font-size: 12.5px; color: var(--muted); font-style: italic; max-width: 360px; line-height: 1.4; }
+    .wrap { width: 360px; max-width: 96vw; }
+
+    /* the case being routed */
+    .case {
+      margin: 14px 0 10px; background: var(--panel2); border: 1px solid var(--border); border-radius: 12px;
+      padding: 10px 12px; display: flex; align-items: center; gap: 10px;
+      box-shadow: 0 6px 18px var(--shadow);
+    }
+    .case .ic { font-size: 26px; line-height: 1; }
+    .case .body { flex: 1; min-width: 0; }
+    .case .nm { font-size: 14px; font-weight: 600; }
+    .tags { margin-top: 5px; display: flex; flex-wrap: wrap; gap: 5px; }
+    .chip {
+      font-size: 11px; padding: 2px 8px; border-radius: 999px; border: 1px solid var(--border);
+      background: var(--panel); color: var(--muted); cursor: pointer;
+    }
+    .chip.act { border-color: var(--accent); color: var(--accent); }
+    .chip.swapped { border-style: dashed; }
+
+    /* the chart */
+    .chart { display: flex; flex-direction: column; gap: 8px; margin-top: 6px; }
+    .dept {
+      position: relative; background: var(--panel); border: 1px solid var(--border); border-radius: 12px;
+      padding: 10px 12px; cursor: pointer; transition: transform .12s, border-color .12s, background .12s;
+    }
+    .dept:active { transform: scale(.985); }
+    .dept .top { display: flex; align-items: center; gap: 9px; }
+    .dept .ic { font-size: 20px; }
+    .dept .lbl { font-size: 13.5px; font-weight: 600; flex: 1; }
+    .dept .rule { margin-top: 6px; font-size: 11.5px; color: var(--muted); line-height: 1.35; }
+    .dept .rule b { color: var(--accent); font-weight: 600; }
+    .dept.term { border-left: 3px solid var(--accent2); }
+    .dept.hot { border-color: var(--accent); background: var(--panel2); }
+    .dept.hold { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(201,162,75,.22); }
+    .dept .badge {
+      position: absolute; top: -8px; right: 10px; font-size: 10.5px; padding: 1px 7px; border-radius: 999px;
+      background: var(--accent); color: var(--btnink); font-weight: 700;
+    }
+
+    /* the travelling case marker */
+    .puck {
+      position: fixed; z-index: 40; font-size: 22px; pointer-events: none;
+      transition: left .34s cubic-bezier(.4,.1,.3,1), top .34s cubic-bezier(.4,.1,.3,1);
+      filter: drop-shadow(0 3px 6px rgba(0,0,0,.6));
+    }
+
+    /* the log — WHY it went where it went */
+    .log { margin-top: 12px; border-top: 1px dashed var(--border); padding-top: 10px; }
+    .log h2 { font-size: 11.5px; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; }
+    .log ol { margin: 7px 0 0 16px; }
+    .log li { font-size: 12px; color: var(--muted); line-height: 1.5; }
+    .log li b { color: var(--ink); font-weight: 600; }
+    .log li.loop b, .log li.loop { color: #d98b7a; }
+
+    .row { display: flex; gap: 8px; margin-top: 14px; }
+    button {
+      flex: 1; padding: 12px 10px; border: 0; border-radius: 11px; font-size: 14px; font-weight: 700;
+      background: var(--accent); color: var(--btnink); cursor: pointer;
+    }
+    button.ghost { background: transparent; color: var(--muted); border: 1px solid var(--border); font-weight: 600; }
+    button:disabled { opacity: .42; cursor: default; }
+    .note { margin-top: 9px; font-size: 11.5px; color: var(--muted); text-align: center; min-height: 15px; line-height: 1.4; }
+    .hintbox { margin-top: 9px; font-size: 12px; color: var(--ink); background: var(--panel2);
+      border: 1px solid var(--border); border-radius: 10px; padding: 9px 11px; line-height: 1.45; display: none; }
+    /* reclassification sheet */
+    .sheet {
+      position: fixed; inset: 0; background: rgba(0,0,0,.62); display: none; align-items: flex-end;
+      justify-content: center; z-index: 50;
+    }
+    .sheet.on { display: flex; }
+    .sheet .in {
+      width: 100%; max-width: 420px; background: var(--panel); border-top-left-radius: 16px;
+      border-top-right-radius: 16px; border: 1px solid var(--border); padding: 14px 14px 20px;
+    }
+    .sheet h3 { font-size: 14px; margin-bottom: 4px; }
+    .sheet p { font-size: 12px; color: var(--muted); line-height: 1.45; margin-bottom: 10px; }
+    .opts { display: flex; flex-direction: column; gap: 7px; }
+    .opt {
+      padding: 10px 11px; border: 1px solid var(--border); border-radius: 10px; background: var(--panel2);
+      font-size: 13px; cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1 id="h1">Organisational chart</h1>
+    <div class="tag" id="tagline"></div>
+  </header>
+
+  <div class="wrap">
+    <div class="case" id="caseCard">
+      <div class="ic" id="caseIcon">📄</div>
+      <div class="body">
+        <div class="nm" id="caseName">Case</div>
+        <div class="tags" id="caseTags"></div>
+      </div>
+    </div>
+
+    <div class="chart" id="chart"></div>
+
+    <div class="log" id="logBox" style="display:none">
+      <h2 id="logTitle">Routing</h2>
+      <ol id="log"></ol>
+    </div>
+
+    <div class="hintbox" id="hintbox"></div>
+    <div class="note" id="note"></div>
+
+    <div class="row">
+      <button class="ghost" id="hintBtn" style="display:none">💡</button>
+      <button class="ghost" id="giveBtn">Give up</button>
+      <button id="fileBtn" disabled>File it</button>
+    </div>
+  </div>
+
+  <div class="sheet" id="sheet"><div class="in">
+    <h3 id="shTitle">Reclassify</h3>
+    <p id="shBody"></p>
+    <div class="opts" id="shOpts"></div>
+    <div class="row"><button class="ghost" id="shCancel">Cancel</button></div>
+  </div></div>
+
+<script>
+// `async` for the `await` on the hosted config below; the IIFE runs synchronously up to that point,
+// and without a `config` param there is no await at all.
+(async function () {
+  "use strict";
+  const tg = window.Telegram && window.Telegram.WebApp;
+  if (tg) { try { tg.ready(); tg.expand(); } catch (e) {} }
+
+  // ---------- params -------------------------------------------------------
+  const Q = new URLSearchParams(location.search);
+
+  // ---------- hosted config (MINIGAMES.md → "Keep launch URLs small") -------
+  // `config` is a URL — normally a bare filename sitting beside this app — to a JSON object whose
+  // keys stand in for URL params. It exists because a launch URL carrying a whole org chart's worth
+  // of departments and routing rules runs past the ~2 KB that some proxies and older WebViews
+  // refuse, and the failure there is a 414 from the static host rather than anything Telegram
+  // reports back.
+  //
+  // A param spelled out in the URL always wins over the file, so one hosted config can serve several
+  // puzzles that differ only in a field or two.
+  //
+  // Non-string values are re-encoded rather than passed through: every reader below goes through
+  // `Q.get()`/`J()`, which expect exactly the `encodeURIComponent(JSON.stringify(x))` shape the
+  // engine's own `buildWebAppUrl` produces for an inline param. Strings are left alone — `skin`,
+  // `title` and friends are read raw, and encoding those would surface the escapes to the player.
+  const configParam = Q.get("config");
+  if (configParam) {
+    const configUrl = new URL(configParam, window.location.href).href;
+    try {
+      const res = await fetch(configUrl);
+      if (!res.ok) throw new Error("HTTP " + res.status);
+      for (const [k, v] of Object.entries(await res.json())) {
+        if (Q.has(k)) continue;
+        Q.set(k, typeof v === "string" ? v : encodeURIComponent(JSON.stringify(v)));
+      }
+    } catch (e) {
+      console.error("config: failed to load", configUrl, e);
+    }
+  }
+
+  const LANG = (function () {
+    const l = (Q.get("lang") || "").toLowerCase();
+    if (l === "hr" || l === "en") return l;
+    const t = tg && tg.initDataUnsafe && tg.initDataUnsafe.user && tg.initDataUnsafe.user.language_code;
+    return String(t || "en").slice(0, 2) === "hr" ? "hr" : "en";
+  })();
+  const L = (v, d) => {
+    if (v === undefined || v === null) return d || "";
+    if (typeof v === "object") return v[LANG] || v.en || v.hr || d || "";
+    return String(v);
+  };
+  const J = (name, dflt) => {
+    const raw = Q.get(name);
+    if (!raw) return dflt;
+    try { return JSON.parse(decodeURIComponent(raw)); } catch (e) {
+      try { return JSON.parse(raw); } catch (e2) { return dflt; }
+    }
+  };
+  const T = {
+    en: { routing: "Routing", deflected: "deflected to", accepted: "accepted the case", loop: "loop — it will not settle",
+          file: "File it", give: "Give up", pick: "Tap a department to file the case there.",
+          held: "%s is holding the case. File it there, or reclassify and try again.",
+          loopNote: "The case is going in circles. Change what it IS, not where you send it.",
+          reclassT: "Reclassify", reclassB: "Swap %s for:", noLeft: "No reclassifications left.",
+          left: "%n reclassification(s) left", cancel: "Cancel", term: "accepts" },
+    hr: { routing: "Prosljeđivanje", deflected: "proslijedio na", accepted: "prihvatio predmet",
+          loop: "vrti se u krug — nikad neće stati", file: "Predaj", give: "Odustani",
+          pick: "Dodirnite odjel da tamo predate predmet.",
+          held: "%s drži predmet. Predajte ga tamo, ili prekategorizirajte i pokušajte ponovno.",
+          loopNote: "Predmet se vrti u krug. Promijenite ŠTO je, ne kamo ga šaljete.",
+          reclassT: "Prekategorizacija", reclassB: "Zamijeni %s za:", noLeft: "Nema više prekategorizacija.",
+          left: "Preostalo prekategorizacija: %n", cancel: "Odustani", term: "prima" },
+  }[LANG];
+
+  const DEPTS = (J("depts", []) || []).filter((d) => d && d.id);
+  const CASE = J("caseItem", { icon: "📄", label: "Case", tags: [] }) || {};
+  const POOL = J("tagPool", []) || [];
+  const HINTS = J("hints", []) || [];
+  const MAX_HOPS = Math.max(2, parseInt(Q.get("maxHops") || "8", 10) || 8);
+  let reclassLeft = Math.max(0, parseInt(Q.get("reclass") || "0", 10) || 0);
+
+  // ---------- skin ---------------------------------------------------------
+  const SKINS = {
+    noir: {}, // the stylesheet default
+    forest: { bg: "#0d1410", bg2: "#16241a", panel: "#132018", panel2: "#1a2b20", ink: "#eaf0e6",
+              muted: "#8fa693", accent: "#7fbf7a", accent2: "#4e7d4a", btnInk: "#0b1a0d", border: "#27402c" },
+    paper:  { bg: "#e9e3d4", bg2: "#f4efe2", panel: "#fbf7ec", panel2: "#f2ecdd", ink: "#2b2a26",
+              muted: "#7d776a", accent: "#8a6a2f", accent2: "#6c5324", btnInk: "#fbf7ec", border: "#d6cdb8" },
+    tech:   { bg: "#07090f", bg2: "#0f1622", panel: "#0c121c", panel2: "#111a28", ink: "#e2efff",
+              muted: "#7d8fa8", accent: "#4fc3f7", accent2: "#2a7fa8", btnInk: "#04121c", border: "#1d2c40" },
+  };
+  (function skin() {
+    const s = Object.assign({}, SKINS[(Q.get("skin") || "noir").toLowerCase()] || {});
+    ["bg", "bg2", "panel", "panel2", "ink", "muted", "accent", "accent2", "btnInk", "border"].forEach((k) => {
+      const v = Q.get(k);
+      if (v) s[k] = v.charAt(0) === "#" ? v : "#" + v;
+    });
+    const map = { btnInk: "btnink" };
+    Object.keys(s).forEach((k) => {
+      document.documentElement.style.setProperty("--" + (map[k] || k), s[k]);
+    });
+  })();
+
+  // ---------- state --------------------------------------------------------
+  const byId = {};
+  DEPTS.forEach((d) => { byId[d.id] = d; });
+  let tags = (CASE.tags || []).slice();            // current tags, ORIGINAL ORDER preserved
+  const swapped = {};                              // index -> true, for the dashed chip
+  let holder = null;                               // dept id currently holding the case
+  let hops = 0, deflections = 0, loops = 0, reclassUsed = 0, hintsUsed = 0, moves = 0;
+  let animating = false;
+
+  const el = (id) => document.getElementById(id);
+  el("h1").textContent = Q.get("title") ? decodeURIComponent(Q.get("title")) : "Organisational chart";
+  el("tagline").textContent = Q.get("tag") ? decodeURIComponent(Q.get("tag")) : T.pick;
+  el("caseIcon").textContent = CASE.icon || "📄";
+  el("caseName").textContent = L(CASE.label, "Case");
+  el("fileBtn").textContent = T.file;
+  el("giveBtn").textContent = T.give;
+  el("logTitle").textContent = T.routing;
+  el("shCancel").textContent = T.cancel;
+
+  function tagLabel(t) {
+    const p = POOL.find((x) => x && x.id === t);
+    return p ? L(p.label, t) : t;
+  }
+
+  function renderTags() {
+    const box = el("caseTags");
+    box.innerHTML = "";
+    tags.forEach((t, i) => {
+      const c = document.createElement("div");
+      c.className = "chip" + (reclassLeft > 0 ? " act" : "") + (swapped[i] ? " swapped" : "");
+      c.textContent = tagLabel(t);
+      if (reclassLeft > 0) c.onclick = () => openSheet(i);
+      box.appendChild(c);
+    });
+  }
+
+  function ruleText(d) {
+    if (!d.rule) return "<b>" + T.term + "</b>";
+    const extra = d.rule.note ? " — " + L(d.rule.note, "") : "";
+    return "<b>" + tagLabel(d.rule.tag) + "</b> → " + L((byId[d.rule.to] || {}).label, d.rule.to) + extra;
+  }
+
+  function renderChart() {
+    const chart = el("chart");
+    chart.innerHTML = "";
+    DEPTS.forEach((d) => {
+      const box = document.createElement("div");
+      box.className = "dept" + (d.rule ? "" : " term") + (holder === d.id ? " hold" : "");
+      box.dataset.id = d.id;
+      const note = d.note ? '<div class="rule">' + L(d.note, "") + "</div>" : "";
+      box.innerHTML =
+        '<div class="top"><div class="ic">' + (d.icon || "🗄") + "</div>" +
+        '<div class="lbl">' + L(d.label, d.id) + "</div></div>" +
+        '<div class="rule">' + ruleText(d) + "</div>" + note +
+        (holder === d.id ? '<div class="badge">' + (CASE.icon || "📄") + "</div>" : "");
+      box.onclick = () => file(d.id);
+      chart.appendChild(box);
+    });
+  }
+
+  function logLine(html, cls) {
+    el("logBox").style.display = "block";
+    const li = document.createElement("li");
+    if (cls) li.className = cls;
+    li.innerHTML = html;
+    el("log").appendChild(li);
+  }
+
+  // ---------- the traversal ------------------------------------------------
+  function centreOf(id) {
+    const n = document.querySelector('.dept[data-id="' + id + '"]');
+    if (!n) return null;
+    const r = n.getBoundingClientRect();
+    return { x: r.left + r.width - 34, y: r.top + 12 };
+  }
+
+  function puckTo(id, first) {
+    let p = document.querySelector(".puck");
+    if (!p) {
+      p = document.createElement("div");
+      p.className = "puck";
+      p.textContent = CASE.icon || "📄";
+      document.body.appendChild(p);
+    }
+    const c = centreOf(id);
+    if (!c) return;
+    if (first) { p.style.transition = "none"; }
+    p.style.left = c.x + "px";
+    p.style.top = c.y + "px";
+    if (first) { void p.offsetWidth; p.style.transition = ""; }
+  }
+
+  /** Walk the chart from `startId`, one visible hop at a time. */
+  function file(startId) {
+    if (animating || !byId[startId]) return;
+    animating = true;
+    moves++;
+    el("log").innerHTML = "";
+    el("note").textContent = "";
+    holder = null;
+    renderChart();
+    puckTo(startId, true);
+
+    const seen = [];
+    let at = startId;
+    let step = 0;
+
+    function hop() {
+      const d = byId[at];
+      seen.push(at);
+      hops++;
+      const match = d.rule && tags.indexOf(d.rule.tag) !== -1 ? d.rule : null;
+
+      if (!match) {                                   // terminus: it stops here
+        holder = at;
+        renderChart();
+        puckTo(at);
+        logLine("<b>" + L(d.label, at) + "</b> " + T.accepted + ".");
+        el("note").textContent = T.held.replace("%s", L(d.label, at));
+        el("fileBtn").disabled = false;
+        animating = false;
+        return;
+      }
+
+      deflections++;
+      logLine("<b>" + L(d.label, at) + "</b> " + T.deflected + " <b>" +
+              L((byId[match.to] || {}).label, match.to) + "</b> (" + tagLabel(match.tag) + ")");
+      const next = match.to;
+      if (!byId[next] || seen.indexOf(next) !== -1 || ++step >= MAX_HOPS) {
+        loops++;
+        logLine(T.loop, "loop");
+        el("note").textContent = T.loopNote;
+        el("fileBtn").disabled = true;
+        holder = null;
+        renderChart();
+        animating = false;
+        return;
+      }
+      at = next;
+      puckTo(at);
+      setTimeout(hop, 380);
+    }
+    setTimeout(hop, 120);
+  }
+
+  // ---------- reclassification --------------------------------------------
+  let sheetIdx = -1;
+  function openSheet(i) {
+    if (reclassLeft <= 0) { el("note").textContent = T.noLeft; return; }
+    sheetIdx = i;
+    el("shTitle").textContent = T.reclassT;
+    el("shBody").textContent = T.reclassB.replace("%s", tagLabel(tags[i]));
+    const opts = el("shOpts");
+    opts.innerHTML = "";
+    POOL.filter((p) => p && p.id && tags.indexOf(p.id) === -1).forEach((p) => {
+      const b = document.createElement("div");
+      b.className = "opt";
+      b.textContent = L(p.label, p.id);
+      b.onclick = () => applySwap(p.id);
+      opts.appendChild(b);
+    });
+    el("sheet").classList.add("on");
+  }
+  function closeSheet() { el("sheet").classList.remove("on"); sheetIdx = -1; }
+  el("shCancel").onclick = closeSheet;
+  el("sheet").onclick = (e) => { if (e.target === el("sheet")) closeSheet(); };
+
+  function applySwap(newTag) {
+    if (sheetIdx < 0 || reclassLeft <= 0) return;
+    tags[sheetIdx] = newTag;
+    swapped[sheetIdx] = true;
+    reclassUsed++;
+    reclassLeft--;
+    closeSheet();
+    holder = null;
+    el("fileBtn").disabled = true;
+    el("log").innerHTML = "";
+    el("logBox").style.display = "none";
+    const p = document.querySelector(".puck");
+    if (p) p.remove();
+    renderTags();
+    renderChart();
+    el("note").textContent = reclassLeft > 0 ? T.left.replace("%n", String(reclassLeft)) : T.noLeft;
+  }
+
+  // ---------- hints --------------------------------------------------------
+  if (HINTS.length) {
+    el("hintBtn").style.display = "";
+    let shown = 0;
+    el("hintBtn").onclick = () => {
+      if (shown >= HINTS.length) return;
+      const box = el("hintbox");
+      box.style.display = "block";
+      box.textContent = L(HINTS[shown], "");
+      shown++; hintsUsed = shown;
+      if (shown >= HINTS.length) el("hintBtn").disabled = true;
+    };
+  }
+
+  // ---------- result -------------------------------------------------------
+  function send(payload) {
+    const body = Object.assign({
+      sessionId: Q.get("sessionId") || "", userId: Q.get("userId") || "",
+      gameId: "org-chart", timestamp: Date.now(),
+    }, payload);
+    if (tg && tg.sendData) { try { tg.sendData(JSON.stringify(body)); } catch (e) {} }
+    else { console.log("org-chart result", body); }
+  }
+  function submit() {
+    if (!holder) return;
+    send({
+      submission: holder,
+      metrics: { hops, deflections, loops, reclassUsed, moves, tags: tags.join(","), hintsUsed },
+    });
+  }
+  el("fileBtn").onclick = submit;
+  el("giveBtn").onclick = () => send({ success: false, outcome: "abandoned" });
+
+  // ---------- boot ---------------------------------------------------------
+  renderTags();
+  renderChart();
+  if (reclassLeft > 0) el("note").textContent = T.left.replace("%n", String(reclassLeft));
+
+  window.__orgChart = {
+    file, reclassify: (oldTag, newTagId) => {
+      const i = tags.indexOf(oldTag);
+      if (i < 0) return false;
+      sheetIdx = i; applySwap(newTagId); return true;
+    },
+    get state() { return { tags: tags.slice(), holder, hops, deflections, loops, reclassUsed, reclassLeft }; },
+    get confirmable() { return !!holder; },
+    submit,
+  };
+})();
+</script>
+</body>
+</html>
