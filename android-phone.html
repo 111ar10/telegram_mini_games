@@ -31,6 +31,10 @@
                     a call log, a drafts folder, a search history, a calendar. A row carrying `body` is
                     tappable and opens as a note (back returns to the list, not to home).
       • note      — a single document: optional `meta` line above pre-wrapped body text.
+                    Rows nest: a row carrying `rows` is a FOLDER and opens another list, so one `list`
+                    app is a whole file explorer. A row carrying `requires` is drawn only when that id
+                    is in `owned` — absent rather than padlocked, for a folder that must stay hidden
+                    until the player has earned it.
       • thread    — ONE SMS conversation, read-only: left/right bubbles, optional per-message time, date
                     dividers, and a dashed "ghost" bubble for a message that was typed and never sent.
                     The conversation you READ, as against `messages`, which is the one you WRITE. Reports
@@ -405,13 +409,13 @@
             typeMsg: 'Type a message…', noContacts: 'No contacts.', confirmed: 'Confirmed', confirmedBody: 'Noted.',
             gaveTitle: 'Screen locked', gaveBody: 'You put the phone down.',
             unlock: 'Unlock', locked: 'Locked',
-            hint: '💡 Hint', noMoreHints: '💡 No more hints' },
+            hint: '💡 Hint', noMoreHints: '💡 No more hints', emptyFolder: 'Empty folder.' },
       hr: { title: 'Telefon', give: 'Odustani', call: 'Telefon', contacts: 'Kontakti', messages: 'Poruke', gallery: 'Galerija',
             sent: 'Poslano', sentBody: 'Provjeri chat za ishod.', to: 'Za',
             typeMsg: 'Upiši poruku…', noContacts: 'Nema kontakata.', confirmed: 'Potvrđeno', confirmedBody: 'Zabilježeno.',
             gaveTitle: 'Zaključan zaslon', gaveBody: 'Odložiš telefon.',
             unlock: 'Otključaj', locked: 'Zaključano',
-            hint: '💡 Savjet', noMoreHints: '💡 Nema više savjeta' },
+            hint: '💡 Savjet', noMoreHints: '💡 Nema više savjeta', emptyFolder: 'Prazna mapa.' },
     };
     const S = STR[lang] || STR.en;
     function loc(v) { if (v == null) return ''; if (typeof v === 'object') return v[lang] || v.en || Object.values(v)[0] || ''; return String(v); }
@@ -582,10 +586,18 @@
 
     // ------- LIST -------
     // One screen shape for every "rows of text with a timestamp" app a phone has: the call log, the
-    // drafts folder, the search history, the calendar. A row with a `body` opens as a note.
-    function renderList(a) {
+    // drafts folder, the search history, the calendar, a file manager. A row opens as a note (`body`),
+    // as a conversation (`thread`), or as ANOTHER LIST (`rows`) — which is what makes this a file
+    // explorer: folders nest to any depth and each level backs out to its parent, not to the home grid.
+    function renderList(a, back) {
       const wrap = document.createElement('div'); wrap.className = 'rowlist';
+      let drawn = 0;
       (a.rows || []).forEach((r) => {
+        // A row may be conditional: `requires` names an id that must be in `owned` for the row to exist.
+        // Not dimmed and not padlocked — ABSENT. A padlock advertises that there is something to find;
+        // a hidden folder must not, or it isn't hidden.
+        if (r.requires && !owned.has(r.requires)) return;
+        drawn++;
         const tappable = !!(r.body || r.rows || r.thread);
         const row = document.createElement(tappable ? 'button' : 'div');
         row.className = 'row' + (tappable ? ' tap' : '');
@@ -596,16 +608,23 @@
         body.appendChild(p);
         if (r.secondary) { const s2 = document.createElement('div'); s2.className = 'rsecondary'; s2.textContent = loc(r.secondary); body.appendChild(s2); }
         row.append(g, body);
-        if (r.meta) { const m = document.createElement('div'); m.className = 'rmeta'; m.textContent = loc(r.meta); row.appendChild(m); }
+        // A folder with no timestamp of its own shows how much is in it, the way a file manager does.
+        const meta = r.meta != null ? loc(r.meta)
+                   : (r.rows ? String(r.rows.filter((c) => !c.requires || owned.has(c.requires)).length) : '');
+        if (meta) { const m = document.createElement('div'); m.className = 'rmeta'; m.textContent = meta; row.appendChild(m); }
         if (tappable) row.addEventListener('click', () => {
-          // A conversation row opens as bubbles; anything else opens as a document. Same list shape either
-          // way — which is what lets one `list` app be a call log, a drafts folder OR an SMS inbox.
-          if (r.thread) renderThread(r.thread, loc(r.primary), () => renderList(a));
-          else renderNote({ label: r.primary, meta: r.meta, body: r.body }, a);
+          // Back always returns HERE, one level up, rather than to the home grid — the difference between
+          // a file explorer and a set of unrelated screens.
+          const backHere = () => renderList(a, back);
+          if (r.rows) renderList(r, backHere);
+          else if (r.thread) renderThread(r.thread, loc(r.primary), backHere);
+          else renderNote({ label: r.primary, meta: r.meta, body: r.body }, backHere);
         });
         wrap.appendChild(row);
       });
-      showScreen(wrap, { title: loc(a.label) || S.title, showBack: true });
+      if (!drawn) { const empty = document.createElement('div'); empty.className = 'tag'; empty.textContent = S.emptyFolder; wrap.appendChild(empty); }
+      showScreen(wrap, { title: loc(a.label) || loc(a.primary) || S.title, showBack: true });
+      if (typeof back === 'function') backBtn.onclick = back;
     }
 
     // ------- NOTE / document -------
