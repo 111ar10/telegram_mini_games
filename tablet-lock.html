@@ -57,10 +57,14 @@
 
     /* Tablet chassis */
     .tablet {
-      width: 320px; max-width: 92vw; aspect-ratio: 3 / 4; border-radius: 26px; position: relative;
+      /* Height from the viewport, not a fixed 3:4. That ratio is a tablet's, and as a phone it left the
+         keypad's last row (0 and ⌫) clipped below `overflow: hidden` — on a 6-digit PIN containing a
+         zero, that is a code nobody can enter. The clamp keeps it phone-shaped on a laptop too. */
+      width: 320px; max-width: 92vw; height: clamp(430px, 82vh, 620px); border-radius: 26px; position: relative;
       background: #0d0f13; border: 8px solid #1b1e25; box-shadow: 0 20px 46px var(--shadow), inset 0 0 0 1px #2a2f3a;
       overflow: hidden;
     }
+    :root { --key: clamp(46px, 12.5vw, 62px); --kgap: clamp(8px, 2.2vw, 12px); }
     .cam { position: absolute; top: 10px; left: 50%; transform: translateX(-50%); width: 6px; height: 6px;
       border-radius: 50%; background: #05070a; box-shadow: inset 0 0 2px #000; z-index: 6; }
 
@@ -69,7 +73,7 @@
       background-size: cover; background-position: center; transition: transform .5s ease, opacity .5s ease; }
 
     /* Lock layer */
-    #lockLayer { padding: 34px 16px 18px; justify-content: flex-start; }
+    #lockLayer { padding: clamp(18px, 4vh, 34px) 16px 14px; justify-content: flex-start; }
     .lclock { font-size: 40px; font-weight: 300; letter-spacing: 1px; text-shadow: 0 2px 8px rgba(0,0,0,.5); margin-top: 6px; }
     .ldate { font-size: 13px; color: rgba(255,255,255,.85); margin-top: 4px; text-shadow: 0 1px 4px rgba(0,0,0,.5); }
     .owner { margin-top: 18px; font-size: 14px; font-weight: 600; color: rgba(255,255,255,.92); text-shadow: 0 1px 4px rgba(0,0,0,.5); }
@@ -79,13 +83,15 @@
     .padwrap { margin-top: auto; width: 100%; display: flex; flex-direction: column; align-items: center; padding-bottom: 6px; }
 
     /* PIN dots */
-    .dots { display: flex; gap: 12px; margin-bottom: 16px; }
+    .dots { display: flex; gap: 12px; margin-bottom: clamp(10px, 2vh, 16px); }
     .dot { width: 13px; height: 13px; border-radius: 50%; border: 1.5px solid rgba(255,255,255,.7); background: transparent; transition: background .15s, transform .15s; }
     .dot.filled { background: var(--ink); transform: scale(1.05); }
 
     /* Keypad */
-    .keys { display: grid; grid-template-columns: repeat(3, 62px); gap: 12px; justify-content: center; }
-    .key { width: 62px; height: 62px; border-radius: 50%; border: none; cursor: pointer;
+    /* Keys shrink on a narrow screen rather than overflowing the device. Belt and braces with the
+       height above: either alone still clips on a short viewport. */
+    .keys { display: grid; grid-template-columns: repeat(3, var(--key)); gap: var(--kgap); justify-content: center; }
+    .key { width: var(--key); height: var(--key); border-radius: 50%; border: none; cursor: pointer;
       background: rgba(255,255,255,.14); backdrop-filter: blur(2px); color: var(--ink); font-size: 21px; font-weight: 600;
       display: flex; align-items: center; justify-content: center; transition: background .1s, transform .06s; }
     .key:active { background: rgba(255,255,255,.28); transform: scale(.94); }
