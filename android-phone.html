@@ -35,6 +35,11 @@
                     app is a whole file explorer. A row carrying `requires` is drawn only when that id
                     is in `owned` — absent rather than padlocked, for a folder that must stay hidden
                     until the player has earned it.
+      • agenda    — a calendar, grouped by day with a time gutter and a coloured bar per entry, the way
+                    a phone calendar reads. `days: [{ label, today?, empty?, entries: [...] }]`; an entry is
+                    `{ from, to?, title, note?, color?, repeat?, body?, requires? }` and one carrying `body`
+                    opens as a note. A day with no entries still draws its header — an empty evening is
+                    information.
       • thread    — ONE SMS conversation, read-only: left/right bubbles, optional per-message time, date
                     dividers, and a dashed "ghost" bubble for a message that was typed and never sent.
                     The conversation you READ, as against `messages`, which is the one you WRITE. Reports
@@ -189,6 +194,26 @@
     /* Note / document screen */
     .note { padding: 18px 18px 26px; font-size: 14px; line-height: 1.62; white-space: pre-wrap; word-break: break-word; }
     .note .nmeta { font-size: 11px; color: var(--muted); margin-bottom: 12px; }
+
+    /* Agenda (a calendar that looks like one) */
+    .agenda { padding: 6px 0 18px; }
+    .agday { position: sticky; top: 0; z-index: 2; background: var(--panel);
+      padding: 9px 14px 6px; font-size: 11px; letter-spacing: .06em; text-transform: uppercase;
+      color: var(--muted); border-bottom: 1px solid #22262f; }
+    .agday.today { color: var(--accent); }
+    .agempty { padding: 10px 14px 12px 78px; font-size: 12px; color: #6b7080; font-style: italic; }
+    .agrow { display: flex; gap: 10px; padding: 9px 14px; align-items: stretch; }
+    .agtime { flex: 0 0 58px; text-align: right; font-size: 11.5px; color: var(--muted);
+      font-variant-numeric: tabular-nums; line-height: 1.35; padding-top: 1px; }
+    .agtime b { display: block; color: var(--ink); font-weight: 600; font-size: 12.5px; }
+    .agbar { flex: 0 0 3px; border-radius: 2px; background: var(--accent); }
+    .agbody { flex: 1 1 auto; min-width: 0; }
+    .agtitle { font-size: 13.5px; line-height: 1.35; }
+    .agnote { font-size: 11.5px; color: var(--muted); margin-top: 2px; line-height: 1.4; }
+    /* A tappable entry is a <button>: strip the UA chrome or it lands as a white box in a dark app. */
+    .agrow.tap { cursor: pointer; background: none; border: none; color: inherit; font: inherit;
+      text-align: left; width: 100%; -webkit-appearance: none; appearance: none; }
+    .agrow.tap:active { background: #1e222b; }
 
     /* Thread (an SMS conversation, read-only) */
     .thread { display: flex; flex-direction: column; gap: 7px; padding: 14px 12px 20px; }
@@ -409,13 +434,13 @@
             typeMsg: 'Type a message…', noContacts: 'No contacts.', confirmed: 'Confirmed', confirmedBody: 'Noted.',
             gaveTitle: 'Screen locked', gaveBody: 'You put the phone down.',
             unlock: 'Unlock', locked: 'Locked',
-            hint: '💡 Hint', noMoreHints: '💡 No more hints', emptyFolder: 'Empty folder.' },
+            hint: '💡 Hint', noMoreHints: '💡 No more hints', emptyFolder: 'Empty folder.', agendaEmpty: 'Nothing scheduled.' },
       hr: { title: 'Telefon', give: 'Odustani', call: 'Telefon', contacts: 'Kontakti', messages: 'Poruke', gallery: 'Galerija',
             sent: 'Poslano', sentBody: 'Provjeri chat za ishod.', to: 'Za',
             typeMsg: 'Upiši poruku…', noContacts: 'Nema kontakata.', confirmed: 'Potvrđeno', confirmedBody: 'Zabilježeno.',
             gaveTitle: 'Zaključan zaslon', gaveBody: 'Odložiš telefon.',
             unlock: 'Otključaj', locked: 'Zaključano',
-            hint: '💡 Savjet', noMoreHints: '💡 Nema više savjeta', emptyFolder: 'Prazna mapa.' },
+            hint: '💡 Savjet', noMoreHints: '💡 Nema više savjeta', emptyFolder: 'Prazna mapa.', agendaEmpty: 'Ništa zakazano.' },
     };
     const S = STR[lang] || STR.en;
     function loc(v) { if (v == null) return ''; if (typeof v === 'object') return v[lang] || v.en || Object.values(v)[0] || ''; return String(v); }
@@ -577,6 +602,7 @@
         case 'player': return renderPlayer(a);
         case 'gallery': return renderGallery(a.gallery || gallery, loc(a.label) || S.gallery);
         case 'thread': return renderThread(a.thread, loc(a.label) || S.messages, renderHome);
+        case 'agenda': return renderAgenda(a, renderHome);
         case 'dialer': return renderDialer();
         case 'contacts': return renderContacts(a.contacts, loc(a.label) || S.contacts);
         case 'messages': return renderMessages();
@@ -638,6 +664,53 @@
       // plain function for callers whose "back" isn't a list.
       if (typeof parent === 'function') backBtn.onclick = parent;
       else if (parent) backBtn.onclick = () => renderList(parent);
+    }
+
+    // ------- AGENDA (a calendar) -------
+    // `days: [{ label, today?, entries: [{ from, to?, title, note?, color?, repeat?, body? }] }]`.
+    // A day with no entries still draws its header and says so — an empty evening is information in a
+    // game about a week somebody did not finish. An entry carrying `body` opens as a note.
+    function renderAgenda(a, back) {
+      const wrap = document.createElement('div'); wrap.className = 'agenda';
+      (a.days || []).forEach((d) => {
+        const head = document.createElement('div');
+        head.className = 'agday' + (d.today ? ' today' : '');
+        head.textContent = loc(d.label);
+        wrap.appendChild(head);
+        const entries = (d.entries || []).filter((e) => !e.requires || owned.has(e.requires));
+        if (!entries.length) {
+          const none = document.createElement('div'); none.className = 'agempty';
+          none.textContent = loc(d.empty) || S.agendaEmpty;
+          wrap.appendChild(none);
+          return;
+        }
+        entries.forEach((e) => {
+          const row = document.createElement(e.body ? 'button' : 'div');
+          row.className = 'agrow' + (e.body ? ' tap' : '');
+          if (e.body) row.type = 'button';
+          const time = document.createElement('div'); time.className = 'agtime';
+          const b = document.createElement('b'); b.textContent = loc(e.from) || '';
+          time.appendChild(b);
+          if (e.to) { const t2 = document.createElement('span'); t2.textContent = loc(e.to); time.appendChild(t2); }
+          const bar = document.createElement('div'); bar.className = 'agbar';
+          if (e.color) bar.style.background = e.color;
+          const body = document.createElement('div'); body.className = 'agbody';
+          const title = document.createElement('div'); title.className = 'agtitle';
+          title.textContent = (e.repeat ? '\u21ba ' : '') + loc(e.title);
+          body.appendChild(title);
+          if (e.note) { const n = document.createElement('div'); n.className = 'agnote'; n.textContent = loc(e.note); body.appendChild(n); }
+          row.append(time, bar, body);
+          if (e.body) {
+            row.addEventListener('click', () => renderNote(
+              { label: e.title, meta: e.from, body: e.body },
+              () => renderAgenda(a, back),
+            ));
+          }
+          wrap.appendChild(row);
+        });
+      });
+      showScreen(wrap, { title: loc(a.label) || S.title, showBack: true });
+      if (typeof back === 'function') backBtn.onclick = back;
     }
 
     // ------- THREAD (one SMS conversation, read-only) -------

@@ -356,46 +356,94 @@
       "screen": "list",
       "rows": [
         {
-          "icon": "📞",
-          "primary": "Ana P.",
+          "icon": "↗️",
+          "primary": "N.",
           "secondary": {
-            "hr": "6 poziva u 3 dana · nijedan duži od 5 s",
-            "en": "6 calls in 3 days · none over 5s"
-          },
-          "meta": "sri–čet"
-        },
-        {
-          "icon": "📵",
-          "primary": "Toma",
-          "secondary": {
-            "hr": "2 propuštena",
-            "en": "2 missed"
+            "hr": "Odlazni · 14 s",
+            "en": "Outgoing · 14s"
           },
           "meta": {
-            "hr": "srijeda",
-            "en": "Wed"
+            "hr": "čet 23:52",
+            "en": "Thu 23:52"
           }
         },
         {
-          "icon": "📲",
-          "primary": "N.",
-          "secondary": {
-            "hr": "odlazni · 14 s",
-            "en": "outgoing · 14s"
+          "icon": "↙️",
+          "primary": {
+            "hr": "01 4600 —",
+            "en": "01 4600 —"
           },
-          "meta": "čet 23:52"
+          "secondary": {
+            "hr": "Dolazni · 9 min 11 s",
+            "en": "Incoming · 9 min 11s"
+          },
+          "meta": {
+            "hr": "čet 21:40",
+            "en": "Thu 21:40"
+          }
         },
         {
-          "icon": "☎️",
+          "icon": "↗️",
+          "primary": "Ana P. (4)",
+          "secondary": {
+            "hr": "Odlazni · 3 s, 2 s, 5 s, 2 s",
+            "en": "Outgoing · 3s, 2s, 5s, 2s"
+          },
+          "meta": {
+            "hr": "čet 14:02",
+            "en": "Thu 14:02"
+          }
+        },
+        {
+          "icon": "⛔",
+          "primary": "Toma",
+          "secondary": {
+            "hr": "Propušten",
+            "en": "Missed"
+          },
+          "meta": {
+            "hr": "sri 21:12",
+            "en": "Wed 21:12"
+          }
+        },
+        {
+          "icon": "⛔",
+          "primary": "Toma",
+          "secondary": {
+            "hr": "Propušten",
+            "en": "Missed"
+          },
+          "meta": {
+            "hr": "sri 19:48",
+            "en": "Wed 19:48"
+          }
+        },
+        {
+          "icon": "↗️",
+          "primary": "Ana P. (2)",
+          "secondary": {
+            "hr": "Odlazni · 4 s, 2 s",
+            "en": "Outgoing · 4s, 2s"
+          },
+          "meta": {
+            "hr": "sri 11:55",
+            "en": "Wed 11:55"
+          }
+        },
+        {
+          "icon": "↗️",
           "primary": {
-            "hr": "Broj bez imena",
-            "en": "Number with no name"
+            "hr": "Vesna (redakcija)",
+            "en": "Vesna (newsroom)"
           },
           "secondary": {
-            "hr": "dolazni · 9 min 11 s · zagrebački fiksni",
-            "en": "incoming · 9 min 11 s · Zagreb landline"
+            "hr": "Odlazni · 6 min 40 s",
+            "en": "Outgoing · 6 min 40s"
           },
-          "meta": "čet 21:40"
+          "meta": {
+            "hr": "uto 10:15",
+            "en": "Tue 10:15"
+          }
         }
       ]
     },
@@ -576,8 +624,8 @@
               "icon": "📄",
               "primary": "vozni_red_noc.pdf",
               "secondary": {
-                "hr": "preuzeto čet 23:41",
-                "en": "downloaded Thu 23:41"
+                "hr": "142 kB · čet 23:41",
+                "en": "142 kB · Thu 23:41"
               },
               "body": {
                 "hr": "Noćni vozni red. Zadnji tramvaj s njezine strane grada polazi u 00:12.\n\n<i>Preuzela ga je u 23:41. Trideset i jednu minutu prije polaska.</i>",
@@ -588,8 +636,8 @@
               "icon": "📄",
               "primary": "obrazac_pristup_arhivi.pdf",
               "secondary": {
-                "hr": "nepopunjen",
-                "en": "blank"
+                "hr": "88 kB · uto 16:20",
+                "en": "88 kB · Tue 16:20"
               },
               "body": {
                 "hr": "Zahtjev za pristup arhivskoj građi. Sva polja prazna osim jednog.\n\nU rubrici „svrha“ piše: <code>novinarska obrada</code>.\n\n<i>Nikad ga nije predala. Vjerojatno zato što bi ga netko morao odobriti.</i>",
@@ -609,8 +657,8 @@
               "icon": "🖊",
               "primary": "potpis_1.jpg",
               "secondary": {
-                "hr": "uvećano 400 %",
-                "en": "enlarged 400%"
+                "hr": "2,4 MB · sri 12:03",
+                "en": "2.4 MB · Wed 12:03"
               },
               "body": {
                 "hr": "Potpis, uvećan dok se ne vide zrna papira.\n\n<i>Isti potpis pojavljuje se na tri različita dokumenta iz tri različita mjeseca.</i>",
@@ -621,8 +669,8 @@
               "icon": "📃",
               "primary": "protokol_str14.jpg",
               "secondary": {
-                "hr": "jedna stranica",
-                "en": "one page"
+                "hr": "1,8 MB · sri 12:05",
+                "en": "1.8 MB · Wed 12:05"
               },
               "body": {
                 "hr": "Stranica 14 protokola. Popis suautora, i jedno ime podvučeno dvaput.\n\n<i>Podvukla ga je ona, ne skener.</i>",
@@ -642,8 +690,8 @@
               "icon": "☕",
               "primary": "racun_kavana.jpg",
               "secondary": {
-                "hr": "čet, 20:48",
-                "en": "Thu, 20:48"
+                "hr": "640 kB · čet 20:49",
+                "en": "640 kB · Thu 20:49"
               },
               "body": {
                 "hr": "Dvije kave. Plaćeno gotovinom u 20:48, dvanaest minuta prije termina bez naslova.\n\n<i>Dvije kave znače da nije čekala sama.</i>",
@@ -692,8 +740,8 @@
               "icon": "📝",
               "primary": "nacrt_v3.docx",
               "secondary": {
-                "hr": "zadnja izmjena čet 20:11",
-                "en": "last edited Thu 20:11"
+                "hr": "41 kB · čet 20:11",
+                "en": "41 kB · Thu 20:11"
               },
               "requires": "arhiva_price",
               "body": {
@@ -705,8 +753,8 @@
               "icon": "📝",
               "primary": "nacrt_v1.docx",
               "secondary": {
-                "hr": "zadnja izmjena pon 02:40",
-                "en": "last edited Mon 02:40"
+                "hr": "38 kB · pon 02:40",
+                "en": "38 kB · Mon 02:40"
               },
               "requires": "arhiva_price",
               "body": {
@@ -718,8 +766,8 @@
               "icon": "📊",
               "primary": "popis_13.csv",
               "secondary": {
-                "hr": "13 redaka",
-                "en": "13 rows"
+                "hr": "3 kB · ned 22:18",
+                "en": "3 kB · Sun 22:18"
               },
               "requires": "arhiva_price",
               "body": {
@@ -731,8 +779,8 @@
               "icon": "🗓",
               "primary": "kronologija.md",
               "secondary": {
-                "hr": "2016.–danas",
-                "en": "2016–now"
+                "hr": "9 kB · čet 19:02",
+                "en": "9 kB · Thu 19:02"
               },
               "requires": "arhiva_price",
               "body": {
@@ -744,8 +792,8 @@
               "icon": "👤",
               "primary": "izvori.txt",
               "secondary": {
-                "hr": "samo inicijali",
-                "en": "initials only"
+                "hr": "1 kB · sub 09:30",
+                "en": "1 kB · Sat 09:30"
               },
               "requires": "arhiva_price",
               "body": {
@@ -757,8 +805,8 @@
               "icon": "⚖️",
               "primary": "pravna_provjera.pdf",
               "secondary": {
-                "hr": "bilješke odvjetnice",
-                "en": "the lawyer's notes"
+                "hr": "210 kB · pet 15:44",
+                "en": "210 kB · Fri 15:44"
               },
               "requires": "arhiva_price",
               "body": {
@@ -770,8 +818,8 @@
               "icon": "❓",
               "primary": "pitanja_za_simunica.docx",
               "secondary": {
-                "hr": "nikad poslano",
-                "en": "never sent"
+                "hr": "26 kB · čet 18:20",
+                "en": "26 kB · Thu 18:20"
               },
               "requires": "arhiva_price",
               "body": {
@@ -783,8 +831,8 @@
               "icon": "✉️",
               "primary": "za_vesnu_ne_saljem.eml",
               "secondary": {
-                "hr": "nacrt, bez primatelja",
-                "en": "draft, no recipient"
+                "hr": "4 kB · čet 23:58",
+                "en": "4 kB · Thu 23:58"
               },
               "requires": "arhiva_price",
               "body": {
@@ -796,8 +844,8 @@
               "icon": "🤍",
               "primary": "sto_ako_grijesim.txt",
               "secondary": {
-                "hr": "osobno",
-                "en": "personal"
+                "hr": "2 kB · čet 19:40",
+                "en": "2 kB · Thu 19:40"
               },
               "requires": "arhiva_price",
               "body": {
@@ -816,43 +864,119 @@
         "hr": "Kalendar",
         "en": "Calendar"
       },
-      "screen": "list",
-      "rows": [
+      "screen": "agenda",
+      "days": [
         {
-          "icon": "🔁",
-          "primary": "H.",
-          "secondary": {
-            "hr": "utorkom, tjedno, bez naslova",
-            "en": "weekly, Tuesdays, no title"
+          "label": {
+            "hr": "utorak, 8. rujna",
+            "en": "Tuesday 8 September"
           },
-          "meta": "18:00"
+          "entries": [
+            {
+              "from": "18:00",
+              "to": "19:00",
+              "repeat": true,
+              "color": "#4285f4",
+              "title": {
+                "hr": "H.",
+                "en": "H."
+              },
+              "note": {
+                "hr": "tjedno, bez naslova",
+                "en": "weekly, no title"
+              }
+            }
+          ]
         },
         {
-          "icon": "❓",
-          "primary": {
-            "hr": "termin bez naslova",
-            "en": "untitled appointment"
+          "label": {
+            "hr": "srijeda, 9. rujna",
+            "en": "Wednesday 9 September"
           },
-          "secondary": {
-            "hr": "bez lokacije — jedini takav u godinu dana",
-            "en": "no location — the only one all year"
+          "empty": {
+            "hr": "Ništa zakazano.",
+            "en": "Nothing scheduled."
           },
-          "meta": "čet 21:00"
+          "entries": []
         },
         {
-          "icon": "☕",
-          "primary": {
-            "hr": "mama — kava, Kvatrić",
-            "en": "mama — coffee, Kvatrić"
+          "label": {
+            "hr": "četvrtak, 10. rujna",
+            "en": "Thursday 10 September"
           },
-          "secondary": {
-            "hr": "uneseno prije dva tjedna",
-            "en": "entered a fortnight ago"
+          "today": true,
+          "entries": [
+            {
+              "from": "21:00",
+              "color": "#ea4335",
+              "title": {
+                "hr": "(bez naslova)",
+                "en": "(no title)"
+              },
+              "note": {
+                "hr": "bez lokacije · bez gostiju",
+                "en": "no location · no guests"
+              },
+              "body": {
+                "hr": "Termin bez naslova, bez lokacije i bez ijednog gosta.\\n\\nUnesen je istog jutra, u 08:40.\\n\\n<i>U kalendaru koji seže godinu unatrag nema nijednog drugog termina bez naslova.</i>",
+                "en": "An appointment with no title, no location and no guests.\\n\\nEntered the same morning, at 08:40.\\n\\n<i>In a calendar going back a year there is not one other untitled entry.</i>"
+              }
+            }
+          ]
+        },
+        {
+          "label": {
+            "hr": "petak, 11. rujna",
+            "en": "Friday 11 September"
           },
-          "meta": {
-            "hr": "petak +7",
-            "en": "Fri +7"
-          }
+          "empty": {
+            "hr": "Ništa zakazano.",
+            "en": "Nothing scheduled."
+          },
+          "entries": []
+        },
+        {
+          "label": {
+            "hr": "subota, 12. rujna",
+            "en": "Saturday 12 September"
+          },
+          "entries": [
+            {
+              "from": "11:00",
+              "to": "12:00",
+              "color": "#5f6368",
+              "title": {
+                "hr": "mama — kava, Kvatrić",
+                "en": "mama — coffee, Kvatrić"
+              },
+              "note": {
+                "hr": "uneseno prije dva tjedna",
+                "en": "entered a fortnight ago"
+              }
+            }
+          ]
+        },
+        {
+          "label": {
+            "hr": "utorak, 15. rujna",
+            "en": "Tuesday 15 September"
+          },
+          "entries": [
+            {
+              "from": "18:00",
+              "to": "19:00",
+              "repeat": true,
+              "color": "#4285f4",
+              "title": {
+                "hr": "H.",
+                "en": "H."
+              },
+              "note": {
+                "hr": "tjedno, bez naslova",
+                "en": "weekly, no title"
+              }
+            }
+          ]
         }
       ]
     },
