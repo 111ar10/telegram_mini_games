@@ -24,6 +24,10 @@
                they just sit in the pool, unused, never part of the reported submission.
       slots    how many ordered slots to fill, default = min(cards.length, 4)
       title    header title      tag  italic prompt line (decodeURIComponent)      lang  "en" | "hr"
+      config   URL (normally a bare filename beside this file) of a JSON object whose keys stand in for any of
+               the params above — the way to keep a launch URL short when `cards` carries a whole deck. A param
+               spelled out in the URL wins over the file. NOTE: with `config` the app renders only once the
+               fetch resolves, so `window.__timeline` must be awaited rather than read on load.
       sessionId / userId  passed straight back in the result payload
     Result (Telegram.WebApp.sendData):
       on CONFIRM: { sessionId, userId, gameId:'timeline-sort', submission:"<id>,<id>,...", timestamp }
@@ -117,6 +121,7 @@
   <button class="confirm" id="confirm">CONFIRM</button>
   <div class="msg" id="msg"></div>
   <button class="giveup" id="giveup">Give up</button>
+  <button class="giveup" id="hintBtn" style="display:none">💡 Hint</button>
 
   <div class="overlay" id="overlay">
     <div class="card2">
@@ -126,7 +131,58 @@
     </div>
   </div>
 
-  <script>
+  <!-- `type="module"` for the top-level `await` in `loadConfigInto` below. Module scope also means
+       nothing here leaks to `window` implicitly — `window.__timeline` below is assigned explicitly,
+       so the headless test hook is unaffected. -->
+  <script type="module">
+    // ------- Hosted config (MINIGAMES.md → "Keep launch URLs small") -------
+    // `config` is a URL — normally a bare filename sitting beside this app — to a JSON object whose
+    // keys stand in for URL params. It exists because a launch URL carrying a full deck of timeline
+    // cards runs past the ~2 KB that some proxies and older WebViews refuse, and the failure there
+    // is a 414 from the static host rather than anything Telegram reports back.
+    //
+    // A param spelled out in the URL always wins over the file, so one hosted config can serve
+    // several puzzles that differ only in a field or two.
+    //
+    // Non-string values are re-encoded rather than passed through: every reader below goes through
+    // `q.get()`/`pjson()`, which expect exactly the `encodeURIComponent(JSON.stringify(x))` shape the
+    // engine's own `buildWebAppUrl` produces for an inline param. Strings are left alone — `skin`,
+    // `title` and friends are read raw, and encoding those would surface the escapes to the player.
+    async function loadConfigInto(params) {
+      const configParam = params.get('config');
+      if (!configParam) return; // no `config` → nothing awaited, behaviour identical to before
+      const configUrl = new URL(configParam, window.location.href).href;
+      try {
+        const res = await fetch(configUrl);
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        for (const [k, v] of Object.entries(await res.json())) {
+          if (params.has(k)) continue;
+          params.set(k, typeof v === 'string' ? v : encodeURIComponent(JSON.stringify(v)));
+        }
+      } catch (e) {
+        console.error('config: failed to load', configUrl, e);
+      }
+      // ------- Hint gate (engine-emitted `hintsAllowed`) -------
+      // A sidecar is a static file, so a hint ladder inside one cannot trim itself the way
+      // `gateWebAppHints` trims an inline `hints` param. The launch carries the count this
+      // difficulty earned; slicing to it here is what keeps the solution rung out of reach on
+      // normal/hard. No-op when the ladder came from the URL — the engine already cut that one.
+      const allowedRaw = params.get('hintsAllowed');
+      if (allowedRaw !== null) {
+        const allowed = Math.max(0, parseInt(allowedRaw, 10) || 0);
+        const rawHints = params.get('hints');
+        if (rawHints) {
+          try {
+            let all;
+            try { all = JSON.parse(decodeURIComponent(rawHints)); } catch (e) { all = JSON.parse(rawHints); }
+            if (Array.isArray(all) && all.length > allowed) {
+              params.set('hints', encodeURIComponent(JSON.stringify(all.slice(0, allowed))));
+            }
+          } catch (e) { /* not a JSON array — leave whatever the content authored */ }
+        }
+      }
+    }
+
     // ------- Telegram bootstrap (mirrors torn-note.html) -------
     const tg = window.Telegram ? window.Telegram.WebApp : null;
     if (tg) { tg.ready(); tg.expand(); }
@@ -140,6 +196,7 @@
     };
 
     const q = new URLSearchParams(window.location.search);
+    await loadConfigInto(q);
     const sessionId = q.get('sessionId');
     const userId = (tg && tg.initDataUnsafe && tg.initDataUnsafe.user) ? tg.initDataUnsafe.user.id : q.get('userId');
     let lang = (q.get('lang') || (tg && tg.initDataUnsafe && tg.initDataUnsafe.user && tg.initDataUnsafe.user.language_code) || 'en')
@@ -148,10 +205,12 @@
     const STR = {
       en: { title: 'Timeline', give: 'Give up', confirm: 'CONFIRM', early: 'Earliest', late: 'Latest', pool: 'Unplaced cards',
             sent: 'Sent', sentBody: 'Check the chat for the verdict.',
-            gaveTitle: 'Left scattered', gaveBody: 'You leave the cards where they lie.' },
+            gaveTitle: 'Left scattered', gaveBody: 'You leave the cards where they lie.',
+            hint: '💡 Hint', noMoreHints: '💡 No more hints' },
       hr: { title: 'Vremenska crta', give: 'Odustani', confirm: 'POTVRDI', early: 'Najranije', late: 'Najkasnije', pool: 'Nepostavljene kartice',
             sent: 'Poslano', sentBody: 'Provjeri chat za ishod.',
-            gaveTitle: 'Ostalo razbacano', gaveBody: 'Ostaviš kartice kako jesu.' },
+            gaveTitle: 'Ostalo razbacano', gaveBody: 'Ostaviš kartice kako jesu.',
+            hint: '💡 Savjet', noMoreHints: '💡 Nema više savjeta' },
     };
     const S = STR[lang] || STR.en;
     document.documentElement.lang = lang;
@@ -170,11 +229,28 @@
     const allCards = pjson('cards') || [];
     const N = Math.max(2, Math.min(allCards.length, parseInt(q.get('slots') || String(Math.min(allCards.length, 4)), 10)));
 
+    // ------- In-app hints (optional; duplicated from the puzzle's own hints) -------
+    const hints = pjson('hints') || [];
+    let hintsRevealed = 0;
+    const msgEl = document.getElementById('msg');
+    const hintBtn = document.getElementById('hintBtn');
+    if (hints.length) {
+      hintBtn.style.display = '';
+      hintBtn.textContent = `${S.hint} (${hints.length})`;
+      hintBtn.addEventListener('click', () => {
+        const h = hints[Math.min(hintsRevealed, hints.length - 1)];
+        hintsRevealed = Math.min(hintsRevealed + 1, hints.length);
+        hintBtn.textContent = hintsRevealed >= hints.length ? S.noMoreHints : `${S.hint} (${hints.length - hintsRevealed} left)`;
+        msgEl.textContent = loc(h);
+        msgEl.className = 'msg';
+      });
+    }
+
     let solved = false;
 
     // ------- Result reporting (server-authoritative, same discipline as torn-note.html) -------
     function send(payload) {
-      const result = { sessionId, userId, gameId: 'timeline-sort', timestamp: Date.now(), ...payload };
+      const result = { sessionId, userId, gameId: 'timeline-sort', timestamp: Date.now(), metrics: { hintsUsed: hintsRevealed }, ...payload };
       console.log('📤 timeline-sort result', result);
       try { if (window.parent && window.parent !== window) window.parent.postMessage({ type: 'MINIGAME_RESULT', payload: result }, '*'); } catch (e) {}
       try {

@@ -242,6 +242,26 @@
     }
   }
 
+  // ------- Hint gate (engine-emitted `hintsAllowed`) -------
+  // A sidecar is a static file, so a hint ladder inside one cannot trim itself the way
+  // `gateWebAppHints` trims an inline `hints` param. The launch carries the count this
+  // difficulty earned; slicing to it here is what keeps the solution rung out of reach on
+  // normal/hard. No-op when the ladder came from the URL — the engine already cut that one.
+  const allowedRaw = Q.get('hintsAllowed');
+  if (allowedRaw !== null) {
+    const allowed = Math.max(0, parseInt(allowedRaw, 10) || 0);
+    const rawHints = Q.get('hints');
+    if (rawHints) {
+      try {
+        let all;
+        try { all = JSON.parse(decodeURIComponent(rawHints)); } catch (e) { all = JSON.parse(rawHints); }
+        if (Array.isArray(all) && all.length > allowed) {
+          Q.set('hints', encodeURIComponent(JSON.stringify(all.slice(0, allowed))));
+        }
+      } catch (e) { /* not a JSON array — leave whatever the content authored */ }
+    }
+  }
+
   const LANG = (function () {
     const l = (Q.get("lang") || "").toLowerCase();
     if (l === "hr" || l === "en") return l;

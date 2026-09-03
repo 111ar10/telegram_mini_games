@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Book</title>
+
+  <!-- Telegram Web App SDK (same as the other mini-games in this repo) -->
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+  <!--
+    GENERIC BOOK / DIARY READER  (reusable across games — config-driven)
+    ----------------------------------------------------------------------
+    A page-turning reader: cover → flip through pages of text → close the book. Pure viewer,
+    CLIENT-TRUSTED (same tier as evidence.html's CONFIRM mode / android-phone.html's confirmLabel) —
+    there's nothing to derive from reading, so it never claims to be server-authoritative.
+
+    Params:
+      pages          REQUIRED — url-encoded JSON array. Each entry is either a plain string or a
+                     {en,hr} localized object, e.g. ["Page one.", {"en":"Page two (en)","hr":"..."}]
+      title/title_hr        cover title (default "Diary"/"Dnevnik")
+      author/author_hr      cover subtitle (e.g. whose diary, or where it was found)
+      tag/tag_hr             italic line under the author (cosmetic flavor)
+      confirmLabel/confirmLabel_hr   override the closing button text (default "Close the book")
+      requireLastPage        "true" (default) | "false" — gate the close button until the last
+                              page has been viewed at least once; "false" allows closing anytime
+      ruled                   "true" | "false" (default) — faint notebook ruling on every page
+      coverColor/coverColor2  cover gradient (hex, # optional)
+      pageColor / inkColor / accentColor   page background / text / gold-accent overrides
+      startPage               deep-link page index (0-based), default -1 = start on the cover
+      lang / sessionId / userId   standard passthrough (see other apps in this folder)
+
+    Result (Telegram.WebApp.sendData):
+      close:   { sessionId, userId, gameId:'book', success:true, metrics:{pagesRead,totalPages}, timestamp }
+      give up: { sessionId, userId, gameId:'book', success:false, outcome:'abandoned', timestamp }
+  -->
+  <style>
+    :root {
+      --bg: #14161c; --bg2: #1d2129; --ink: #e8e6df; --muted: #8b90a0;
+      --brass: #c9a24b; --brass-dark: #8a6d2c; --shadow: rgba(0,0,0,.45);
+      --cover: #4a2016; --cover2: #2c110a; --page: #f4ecd8; --page2: #e8dcc0; --pageink: #3b2f26;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    html, body { height: 100%; }
+    body {
+      background: radial-gradient(120% 90% at 50% 0%, #232833 0%, var(--bg) 60%);
+      color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      display: flex; flex-direction: column; align-items: center; min-height: 100%; padding: 16px 14px 26px; user-select: none;
+    }
+
+    .frame { position: relative; width: 320px; max-width: 90vw; height: 60vh; max-height: 480px; margin: 8px auto 0;
+      perspective: 1200px; }
+    .leaf { position: absolute; inset: 0; border-radius: 14px; overflow: hidden; box-shadow: 0 14px 34px var(--shadow);
+      transform-style: preserve-3d; will-change: transform, opacity; }
+
+    /* cover face */
+    .cover { background: linear-gradient(155deg, var(--cover) 0%, var(--cover2) 100%);
+      display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center;
+      padding: 28px 22px; border: 1px solid #1a0b06; position: relative; }
+    .cover::before { content: ''; position: absolute; inset: 10px; border: 1px solid rgba(201,162,75,.35); border-radius: 8px; pointer-events: none; }
+    .cover h1 { font-family: Georgia, 'Iowan Old Style', serif; font-size: 24px; font-weight: 700; letter-spacing: .5px;
+      color: var(--brass); text-shadow: 0 1px 0 rgba(0,0,0,.4); line-height: 1.3; }
+    .cover .author { margin-top: 10px; font-size: 14px; color: #d8c9a8; font-style: italic; }
+    .cover .tag { margin-top: 14px; font-size: 12.5px; color: #b39c78; line-height: 1.5; max-width: 240px; }
+    .cover .hint { position: absolute; bottom: 18px; left: 0; right: 0; font-size: 12px; color: #9a835f; letter-spacing: .3px; }
+
+    /* page face */
+    .page { background: linear-gradient(180deg, var(--page) 0%, var(--page2) 100%); color: var(--pageink);
+      padding: 26px 22px 40px; font-family: Georgia, 'Iowan Old Style', serif; font-size: 15.5px; line-height: 1.65;
+      overflow-y: auto; white-space: pre-wrap; border: 1px solid #d8c9a0; }
+    .page.ruled { background-image: linear-gradient(180deg, var(--page) 0%, var(--page2) 100%),
+      repeating-linear-gradient(180deg, transparent, transparent 27px, rgba(59,47,38,.12) 28px);
+      background-blend-mode: normal; }
+    .page .pnum { position: absolute; bottom: 10px; right: 16px; font-size: 11px; color: #8a7a5e; font-style: italic; }
+
+    .navbar { display: flex; align-items: center; justify-content: space-between; gap: 10px; width: 320px; max-width: 90vw; margin-top: 12px; }
+    .navbtn { width: 44px; height: 44px; border: none; border-radius: 10px; background: rgba(255,255,255,.06); color: var(--ink);
+      font-size: 20px; line-height: 1; cursor: pointer; }
+    .navbtn:disabled { opacity: .28; }
+    .navbtn:active:not(:disabled) { background: rgba(255,255,255,.12); }
+    .counter { font-size: 13px; color: var(--muted); letter-spacing: .3px; }
+
+    .confirm { margin-top: 16px; width: 300px; max-width: 86vw; padding: 15px; border: none; border-radius: 14px; cursor: pointer;
+      background: linear-gradient(180deg, var(--brass) 0%, var(--brass-dark) 100%); color: #221a06; font-size: 16px; font-weight: 800;
+      letter-spacing: .4px; box-shadow: 0 4px 0 #5c4a1f, 0 8px 18px var(--shadow); transition: transform .07s, box-shadow .07s, opacity .2s; }
+    .confirm:active:not(:disabled) { transform: translateY(3px); box-shadow: 0 1px 0 #5c4a1f; }
+    .confirm:disabled { opacity: .35; cursor: default; }
+
+    .msg { min-height: 18px; margin-top: 10px; font-size: 13px; color: var(--muted); text-align: center; }
+    .giveup { margin-top: 12px; background: none; border: none; color: var(--muted); font-size: 13px; text-decoration: underline; cursor: pointer; }
+
+    .overlay { position: fixed; inset: 0; background: rgba(10,12,16,.86); backdrop-filter: blur(3px);
+      display: none; align-items: center; justify-content: center; z-index: 20; padding: 24px; }
+    .overlay.show { display: flex; }
+    .card { background: var(--bg2); border: 1px solid #333a46; border-radius: 18px; padding: 28px 24px; text-align: center;
+      max-width: 320px; width: 100%; box-shadow: 0 20px 50px var(--shadow); }
+    .card .emoji { font-size: 44px; } .card h2 { margin: 12px 0 6px; font-size: 20px; font-family: Georgia, serif; }
+    .card p { color: var(--muted); font-size: 14px; line-height: 1.5; }
+  </style>
+</head>
+<body>
+  <div class="frame" id="frame">
+    <div class="leaf" id="leaf"></div>
+  </div>
+
+  <div class="navbar">
+    <button class="navbtn" id="prev" aria-label="Previous page">‹</button>
+    <div class="counter" id="counter"></div>
+    <button class="navbtn" id="next" aria-label="Next page">›</button>
+  </div>
+
+  <button class="confirm" id="confirm"></button>
+  <div class="msg" id="msg"></div>
+  <button class="giveup" id="giveup"></button>
+
+  <div class="overlay" id="overlay">
+    <div class="card">
+      <div class="emoji" id="rEmoji">📖</div>
+      <h2 id="rTitle"></h2>
+      <p id="rBody"></p>
+    </div>
+  </div>
+
+  <!-- `type="module"` for the top-level `await` in `loadConfigInto` below. Module scope also means
+       nothing here leaks to `window` implicitly, so any test hook must be assigned explicitly. -->
+  <script type="module">
+    // ------- Hosted config (MINIGAMES.md → "Keep launch URLs small") -------
+    // `config` is a URL — normally a bare filename sitting beside this app — to a JSON object whose
+    // keys stand in for URL params. It exists because a launch URL carrying a whole diary's worth of pages
+    // runs past the ~2 KB that some proxies and older WebViews refuse, and the failure there is a 414
+    // from the static host rather than anything Telegram reports back.
+    //
+    // A param spelled out in the URL always wins over the file, so one hosted config can serve
+    // several puzzles that differ only in a field or two.
+    //
+    // Non-string values are re-encoded rather than passed through: every reader below expects exactly
+    // the `encodeURIComponent(JSON.stringify(x))` shape the engine's own `buildWebAppUrl` produces for
+    // an inline param. Strings are left alone — `skin`, `title` and friends are read raw, and encoding
+    // those would surface the escapes to the player.
+    //
+    // NOTE: `hints` is deliberately never in a sidecar — the engine trims it per launch to what the
+    // session's difficulty has earned (`gateWebAppHints`), which a static file would bypass.
+    async function loadConfigInto(params) {
+      const configParam = params.get('config');
+      if (!configParam) return; // no `config` → nothing awaited, behaviour identical to before
+      const configUrl = new URL(configParam, window.location.href).href;
+      try {
+        const res = await fetch(configUrl);
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        for (const [k, v] of Object.entries(await res.json())) {
+          if (params.has(k)) continue;
+          params.set(k, typeof v === 'string' ? v : encodeURIComponent(JSON.stringify(v)));
+        }
+      } catch (e) {
+        console.error('config: failed to load', configUrl, e);
+      }
+      // ------- Hint gate (engine-emitted `hintsAllowed`) -------
+      // A sidecar is a static file, so a hint ladder inside one cannot trim itself the way
+      // `gateWebAppHints` trims an inline `hints` param. The launch carries the count this
+      // difficulty earned; slicing to it here is what keeps the solution rung out of reach on
+      // normal/hard. No-op when the ladder came from the URL — the engine already cut that one.
+      const allowedRaw = params.get('hintsAllowed');
+      if (allowedRaw !== null) {
+        const allowed = Math.max(0, parseInt(allowedRaw, 10) || 0);
+        const rawHints = params.get('hints');
+        if (rawHints) {
+          try {
+            let all;
+            try { all = JSON.parse(decodeURIComponent(rawHints)); } catch (e) { all = JSON.parse(rawHints); }
+            if (Array.isArray(all) && all.length > allowed) {
+              params.set('hints', encodeURIComponent(JSON.stringify(all.slice(0, allowed))));
+            }
+          } catch (e) { /* not a JSON array — leave whatever the content authored */ }
+        }
+      }
+    }
+
+    // ------- Telegram bootstrap (mirrors evidence.html) -------
+    const tg = window.Telegram ? window.Telegram.WebApp : null;
+    if (tg) { tg.ready(); tg.expand(); }
+    const haptic = (kind) => {
+      try {
+        if (!tg || !tg.HapticFeedback) return;
+        if (kind === 'tick') tg.HapticFeedback.selectionChanged();
+        else if (kind === 'ok') tg.HapticFeedback.notificationOccurred('success');
+      } catch (e) {}
+    };
+
+    // ------- Input params -------
+    const q = new URLSearchParams(window.location.search);
+    await loadConfigInto(q);
+    const sessionId = q.get('sessionId');
+    const userId = (tg && tg.initDataUnsafe && tg.initDataUnsafe.user) ? tg.initDataUnsafe.user.id : q.get('userId');
+    let lang = (q.get('lang') || (tg && tg.initDataUnsafe && tg.initDataUnsafe.user && tg.initDataUnsafe.user.language_code) || 'en')
+                 .split('-')[0].toLowerCase();
+    const STR = {
+      en: { coverTitle: 'Diary', give: 'Set the book aside', confirm: 'Close the book',
+            gaveTitle: 'Set aside', gaveBody: 'You close the cover, unread.',
+            doneTitle: 'Closed', doneBody: 'You set it back where you found it.',
+            hint: 'Tap or swipe to open', page: (n, t) => `Page ${n} of ${t}`, cover: 'Cover' },
+      hr: { coverTitle: 'Dnevnik', give: 'Odloži knjigu', confirm: 'Zatvori knjigu',
+            gaveTitle: 'Odloženo', gaveBody: 'Zatvoriš korice, nepročitano.',
+            doneTitle: 'Zatvoreno', doneBody: 'Vratiš je onamo gdje si je našao/la.',
+            hint: 'Dodirni ili prijeđi prstom za otvoriti', page: (n, t) => `Stranica ${n} od ${t}`, cover: 'Korice' },
+    };
+    const S = STR[lang] || STR.en;
+    function loc(v) {
+      if (v == null) return '';
+      if (typeof v === 'object') return v[lang] || v.en || Object.values(v)[0] || '';
+      return String(v);
+    }
+    function pjson(name) { try { const raw = q.get(name); return raw ? JSON.parse(decodeURIComponent(raw)) : null; } catch (e) { return null; } }
+    function locParam(base) { // combines base/base_hr into a loc()-able value
+      const en = q.get(base); const hr = q.get(base + '_hr');
+      if (en == null && hr == null) return null;
+      if (hr != null) return { en: en != null ? decodeURIComponent(en) : '', hr: decodeURIComponent(hr) };
+      return decodeURIComponent(en);
+    }
+    function hex(v, fallback) { if (!v) return fallback; const s = v.startsWith('#') ? v : '#' + v; return /^#[0-9a-fA-F]{3,8}$/.test(s) ? s : fallback; }
+
+    document.documentElement.lang = lang;
+    const root = document.documentElement.style;
+    root.setProperty('--cover', hex(q.get('coverColor'), '#4a2016'));
+    root.setProperty('--cover2', hex(q.get('coverColor2'), '#2c110a'));
+    root.setProperty('--page', hex(q.get('pageColor'), '#f4ecd8'));
+    root.setProperty('--brass', hex(q.get('accentColor'), '#c9a24b'));
+
+    const pagesRaw = pjson('pages');
+    const pages = Array.isArray(pagesRaw) ? pagesRaw : [];
+    const total = pages.length;
+    const ruled = q.get('ruled') === 'true';
+    const requireLastPage = q.get('requireLastPage') !== 'false';
+    const titleText = locParam('title') || S.coverTitle;
+    const authorText = locParam('author');
+    const tagText = locParam('tag');
+    const confirmText = locParam('confirmLabel') || S.confirm;
+    document.getElementById('confirm').textContent = confirmText;
+    document.getElementById('giveup').textContent = S.give;
+
+    // ------- Paging model: -1 = cover, 0..total-1 = content pages -------
+    let view = -1;
+    const startPage = parseInt(q.get('startPage'), 10);
+    if (!Number.isNaN(startPage) && startPage >= 0 && startPage < total) view = startPage;
+    let maxSeen = view;
+
+    function coverHTML() {
+      return `<div class="cover">
+        <h1>${escapeHtml(loc(titleText))}</h1>
+        ${authorText ? `<div class="author">${escapeHtml(loc(authorText))}</div>` : ''}
+        ${tagText ? `<div class="tag">${escapeHtml(loc(tagText))}</div>` : ''}
+        <div class="hint">${escapeHtml(S.hint)}</div>
+      </div>`;
+    }
+    function pageHTML(i) {
+      const body = total ? loc(pages[i]) : '';
+      return `<div class="page${ruled ? ' ruled' : ''}" style="position:relative;height:100%">${escapeHtml(body)}<span class="pnum">${i + 1} / ${total}</span></div>`;
+    }
+    function escapeHtml(s) { const d = document.createElement('div'); d.textContent = String(s); return d.innerHTML; }
+
+    function paint() {
+      const leaf = document.getElementById('leaf');
+      leaf.innerHTML = view === -1 ? coverHTML() : pageHTML(view);
+      document.getElementById('counter').textContent = view === -1 ? S.cover : S.page(view + 1, total);
+      document.getElementById('prev').disabled = view === -1;
+      document.getElementById('next').disabled = total === 0 || view >= total - 1;
+      const unlocked = !requireLastPage || total === 0 || maxSeen >= total - 1;
+      document.getElementById('confirm').disabled = !unlocked;
+    }
+
+    function go(delta) {
+      const target = Math.max(-1, Math.min(total - 1, view + delta));
+      if (target === view) return;
+      haptic('tick');
+      const leaf = document.getElementById('leaf');
+      leaf.style.transition = 'transform .18s ease-in, opacity .18s ease-in';
+      leaf.style.transform = `rotateY(${delta > 0 ? -90 : 90}deg)`;
+      leaf.style.opacity = '.2';
+      setTimeout(() => {
+        view = target; maxSeen = Math.max(maxSeen, view);
+        paint();
+        leaf.style.transition = 'none';
+        leaf.style.transform = `rotateY(${delta > 0 ? 90 : -90}deg)`;
+        void leaf.offsetWidth;
+        leaf.style.transition = 'transform .18s ease-out, opacity .18s ease-out';
+        leaf.style.transform = 'rotateY(0deg)';
+        leaf.style.opacity = '1';
+      }, 180);
+    }
+
+    document.getElementById('prev').addEventListener('click', () => go(-1));
+    document.getElementById('next').addEventListener('click', () => go(1));
+
+    // tap zones on the frame itself: left third = prev, right third = next; swipe also works
+    const frame = document.getElementById('frame');
+    let downX = 0, downY = 0, moved = 0;
+    frame.addEventListener('pointerdown', (e) => { downX = e.clientX; downY = e.clientY; moved = 0; });
+    frame.addEventListener('pointermove', (e) => { moved = Math.max(moved, Math.abs(e.clientX - downX) + Math.abs(e.clientY - downY)); });
+    frame.addEventListener('pointerup', (e) => {
+      const dx = e.clientX - downX, dy = e.clientY - downY;
+      if (Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy) * 1.5) { go(dx < 0 ? 1 : -1); return; }
+      if (moved > 10) return; // was a drag, not a tap
+      const r = frame.getBoundingClientRect();
+      const nx = (e.clientX - r.left) / r.width;
+      if (nx < 0.32) go(-1); else if (nx > 0.68) go(1);
+    });
+
+    // ------- Result -------
+    let solved = false;
+    function send(payload) {
+      const result = { sessionId, userId, gameId: 'book', timestamp: Date.now(), ...payload };
+      console.log('📤 book result', result);
+      try { if (window.parent && window.parent !== window) window.parent.postMessage({ type: 'MINIGAME_RESULT', payload: result }, '*'); } catch (e) {}
+      try { if (tg && typeof tg.sendData === 'function') tg.sendData(JSON.stringify(result)); else localStorage.setItem('book_result_latest', JSON.stringify(result)); } catch (e) { console.error('sendData failed', e); }
+    }
+    function showOverlay(kind) {
+      document.getElementById('rEmoji').textContent = kind === 'gave' ? '🕳️' : '📖';
+      document.getElementById('rTitle').textContent = kind === 'gave' ? S.gaveTitle : S.doneTitle;
+      document.getElementById('rBody').textContent = kind === 'gave' ? S.gaveBody : S.doneBody;
+      document.getElementById('overlay').classList.add('show');
+    }
+    document.getElementById('confirm').addEventListener('click', () => {
+      if (solved || document.getElementById('confirm').disabled) return;
+      solved = true; haptic('ok');
+      const pagesRead = total === 0 ? 0 : Math.max(0, maxSeen + 1);
+      send({ success: true, metrics: { pagesRead, totalPages: total } });
+      setTimeout(() => showOverlay('done'), 250);
+    });
+    document.getElementById('giveup').addEventListener('click', () => {
+      if (solved) return; solved = true;
+      send({ success: false, outcome: 'abandoned' });
+      setTimeout(() => showOverlay('gave'), 150);
+    });
+
+    // ------- Test hook -------
+    window.__book = {
+      get index() { return view; }, get total() { return total; },
+      next: () => go(1), prev: () => go(-1),
+      goto: (i) => { const d = Math.max(-1, Math.min(total - 1, i)) - view; if (d) go(d); },
+      confirm: () => document.getElementById('confirm').click(),
+      giveUp: () => document.getElementById('giveup').click(),
+    };
+
+    paint();
+  </script>
+</body>
+</html>

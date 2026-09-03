@@ -918,8 +918,8 @@
                 "en": "no location · no guests"
               },
               "body": {
-                "hr": "Termin bez naslova, bez lokacije i bez ijednog gosta.\\n\\nUnesen je istog jutra, u 08:40.\\n\\n<i>U kalendaru koji seže godinu unatrag nema nijednog drugog termina bez naslova.</i>",
-                "en": "An appointment with no title, no location and no guests.\\n\\nEntered the same morning, at 08:40.\\n\\n<i>In a calendar going back a year there is not one other untitled entry.</i>"
+                "hr": "Termin bez naslova, bez lokacije i bez ijednog gosta.\n\nUnesen je istog jutra, u 08:40.\n\n<i>U kalendaru koji seže godinu unatrag nema nijednog drugog termina bez naslova.</i>",
+                "en": "An appointment with no title, no location and no guests.\n\nEntered the same morning, at 08:40.\n\n<i>In a calendar going back a year there is not one other untitled entry.</i>"
               }
             }
           ]

@@ -194,6 +194,9 @@
     /* Note / document screen */
     .note { padding: 18px 18px 26px; font-size: 14px; line-height: 1.62; white-space: pre-wrap; word-break: break-word; }
     .note .nmeta { font-size: 11px; color: var(--muted); margin-bottom: 12px; }
+    .note i { color: var(--muted); }
+    .note code { font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace; font-size: 13px;
+      background: #22262f; border-radius: 4px; padding: 1px 4px; }
 
     /* Agenda (a calendar that looks like one) */
     .agenda { padding: 6px 0 18px; }
@@ -423,6 +426,26 @@
         console.error('config: failed to load', configUrl, e);
       }
     }
+    // ------- Hint gate (engine-emitted `hintsAllowed`) -------
+    // A sidecar is a static file, so a hint ladder inside one cannot trim itself the way
+    // `gateWebAppHints` trims an inline `hints` param. The launch carries the count this
+    // difficulty earned; slicing to it here is what keeps the solution rung out of reach on
+    // normal/hard. No-op when the ladder came from the URL — the engine already cut that one.
+    const allowedRaw = q.get('hintsAllowed');
+    if (allowedRaw !== null) {
+      const allowed = Math.max(0, parseInt(allowedRaw, 10) || 0);
+      const rawHints = q.get('hints');
+      if (rawHints) {
+        try {
+          let all;
+          try { all = JSON.parse(decodeURIComponent(rawHints)); } catch (e) { all = JSON.parse(rawHints); }
+          if (Array.isArray(all) && all.length > allowed) {
+            q.set('hints', encodeURIComponent(JSON.stringify(all.slice(0, allowed))));
+          }
+        } catch (e) { /* not a JSON array — leave whatever the content authored */ }
+      }
+    }
+
     const sessionId = q.get('sessionId');
     const userId = (tg && tg.initDataUnsafe && tg.initDataUnsafe.user) ? tg.initDataUnsafe.user.id : q.get('userId');
     let lang = (q.get('lang') || (tg && tg.initDataUnsafe && tg.initDataUnsafe.user && tg.initDataUnsafe.user.language_code) || 'en')
@@ -654,10 +677,26 @@
     }
 
     // ------- NOTE / document -------
+/**
+     * Authored markup inside a note body.
+     *
+     * Everything else on this phone is plain text, but note bodies are written in the same house style
+     * as the rest of the game — an italic aside in the narrator's voice — and `textContent` turned
+     * every one of those into a literal `<i>` on screen.
+     *
+     * Escape the whole string first, then re-allow a fixed tag set. NOT innerHTML on authored text:
+     * `apps` can arrive from a URL param in another game, and this page must not care who wrote it.
+     */
+    function richText(el, str) {
+      const esc = String(str ?? '')
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      el.innerHTML = esc.replace(/&lt;(\/?)(i|b|code)&gt;/g, '<$1$2>');
+    }
+
     function renderNote(a, parent) {
       const wrap = document.createElement('div'); wrap.className = 'note';
       if (a.meta) { const m = document.createElement('div'); m.className = 'nmeta'; m.textContent = loc(a.meta); wrap.appendChild(m); }
-      const b = document.createElement('div'); b.textContent = loc(a.body); wrap.appendChild(b);
+      const b = document.createElement('div'); richText(b, loc(a.body)); wrap.appendChild(b);
       showScreen(wrap, { title: loc(a.label) || S.title, showBack: true });
       // A note reached from somewhere other than home goes BACK there, not to the grid: from a list row
       // to its list, from a contact card to the phonebook. `parent` is either the app to re-render or a

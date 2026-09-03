@@ -42,7 +42,18 @@
                   [{ id, shape:"rect"|"circle", x,y,w,h (rect, 0..1) | cx,cy,r (circle, 0..1),
                      label:{en,hr}, kind:"look"|"open"|"take"|"combine",
                      locked, requiresItem, reveals:[ids], givesItem, acceptsItem,
-                     lookText:{en,hr}, lookImage, openText:{en,hr}, openImage, wrongText:{en,hr} }]
+                     lookText:{en,hr}, lookImage, openText:{en,hr}, openImage, wrongText:{en,hr},
+                     slideOpen:"down"|"up"|"left"|"right", rotation:degrees }]
+                  `slideOpen` (open/combine only) makes a successful open visually real: a crop of
+                  THIS hotspot's own region of the background photo (no separate art needed) sits in
+                  front, indistinguishable from the photo while closed, and slides away in the given
+                  direction on success, revealing a plain dark panel behind it — any `reveals` hotspot
+                  the author placed there becomes visible right on top of that panel, same as always.
+                  `rotation` (degrees) tilts that crop (and the dark panel) to match an angled object
+                  in the photo — it does NOT rotate the tappable area itself, which stays an
+                  untilted, generously-sized rectangle (same "forgiving hit target" philosophy as
+                  every other app in this family — a tilted hit-region would just be harder to tap
+                  precisely for no real benefit).
       inventory   Inline alternative to `scene.inventory` — JSON array of item defs the hotspots
                   reference: [{ id, label:{en,hr}, icon:"🗝️" }]
       finalHotspot  optional — hotspot id whose successful OPEN/COMBINE auto-submits `{choice:id}`
@@ -50,12 +61,26 @@
                   assist). Set `dots=false` for a genuine "search the room" feel: no markers, the
                   puzzle's own hints text is the only guidance on where to look. Every tap still gets
                   a brief ripple regardless of this setting, so blind mode doesn't feel unresponsive.
+      hints       optional — JSON array of localized hint strings `[{en,hr}, ...]` (inline param, OR
+                  `scene.hints` inside the hosted scene file — same inline-vs-scene split as bg/
+                  hotspots/inventory). Duplicate the puzzle's own `hints` content here if you want a
+                  hint button INSIDE the mini-game (Telegram's `sendData()` closes the app immediately,
+                  so hints can't be fetched live mid-session — they have to ride in at launch). Shown
+                  progressively via a "💡 Hint" button; `hintsUsed` (how many were revealed) rides in
+                  the final result's `metrics` — same soft, client-reported trust tier as `timeMs`/
+                  `attempts` elsewhere in this family (not a scored fact like `submission`/`choice`;
+                  a content author can react to it via a `MiniGameFinished` flow rule if it should
+                  affect rewards, but nothing here enforces that automatically).
       title / tag   cosmetic header text (decodeURIComponent)
       lang / sessionId / userId  same as every other app here
     Result (Telegram.WebApp.sendData):
-      Submit bar:      { sessionId, userId, gameId:'room_scene', submission, timestamp }
-      finalHotspot:    { sessionId, userId, gameId:'room_scene', choice, timestamp }
-      give up:         { sessionId, userId, gameId:'room_scene', success:false, outcome:'abandoned', timestamp }
+      Submit bar:      { sessionId, userId, gameId:'room_scene', submission, metrics:{hintsUsed}, timestamp }
+      finalHotspot:    { sessionId, userId, gameId:'room_scene', choice, metrics:{hintsUsed}, timestamp }
+      give up:         { sessionId, userId, gameId:'room_scene', success:false, outcome:'abandoned', metrics:{hintsUsed}, timestamp }
+
+    If a scene has any TAKE hotspot and the player tries to Submit or Give up having collected
+    nothing at all, a soft "you haven't found anything yet" confirmation steps in first (Cancel stays
+    free — only actually leaving counts). Pure UX nudge, not a hard gate.
   -->
   <style>
     :root {
@@ -78,6 +103,9 @@
       background: #000; box-shadow: 0 10px 26px var(--shadow); flex: 1 1 auto; min-height: 200px; }
     .stage img { width: 100%; height: 100%; object-fit: cover; display: block; }
     .hotspot { position: absolute; cursor: pointer; }
+    .hotspot.hasSlide { overflow: hidden; }
+    .slideBack { position: absolute; inset: 0; background: #1a140c; box-shadow: inset 0 6px 14px rgba(0,0,0,.6); }
+    .slideFront { position: absolute; inset: 0; background-repeat: no-repeat; transition: transform .5s cubic-bezier(.3,.7,.3,1); }
     .hotspot .dot {
       position: absolute; top: 50%; left: 50%; width: 16px; height: 16px; margin: -8px 0 0 -8px;
       border-radius: 50%; background: var(--marker); box-shadow: 0 0 0 4px rgba(255,216,138,.25), 0 2px 6px rgba(0,0,0,.5);
@@ -152,6 +180,7 @@
 
   <div class="footer">
     <button class="giveup" id="giveup">Give up</button>
+    <button class="giveup" id="hintBtn" style="display:none">💡 Hint</button>
     <button class="submitBtn" id="openSubmit" style="display:none">✅ Submit</button>
   </div>
 
@@ -175,6 +204,17 @@
       <div class="emoji" id="rEmoji">🔎</div>
       <h2 id="rTitle">Sent</h2>
       <p id="rBody"></p>
+    </div>
+  </div>
+
+  <div class="overlay center" id="nudgeOverlay">
+    <div class="sheet">
+      <h2 id="nudgeTitle">You haven't found anything yet</h2>
+      <p id="nudgeBody">There might be more here worth a closer look.</p>
+      <div class="row">
+        <button class="action" id="nudgeStay">Keep looking</button>
+        <button class="close" id="nudgeGo">Leave anyway</button>
+      </div>
     </div>
   </div>
 
@@ -202,12 +242,18 @@
             cancel: 'Cancel', go: 'Submit', close: 'Close', take: 'Take', locked: "It's locked.",
             emptyTake: "There's nothing left here.", needItem: 'Pick something from your things first.',
             sent: 'Sent', sentBody: 'Check the chat for the verdict.', gaveTitle: 'Stepped away', gaveBody: 'You leave the room as it was.',
-            found: 'You found:', trayHint: 'Tap a thing, then tap where to use it.' },
+            found: 'You found:', trayHint: 'Tap a thing, then tap where to use it.',
+            hint: '💡 Hint', noMoreHints: '💡 No more hints', hintTitle: 'Hint',
+            nudgeTitle: "You haven't found anything yet", nudgeBody: 'There might be more here worth a closer look.',
+            nudgeStay: 'Keep looking', nudgeGo: 'Leave anyway' },
       hr: { title: 'Razgledaj', give: 'Odustani', submit: '✅ Pošalji', submitTitle: 'Što si pronašao/la?',
             cancel: 'Odustani', go: 'Pošalji', close: 'Zatvori', take: 'Uzmi', locked: 'Zaključano je.',
             emptyTake: 'Ovdje više nema ničega.', needItem: 'Prvo odaberi nešto od svojih stvari.',
             sent: 'Poslano', sentBody: 'Provjeri chat za ishod.', gaveTitle: 'Odmakao/la si se', gaveBody: 'Ostavljaš sobu kakva je bila.',
-            found: 'Pronašao/la si:', trayHint: 'Dodirni nešto, pa dodirni gdje to koristiš.' },
+            found: 'Pronašao/la si:', trayHint: 'Dodirni nešto, pa dodirni gdje to koristiš.',
+            hint: '💡 Savjet', noMoreHints: '💡 Nema više savjeta', hintTitle: 'Savjet',
+            nudgeTitle: 'Još ništa nisi pronašao/la', nudgeBody: 'Možda ovdje ima još nešto vrijedno pažnje.',
+            nudgeStay: 'Nastavi tražiti', nudgeGo: 'Ipak izađi' },
     };
     const S = STR[lang] || STR.en;
     document.documentElement.lang = lang;
@@ -217,6 +263,10 @@
     document.getElementById('submitTitle').textContent = S.submitTitle;
     document.getElementById('submitCancel').textContent = S.cancel;
     document.getElementById('submitGo').textContent = S.go;
+    document.getElementById('nudgeTitle').textContent = S.nudgeTitle;
+    document.getElementById('nudgeBody').textContent = S.nudgeBody;
+    document.getElementById('nudgeStay').textContent = S.nudgeStay;
+    document.getElementById('nudgeGo').textContent = S.nudgeGo;
     const tagText = q.get('tag');
     if (tagText) document.getElementById('tagEl').textContent = decodeURIComponent(tagText);
 
@@ -233,7 +283,8 @@
     //  • Inline `bg`/`hotspots`/`inventory` params (unchanged, still supported) — fine for a genuinely
     //    tiny scene (a couple of hotspots, no photo — e.g. a flat-color placeholder), or for the
     //    builder tool's own local "Open Live Preview" (no server involved, so URL length is moot).
-    let bg = '', hotspots = [], inventory = [], invById = {}, revealedBy = {};
+    let bg = '', hotspots = [], inventory = [], hints = [], invById = {}, revealedBy = {};
+    let hintsRevealed = 0;
     const finalHotspot = q.get('finalHotspot') || null;
     if (!finalHotspot) document.getElementById('openSubmit').style.display = '';
     // Marker dots pinpoint every hotspot before the player taps anything — a deliberate assist, on
@@ -256,6 +307,7 @@
           bg = new URL(scene.bg || '', sceneUrl).toString();
           hotspots = scene.hotspots || [];
           inventory = scene.inventory || [];
+          hints = scene.hints || [];
         } catch (e) {
           console.error('room-scene: failed to load `scene`', sceneUrl, e);
         }
@@ -263,12 +315,41 @@
         bg = q.get('bg') || '';
         hotspots = pjson('hotspots', []);
         inventory = pjson('inventory', []);
+        hints = pjson('hints', []);
       }
-      document.getElementById('bgImg').src = bg;
+      // Lock the stage's own box to the photo's real aspect ratio once it loads, so object-fit:cover
+      // never actually has to crop anything — without this, a stage whose rendered aspect ratio
+      // differs from the photo's would make every hotspot's percentage-based position drift off the
+      // thing it's supposed to sit over. Also gives the slide-open crop (below) a stable, correct
+      // pixel rect to work from.
+      const bgImgEl = document.getElementById('bgImg');
+      await new Promise((resolve) => {
+        bgImgEl.addEventListener('load', () => {
+          stage.style.aspectRatio = `${bgImgEl.naturalWidth} / ${bgImgEl.naturalHeight}`;
+          resolve();
+        }, { once: true });
+        bgImgEl.addEventListener('error', () => resolve(), { once: true });
+        bgImgEl.src = bg;
+        if (bgImgEl.complete && bgImgEl.naturalWidth) {
+          stage.style.aspectRatio = `${bgImgEl.naturalWidth} / ${bgImgEl.naturalHeight}`;
+          resolve();
+        }
+      });
       invById = Object.fromEntries(inventory.map((i) => [i.id, i]));
       // Which hotspots start hidden (listed in some other hotspot's `reveals`) and who reveals them.
       revealedBy = {};
       for (const h of hotspots) for (const r of (h.reveals || [])) (revealedBy[r] = revealedBy[r] || []).push(h.id);
+      if (hints.length) {
+        const hintBtn = document.getElementById('hintBtn');
+        hintBtn.style.display = '';
+        hintBtn.textContent = `${S.hint} (${hints.length})`;
+        hintBtn.addEventListener('click', () => {
+          const text = loc(hints[Math.min(hintsRevealed, hints.length - 1)]);
+          hintsRevealed = Math.min(hintsRevealed + 1, hints.length);
+          hintBtn.textContent = hintsRevealed >= hints.length ? S.noMoreHints : `${S.hint} (${hints.length - hintsRevealed} left)`;
+          showSheet(S.hintTitle, text);
+        });
+      }
     }
 
     let solved = false;
@@ -285,6 +366,32 @@
 
     const stage = document.getElementById('stage');
     const hotspotEls = {};
+    const slideEls = {}; // hotspot id -> { front, dir, rotation } for hotspots with `slideOpen`
+    // "Opens" a hotspot visually using nothing but the background photo itself: a crop of the photo
+    // at exactly this hotspot's position sits in front (indistinguishable from the photo underneath
+    // while closed), a plain dark panel sits behind it (the "interior"). On open, the crop slides
+    // away in the configured direction, revealing the dark panel — and whatever `reveals` hotspot
+    // the author placed there (e.g. a diary page) becomes visible/tappable right on top of it, same
+    // as it always did. No extra art asset needed per scene.
+    function buildSlideFront(h) {
+      const back = document.createElement('div'); back.className = 'slideBack';
+      const front = document.createElement('div'); front.className = 'slideFront';
+      const stageRect = stage.getBoundingClientRect();
+      front.style.backgroundImage = `url(${bg})`;
+      front.style.backgroundSize = `${stageRect.width}px ${stageRect.height}px`;
+      const leftFrac = h.shape === 'circle' ? (h.cx - h.r) : h.x;
+      const topFrac = h.shape === 'circle' ? (h.cy - h.r) : h.y;
+      front.style.backgroundPosition = `-${leftFrac * stageRect.width}px -${topFrac * stageRect.height}px`;
+      const rot = h.rotation || 0;
+      front.style.transform = rot ? `rotate(${rot}deg)` : '';
+      back.style.transform = rot ? `rotate(${rot}deg)` : '';
+      return { back, front };
+    }
+    function slideAway(id) {
+      const s = slideEls[id]; if (!s) return;
+      const move = { down: 'translateY(100%)', up: 'translateY(-100%)', left: 'translateX(-100%)', right: 'translateX(100%)' }[s.dir] || 'translateY(100%)';
+      s.front.style.transform = `${move}${s.rotation ? ` rotate(${s.rotation}deg)` : ''}`;
+    }
     function buildHotspots() {
       for (const h of hotspots) {
         const el = document.createElement('div');
@@ -296,6 +403,12 @@
         } else {
           el.style.left = (h.x * 100) + '%'; el.style.top = (h.y * 100) + '%';
           el.style.width = (h.w * 100) + '%'; el.style.height = (h.h * 100) + '%';
+        }
+        if (h.slideOpen && (h.kind === 'open' || h.kind === 'combine')) {
+          el.classList.add('hasSlide');
+          const { back, front } = buildSlideFront(h);
+          el.appendChild(back); el.appendChild(front);
+          slideEls[h.id] = { front, dir: h.slideOpen, rotation: h.rotation || 0 };
         }
         if (showDots) { const dot = document.createElement('div'); dot.className = 'dot'; el.appendChild(dot); }
         const fx = document.createElement('div'); fx.className = 'tapfx'; el.appendChild(fx);
@@ -382,6 +495,7 @@
         }
         openIds.add(h.id);
         haptic('ok');
+        slideAway(h.id);
         showSheet(loc(h.label), loc(h.openText), h.openImage);
         finishHotspot(h);
         return;
@@ -392,6 +506,7 @@
         if (selected === h.acceptsItem) {
           openIds.add(h.id);
           haptic('ok');
+          slideAway(h.id);
           showSheet(loc(h.label), loc(h.openText), h.openImage);
           finishHotspot(h);
         } else {
@@ -404,7 +519,9 @@
 
     // ------- Result reporting (server-authoritative) -------
     function send(payload) {
-      const result = { sessionId, userId, gameId: 'room_scene', timestamp: Date.now(), ...payload };
+      // hintsUsed rides along on every exit path automatically — soft, client-reported flavor (same
+      // trust tier as timeMs/attempts elsewhere in this family), not something this file enforces.
+      const result = { sessionId, userId, gameId: 'room_scene', timestamp: Date.now(), metrics: { hintsUsed: hintsRevealed }, ...payload };
       console.log('📤 room-scene result', result);
       try { if (window.parent && window.parent !== window) window.parent.postMessage({ type: 'MINIGAME_RESULT', payload: result }, '*'); } catch (e) {}
       try {
@@ -424,20 +541,47 @@
       send({ choice: hotspotId });
       setTimeout(() => showFinal(false), 400);
     }
+    // Soft nudge, not a hard gate: if the scene has anything to TAKE at all and the player hasn't
+    // collected a single thing yet, check in before they Submit or Give up — Cancel ("Keep looking")
+    // costs nothing, same free-cancel principle as everywhere else in this file.
+    const nudgeOverlay = document.getElementById('nudgeOverlay');
+    let pendingAction = null;
+    function guardEmptyTray(action) {
+      const hasTakeables = hotspots.some((h) => h.kind === 'take');
+      if (hasTakeables && tray.length === 0) {
+        pendingAction = action;
+        nudgeOverlay.classList.add('show');
+      } else {
+        action();
+      }
+    }
+    document.getElementById('nudgeStay').addEventListener('click', () => { nudgeOverlay.classList.remove('show'); pendingAction = null; });
+    document.getElementById('nudgeGo').addEventListener('click', () => {
+      nudgeOverlay.classList.remove('show');
+      const action = pendingAction; pendingAction = null;
+      if (action) action();
+    });
+
     document.getElementById('giveup').addEventListener('click', () => {
       if (solved) return;
-      solved = true;
-      send({ success: false, outcome: 'abandoned' });
-      setTimeout(() => showFinal(true), 150);
+      guardEmptyTray(() => {
+        if (solved) return;
+        solved = true;
+        send({ success: false, outcome: 'abandoned' });
+        setTimeout(() => showFinal(true), 150);
+      });
     });
 
     const submitOverlay = document.getElementById('submitOverlay');
     const submitInput = document.getElementById('submitInput');
     document.getElementById('openSubmit').addEventListener('click', () => {
       if (solved) return;
-      submitInput.value = '';
-      submitOverlay.classList.add('show');
-      setTimeout(() => submitInput.focus(), 50);
+      guardEmptyTray(() => {
+        if (solved) return;
+        submitInput.value = '';
+        submitOverlay.classList.add('show');
+        setTimeout(() => submitInput.focus(), 50);
+      });
     });
     document.getElementById('submitCancel').addEventListener('click', () => submitOverlay.classList.remove('show'));
     document.getElementById('submitGo').addEventListener('click', () => {
@@ -456,7 +600,10 @@
       tapHotspot(id) { const h = hotspots.find((x) => x.id === id); if (h) onTap(h); },
       selectItem(id) { selected = (selected === id) ? null : id; renderTray(); },
       submit(text) { submitInput.value = text; document.getElementById('submitGo').click(); },
-      state() { return { taken: [...takenIds], open: [...openIds], tray: [...tray], selected, solved }; },
+      state() { return { taken: [...takenIds], open: [...openIds], tray: [...tray], selected, solved, hintsRevealed }; },
+      useHint() { document.getElementById('hintBtn').click(); },
+      keepLooking() { document.getElementById('nudgeStay').click(); },
+      leaveAnyway() { document.getElementById('nudgeGo').click(); },
       ready: false,
     };
     loadScene().then(() => {

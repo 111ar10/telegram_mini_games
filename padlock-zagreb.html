@@ -17,10 +17,14 @@
     Params (URL query, all optional):
       digits   number of dials, default 4 (structural — not a secret)
       lang     "en" | "hr" (else Telegram user lang)      tag  italic subtitle line (decodeURIComponent)
+      hints    JSON array of localized hint strings — shows a "💡 Hint" button, revealed progressively;
+               `hintsUsed` rides back in the result's `metrics` (soft, client-reported, not scored)
       sessionId / userId  passed straight back in the result payload
+    Test hook: window.__padlock = { dials, digits(), solved(), setDigit(i,v), setCode(code), pull(),
+               giveUp() } — same shape as padlock.html, so one helper drives both.
     Result (Telegram.WebApp.sendData):
-      on PULL:    { sessionId, userId, gameId:'padlock', submission, timestamp }
-      on give up: { sessionId, userId, gameId:'padlock', success:false, outcome:'abandoned', timestamp }
+      on PULL:    { sessionId, userId, gameId:'padlock', submission, metrics:{hintsUsed}, timestamp }
+      on give up: { sessionId, userId, gameId:'padlock', success:false, outcome:'abandoned', metrics:{hintsUsed}, timestamp }
   -->
   <style>
     :root {
@@ -163,6 +167,7 @@
 
   <div class="msg" id="msg"></div>
   <button class="giveup" id="giveup">Give up</button>
+  <button class="giveup" id="hintBtn" style="display:none">💡 Hint</button>
 
   <div class="overlay" id="overlay">
     <div class="card">
@@ -172,7 +177,52 @@
     </div>
   </div>
 
-  <script>
+  <!-- `type="module"` for the top-level `await` in `loadConfigInto` below. Module scope also means
+       nothing here leaks to `window` implicitly, so any test hook must be assigned explicitly. -->
+  <script type="module">
+    // ------- Hosted config (MINIGAMES.md → "Keep launch URLs small") -------
+    // `config` names a JSON file — normally a bare filename beside this app — whose keys stand in for
+    // URL params, so a launch carrying a whole hint ladder stays a couple of
+    // hundred characters instead of running past the ~2 KB some proxies and older WebViews refuse.
+    // A param spelled out in the URL always wins over the file.
+    //
+    // Non-string values are re-encoded rather than passed through: the readers below expect exactly
+    // the `encodeURIComponent(JSON.stringify(x))` shape the engine's `buildWebAppUrl` produces.
+    async function loadConfigInto(params) {
+      const configParam = params.get('config');
+      if (!configParam) return; // no `config` → nothing awaited, behaviour identical to before
+      const configUrl = new URL(configParam, window.location.href).href;
+      try {
+        const res = await fetch(configUrl);
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        for (const [k, v] of Object.entries(await res.json())) {
+          if (params.has(k)) continue;
+          params.set(k, typeof v === 'string' ? v : encodeURIComponent(JSON.stringify(v)));
+        }
+      } catch (e) {
+        console.error('config: failed to load', configUrl, e);
+      }
+      // ------- Hint gate (engine-emitted `hintsAllowed`) -------
+      // A sidecar is a static file, so a hint ladder inside one cannot trim itself the way
+      // `gateWebAppHints` trims an inline `hints` param. The launch carries the count this
+      // difficulty earned; slicing to it here is what keeps the solution rung out of reach on
+      // normal/hard. No-op when the ladder came from the URL — the engine already cut that one.
+      const allowedRaw = params.get('hintsAllowed');
+      if (allowedRaw !== null) {
+        const allowed = Math.max(0, parseInt(allowedRaw, 10) || 0);
+        const rawHints = params.get('hints');
+        if (rawHints) {
+          try {
+            let all;
+            try { all = JSON.parse(decodeURIComponent(rawHints)); } catch (e) { all = JSON.parse(rawHints); }
+            if (Array.isArray(all) && all.length > allowed) {
+              params.set('hints', encodeURIComponent(JSON.stringify(all.slice(0, allowed))));
+            }
+          } catch (e) { /* not a JSON array — leave whatever the content authored */ }
+        }
+      }
+    }
+
     // ------- Telegram bootstrap (mirrors hanoi.html) -------
     const tg = window.Telegram ? window.Telegram.WebApp : null;
     if (tg) { tg.ready(); tg.expand(); }
@@ -187,6 +237,7 @@
 
     // ------- Input params -------
     const q = new URLSearchParams(window.location.search);
+    await loadConfigInto(q);
     const sessionId = q.get('sessionId');
     const userId = (tg && tg.initDataUnsafe && tg.initDataUnsafe.user) ? tg.initDataUnsafe.user.id : q.get('userId');
     const N = Math.max(1, parseInt(q.get('digits') || '4', 10));
@@ -198,10 +249,12 @@
     const STR = {
       en: { title: 'Padlock', pull: 'PULL', give: 'Give up',
             sent: 'Sent', sentBody: 'Check the chat for the verdict.',
-            gaveTitle: 'Left locked', gaveBody: 'You step back from the lock.' },
+            gaveTitle: 'Left locked', gaveBody: 'You step back from the lock.',
+            hint: '💡 Hint', noMoreHints: '💡 No more hints' },
       hr: { title: 'Lokot', pull: 'POVUCI', give: 'Odustani',
             sent: 'Poslano', sentBody: 'Provjeri chat za ishod.',
-            gaveTitle: 'Ostalo zaključano', gaveBody: 'Odmakneš se od lokota.' },
+            gaveTitle: 'Ostalo zaključano', gaveBody: 'Odmakneš se od lokota.',
+            hint: '💡 Savjet', noMoreHints: '💡 Nema više savjeta' },
     };
     const S = STR[lang] || STR.en;
 
@@ -211,6 +264,24 @@
     document.getElementById('giveup').textContent = S.give;
     const tagText = q.get('tag');
     if (tagText) document.getElementById('tag').textContent = decodeURIComponent(tagText);
+
+    // ------- In-app hints (optional; duplicated from the puzzle's own hints so Telegram's
+    // sendData-closes-the-app contract doesn't block a live server round-trip mid-session) -------
+    let hints = []; try { hints = JSON.parse(decodeURIComponent(q.get('hints') || '[]')); } catch (e) {}
+    let hintsRevealed = 0;
+    const msgEl = document.getElementById('msg');
+    const hintBtn = document.getElementById('hintBtn');
+    if (hints.length) {
+      hintBtn.style.display = '';
+      hintBtn.textContent = `${S.hint} (${hints.length})`;
+      hintBtn.addEventListener('click', () => {
+        const h = hints[Math.min(hintsRevealed, hints.length - 1)];
+        hintsRevealed = Math.min(hintsRevealed + 1, hints.length);
+        hintBtn.textContent = hintsRevealed >= hints.length ? S.noMoreHints : `${S.hint} (${hints.length - hintsRevealed} left)`;
+        msgEl.textContent = typeof h === 'string' ? h : (h[lang] || h.en || '');
+        msgEl.className = 'msg';
+      });
+    }
 
     // ------- Dials -------
     const digits = new Array(N).fill(0);
@@ -272,6 +343,7 @@
         userId: userId,
         gameId: 'padlock',
         timestamp: Date.now(),
+        metrics: { hintsUsed: hintsRevealed },
         ...payload,
       };
       console.log('📤 padlock result', result);
@@ -308,6 +380,27 @@
       send({ success: false, outcome: 'abandoned' });
       setTimeout(() => showOverlay(true), 200);
     });
+
+    // ------- Test hook -------
+    // Same shape as padlock.html's (this file is its Zagreb-skinned sibling), so one headless helper
+    // can drive both. `setDigit` clicks the real arrow rather than writing `digits` directly, and the
+    // combination is never in this page — PULL reports what is dialed and the engine decides.
+    window.__padlock = {
+      dials: N,
+      digits: () => digits.slice(),
+      solved: () => solved,
+      setDigit: (i, v) => {
+        const dial = dialsEl.querySelectorAll('.dial')[i];
+        if (!dial) return false;
+        const up = dial.querySelector('.arrow');
+        const target = mod10(v);
+        for (let guard = 0; digits[i] !== target && guard < 10; guard++) up.click();
+        return digits[i] === target;
+      },
+      setCode: (code) => String(code).split('').every((c, i) => window.__padlock.setDigit(i, Number(c))),
+      pull: () => document.getElementById('pull').click(),
+      giveUp: () => document.getElementById('giveup').click(),
+    };
   </script>
 </body>
 </html>
