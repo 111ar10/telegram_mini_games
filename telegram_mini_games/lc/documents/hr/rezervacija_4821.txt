@@ -1,0 +1,5 @@
+REZERVACIJA 4821
+
+Badminton, rekreacija.
+Status: iskorišteno, prošli mjesec.
+Kod vrijedi samo za ulazak u dvoranu u rezerviranom terminu.

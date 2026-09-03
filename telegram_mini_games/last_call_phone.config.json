@@ -1,0 +1,2098 @@
+{
+  "apps": [
+    {
+      "id": "poruke",
+      "icon": "💬",
+      "label": {
+        "hr": "Arhiva poruka",
+        "en": "Message archive"
+      },
+      "screen": "inbox",
+      "rows": [
+        {
+          "icon": "🚬",
+          "primary": "Toma",
+          "secondary": {
+            "hr": "ti: „sutra“ — nije pročitano",
+            "en": "you: \"tomorrow\" — unread"
+          },
+          "meta": {
+            "hr": "čet",
+            "en": "Thu"
+          },
+          "thread": [
+            {
+              "sep": {
+                "hr": "utorak",
+                "en": "Tuesday"
+              }
+            },
+            {
+              "from": "them",
+              "text": {
+                "hr": "Kupio sam onu rižu koju voliš. Dolaziš?",
+                "en": "I bought that rice you like. Are you coming over?"
+              },
+              "time": "19:04"
+            },
+            {
+              "from": "me",
+              "text": {
+                "hr": "Ne večeras. Radim.",
+                "en": "Not tonight. Working."
+              },
+              "time": "19:31"
+            },
+            {
+              "from": "them",
+              "text": {
+                "hr": "Radiš svaku večer već tri tjedna.",
+                "en": "You have been working every night for three weeks."
+              },
+              "time": "19:32"
+            },
+            {
+              "from": "me",
+              "text": {
+                "hr": "Znam. Daj mi tjedan dana.",
+                "en": "I know. Give me a week."
+              },
+              "time": "19:40"
+            },
+            {
+              "sep": {
+                "hr": "četvrtak",
+                "en": "Thursday"
+              }
+            },
+            {
+              "from": "them",
+              "text": {
+                "hr": "Jesi dobro?",
+                "en": "Are you all right?"
+              },
+              "time": "22:15"
+            },
+            {
+              "from": "me",
+              "text": {
+                "hr": "sutra",
+                "en": "tomorrow"
+              },
+              "time": "23:59"
+            },
+            {
+              "from": "them",
+              "text": {
+                "hr": "Lena?",
+                "en": "Lena?"
+              },
+              "time": {
+                "hr": "pet 08:20",
+                "en": "Fri 08:20"
+              }
+            },
+            {
+              "from": "them",
+              "text": {
+                "hr": "Lena.",
+                "en": "Lena."
+              },
+              "time": {
+                "hr": "pet 14:02",
+                "en": "Fri 14:02"
+              }
+            }
+          ],
+          "contactId": "toma"
+        },
+        {
+          "icon": "👩‍🦳",
+          "primary": "Ana P.",
+          "secondary": {
+            "hr": "nit staje 6. ožujka",
+            "en": "the thread stops on 6 March"
+          },
+          "meta": {
+            "hr": "ožu",
+            "en": "Mar"
+          },
+          "thread": [
+            {
+              "sep": {
+                "hr": "4. ožujka",
+                "en": "4 March"
+              }
+            },
+            {
+              "from": "them",
+              "text": {
+                "hr": "Imaju popis. Ja sam na njemu. Ti još nisi.",
+                "en": "They have a list. I am on it. You are not, yet."
+              },
+              "time": "21:12"
+            },
+            {
+              "from": "me",
+              "text": {
+                "hr": "Koji popis?",
+                "en": "What list?"
+              },
+              "time": "21:13"
+            },
+            {
+              "from": "them",
+              "text": {
+                "hr": "Ne preko poruke. Dođi u petak.",
+                "en": "Not over text. Come on Friday."
+              },
+              "time": "21:15"
+            },
+            {
+              "sep": {
+                "hr": "6. ožujka",
+                "en": "6 March"
+              }
+            },
+            {
+              "from": "them",
+              "text": {
+                "hr": "Ako se ne javim do nedjelje, ne traži me. Traži papire.",
+                "en": "If I do not write by Sunday, do not look for me. Look for the paperwork."
+              },
+              "time": "23:48"
+            },
+            {
+              "from": "me",
+              "text": {
+                "hr": "Ana.",
+                "en": "Ana."
+              },
+              "time": "23:49"
+            },
+            {
+              "from": "me",
+              "text": {
+                "hr": "Ana, javi se.",
+                "en": "Ana, answer me."
+              },
+              "time": "23:57"
+            },
+            {
+              "sep": {
+                "hr": "19. ožujka",
+                "en": "19 March"
+              }
+            },
+            {
+              "from": "me",
+              "unsent": true,
+              "text": {
+                "hr": "Danas sam napokon dobila popis. Trinaest dana prekasno.",
+                "en": "I finally got the list today. Thirteen days too late."
+              }
+            }
+          ],
+          "contactId": "ana_p"
+        },
+        {
+          "icon": "☎️",
+          "primary": {
+            "hr": "01 4600 — (bez imena)",
+            "en": "01 4600 — (no name)"
+          },
+          "secondary": {
+            "hr": "nitko se ne potpisuje",
+            "en": "nobody signs their name"
+          },
+          "meta": {
+            "hr": "čet",
+            "en": "Thu"
+          },
+          "thread": [
+            {
+              "sep": {
+                "hr": "srijeda",
+                "en": "Wednesday"
+              }
+            },
+            {
+              "from": "them",
+              "text": {
+                "hr": "Ne s ovog broja više. Kupite drugi.",
+                "en": "Not from this number any more. Buy another one."
+              },
+              "time": "22:41"
+            },
+            {
+              "from": "me",
+              "text": {
+                "hr": "Treba mi popis potpisnika. Samo imena.",
+                "en": "I need the list of signatories. Names only."
+              },
+              "time": "22:44"
+            },
+            {
+              "from": "them",
+              "text": {
+                "hr": "Znate što tražite?",
+                "en": "Do you know what you are asking for?"
+              },
+              "time": "23:02"
+            },
+            {
+              "from": "me",
+              "text": {
+                "hr": "Da.",
+                "en": "Yes."
+              },
+              "time": "23:02"
+            },
+            {
+              "sep": {
+                "hr": "četvrtak",
+                "en": "Thursday"
+              }
+            },
+            {
+              "from": "them",
+              "text": {
+                "hr": "Sutra u devet. Ne dolazite autom.",
+                "en": "Nine tomorrow. Do not come by car."
+              },
+              "time": "20:55"
+            },
+            {
+              "from": "me",
+              "text": {
+                "hr": "Nemoj se javljati na fiksni.",
+                "en": "Do not answer the landline."
+              },
+              "time": "23:53"
+            }
+          ],
+          "contactId": "bez_imena",
+          "number": "01 4600 —"
+        },
+        {
+          "icon": "📇",
+          "primary": "Vesna",
+          "secondary": {
+            "hr": "sedam poruka, sve o roku",
+            "en": "seven messages, all about the deadline"
+          },
+          "meta": {
+            "hr": "čet",
+            "en": "Thu"
+          },
+          "thread": [
+            {
+              "sep": {
+                "hr": "ponedjeljak",
+                "en": "Monday"
+              }
+            },
+            {
+              "from": "them",
+              "text": {
+                "hr": "Gdje je tekst.",
+                "en": "Where is the copy."
+              },
+              "time": "09:02"
+            },
+            {
+              "from": "me",
+              "text": {
+                "hr": "Imam drugi izvor. Treba mi još tjedan.",
+                "en": "I have a second source. I need another week."
+              },
+              "time": "09:40"
+            },
+            {
+              "from": "them",
+              "text": {
+                "hr": "Imaš do srijede.",
+                "en": "You have until Wednesday."
+              },
+              "time": "09:41"
+            },
+            {
+              "sep": {
+                "hr": "četvrtak",
+                "en": "Thursday"
+              }
+            },
+            {
+              "from": "me",
+              "text": {
+                "hr": "Ako ti se ne javim do jutra, nazovi Ivanu.",
+                "en": "If you do not hear from me by morning, ring Ivana."
+              },
+              "time": "21:38"
+            },
+            {
+              "from": "them",
+              "text": {
+                "hr": "To nije smiješno.",
+                "en": "That is not funny."
+              },
+              "time": "21:52"
+            },
+            {
+              "from": "them",
+              "text": {
+                "hr": "Lena, to nije smiješno.",
+                "en": "Lena, that is not funny."
+              },
+              "time": "22:30"
+            }
+          ],
+          "contactId": "vesna_redakcija"
+        }
+      ]
+    },
+    {
+      "id": "dnevnik_poziva",
+      "icon": "📞",
+      "label": {
+        "hr": "Dnevnik poziva",
+        "en": "Call log"
+      },
+      "screen": "list",
+      "rows": [
+        {
+          "icon": "↗️",
+          "primary": "N.",
+          "secondary": {
+            "hr": "Odlazni · 00:14",
+            "en": "Outgoing · 00:14"
+          },
+          "meta": {
+            "hr": "čet 23:52",
+            "en": "Thu 23:52"
+          }
+        },
+        {
+          "icon": "↙️",
+          "primary": {
+            "hr": "01 4600 —",
+            "en": "01 4600 —"
+          },
+          "secondary": {
+            "hr": "Dolazni · 09:11",
+            "en": "Incoming · 09:11"
+          },
+          "meta": {
+            "hr": "čet 21:40",
+            "en": "Thu 21:40"
+          }
+        },
+        {
+          "icon": "↗️",
+          "primary": "Ana P. (4)",
+          "secondary": {
+            "hr": "Odlazni · 00:03, 00:02, 00:05, 00:02",
+            "en": "Outgoing · 00:03, 00:02, 00:05, 00:02"
+          },
+          "meta": {
+            "hr": "čet 14:02",
+            "en": "Thu 14:02"
+          }
+        },
+        {
+          "icon": "⛔",
+          "primary": "Toma",
+          "secondary": {
+            "hr": "Propušten",
+            "en": "Missed"
+          },
+          "meta": {
+            "hr": "sri 21:12",
+            "en": "Wed 21:12"
+          }
+        },
+        {
+          "icon": "⛔",
+          "primary": "Toma",
+          "secondary": {
+            "hr": "Propušten",
+            "en": "Missed"
+          },
+          "meta": {
+            "hr": "sri 19:48",
+            "en": "Wed 19:48"
+          }
+        },
+        {
+          "icon": "↗️",
+          "primary": "Ana P. (2)",
+          "secondary": {
+            "hr": "Odlazni · 00:04, 00:02",
+            "en": "Outgoing · 00:04, 00:02"
+          },
+          "meta": {
+            "hr": "sri 11:55",
+            "en": "Wed 11:55"
+          }
+        },
+        {
+          "icon": "↗️",
+          "primary": {
+            "hr": "Vesna (redakcija)",
+            "en": "Vesna (newsroom)"
+          },
+          "secondary": {
+            "hr": "Odlazni · 06:40",
+            "en": "Outgoing · 06:40"
+          },
+          "meta": {
+            "hr": "uto 10:15",
+            "en": "Tue 10:15"
+          }
+        }
+      ]
+    },
+    {
+      "id": "imenik",
+      "icon": "👤",
+      "label": {
+        "hr": "Imenik",
+        "en": "Phonebook"
+      },
+      "screen": "contacts",
+      "contacts": [
+        {
+          "id": "toma",
+          "name": {
+            "hr": "Toma 🚬",
+            "en": "Toma 🚬"
+          },
+          "number": "091 447 2210",
+          "note": {
+            "hr": "Ne zovi prije deset. Ne piše prije kave.\n\nAko se ne javi iz prve, javit će se iz druge.",
+            "en": "Do not call before ten. He does not write before coffee.\n\nIf he does not pick up first time, he picks up the second."
+          }
+        },
+        {
+          "id": "mama",
+          "name": {
+            "hr": "Mama",
+            "en": "Mama"
+          },
+          "number": "098 612 0043",
+          "note": {
+            "hr": "Nedjeljom u jedan. Uvijek nedjeljom u jedan.\n\n<i>Zadnji zapis uz kontakt: „ne govori joj o poslu“.</i>",
+            "en": "Sundays at one. Always Sundays at one.\n\n<i>The last line saved with the contact: \"do not tell her about work\".</i>"
+          }
+        },
+        {
+          "id": "ivana",
+          "name": {
+            "hr": "Ivana",
+            "en": "Ivana"
+          },
+          "number": "095 208 7719",
+          "note": {
+            "hr": "Ako mi se išta dogodi — ona prva, pa tek onda redakcija.\n\n<i>Napisano u polju za bilješku, kao da je adresa.</i>",
+            "en": "If anything happens to me — her first, the newsroom second.\n\n<i>Written in the notes field, as if it were an address.</i>"
+          }
+        },
+        {
+          "id": "ana_p",
+          "name": {
+            "hr": "Ana P.",
+            "en": "Ana P."
+          },
+          "number": "099 331 5580",
+          "note": {
+            "hr": "Ne briši.",
+            "en": "Do not delete."
+          }
+        },
+        {
+          "id": "vesna_redakcija",
+          "name": {
+            "hr": "Vesna (redakcija)",
+            "en": "Vesna (newsroom)"
+          },
+          "number": "01 4881 200",
+          "note": {
+            "hr": "Zove samo zbog roka. Ako zove dvaput zaredom, onda nije zbog roka.",
+            "en": "She only calls about the deadline. If she calls twice running, it is not about the deadline."
+          }
+        },
+        {
+          "id": "horvat_kontakt",
+          "name": {
+            "hr": "dr. Horvat",
+            "en": "Dr Horvat"
+          },
+          "number": "01 3702 455",
+          "note": {
+            "hr": "Utorkom u 18:00.\n\n<i>Jedini termin u kalendaru koji se ponavlja i jedini koji nikad nije otkazan.</i>",
+            "en": "Tuesdays at 18:00.\n\n<i>The only recurring appointment in the calendar, and the only one never cancelled.</i>"
+          }
+        },
+        {
+          "id": "bez_imena",
+          "name": {
+            "hr": "",
+            "en": ""
+          },
+          "number": "01 4600 —",
+          "note": {
+            "hr": "Spremljen bez imena, a spremljen je.\n\n<i>Jedini kontakt u imeniku koji nema ime. Netko koga je htjela moći nazvati, a ne htjela da itko vidi koga zove.</i>",
+            "en": "Saved with no name — but saved.\n\n<i>The only contact in the phonebook without a name. Somebody she wanted to be able to ring, and did not want anybody to see her ringing.</i>"
+          }
+        },
+        {
+          "id": "ne_javljaj_se",
+          "name": {
+            "hr": "NE JAVLJAJ SE",
+            "en": "DO NOT ANSWER"
+          },
+          "number": "01 4600 318",
+          "note": {
+            "hr": "Zvali su tri puta u tjedan dana, uvijek s istog broja, uvijek u uredovno vrijeme.\n\n<i>Prve tri znamenke iste su kao kod kontakta bez imena. Ista centrala, druga osoba.</i>",
+            "en": "They rang three times in a week, always from the same number, always in office hours.\n\n<i>The first digits match the contact with no name. Same switchboard, different person.</i>"
+          }
+        },
+        {
+          "id": "svakodnevni_1",
+          "name": {
+            "hr": "Boris Kovač",
+            "en": "Boris Kovač"
+          },
+          "number": "093 555 2100",
+          "note": {
+            "hr": "Susjed iz drugog ulaza.",
+            "en": "Neighbour from the next entrance."
+          }
+        },
+        {
+          "id": "svakodnevni_2",
+          "name": {
+            "hr": "Dora Marić",
+            "en": "Dora Marić"
+          },
+          "number": "093 555 2101",
+          "note": {
+            "hr": "Dogovor za badminton.",
+            "en": "Badminton arrangements."
+          }
+        },
+        {
+          "id": "svakodnevni_3",
+          "name": {
+            "hr": "Ema Perić",
+            "en": "Ema Perić"
+          },
+          "number": "093 555 2102",
+          "note": {
+            "hr": "Preporuka za popravak bicikla.",
+            "en": "Bicycle repair recommendation."
+          }
+        },
+        {
+          "id": "svakodnevni_4",
+          "name": {
+            "hr": "Filip Novak",
+            "en": "Filip Novak"
+          },
+          "number": "093 555 2103",
+          "note": {
+            "hr": "Grupa s tečaja jezika.",
+            "en": "Language course group."
+          }
+        },
+        {
+          "id": "svakodnevni_5",
+          "name": {
+            "hr": "Goran Babić",
+            "en": "Goran Babić"
+          },
+          "number": "093 555 2104",
+          "note": {
+            "hr": "Susjed iz drugog ulaza.",
+            "en": "Neighbour from the next entrance."
+          }
+        },
+        {
+          "id": "svakodnevni_6",
+          "name": {
+            "hr": "Helena Radić",
+            "en": "Helena Radić"
+          },
+          "number": "093 555 2105",
+          "note": {
+            "hr": "Dogovor za badminton.",
+            "en": "Badminton arrangements."
+          }
+        },
+        {
+          "id": "svakodnevni_7",
+          "name": {
+            "hr": "Irena Matić",
+            "en": "Irena Matić"
+          },
+          "number": "093 555 2106",
+          "note": {
+            "hr": "Preporuka za popravak bicikla.",
+            "en": "Bicycle repair recommendation."
+          }
+        },
+        {
+          "id": "svakodnevni_8",
+          "name": {
+            "hr": "Jasna Vuković",
+            "en": "Jasna Vuković"
+          },
+          "number": "093 555 2107",
+          "note": {
+            "hr": "Grupa s tečaja jezika.",
+            "en": "Language course group."
+          }
+        },
+        {
+          "id": "svakodnevni_9",
+          "name": {
+            "hr": "Karlo Jurić",
+            "en": "Karlo Jurić"
+          },
+          "number": "093 555 2108",
+          "note": {
+            "hr": "Susjed iz drugog ulaza.",
+            "en": "Neighbour from the next entrance."
+          }
+        },
+        {
+          "id": "svakodnevni_10",
+          "name": {
+            "hr": "Lucija Horvat",
+            "en": "Lucija Horvat"
+          },
+          "number": "093 555 2109",
+          "note": {
+            "hr": "Dogovor za badminton.",
+            "en": "Badminton arrangements."
+          }
+        },
+        {
+          "id": "svakodnevni_11",
+          "name": {
+            "hr": "Marin Pavlović",
+            "en": "Marin Pavlović"
+          },
+          "number": "093 555 2110",
+          "note": {
+            "hr": "Preporuka za popravak bicikla.",
+            "en": "Bicycle repair recommendation."
+          }
+        },
+        {
+          "id": "svakodnevni_12",
+          "name": {
+            "hr": "Nika Šarić",
+            "en": "Nika Šarić"
+          },
+          "number": "093 555 2111",
+          "note": {
+            "hr": "Grupa s tečaja jezika.",
+            "en": "Language course group."
+          }
+        },
+        {
+          "id": "svakodnevni_13",
+          "name": {
+            "hr": "Ognjen Petrović",
+            "en": "Ognjen Petrović"
+          },
+          "number": "093 555 2112",
+          "note": {
+            "hr": "Susjed iz drugog ulaza.",
+            "en": "Neighbour from the next entrance."
+          }
+        },
+        {
+          "id": "svakodnevni_14",
+          "name": {
+            "hr": "Petra Božić",
+            "en": "Petra Božić"
+          },
+          "number": "093 555 2113",
+          "note": {
+            "hr": "Dogovor za badminton.",
+            "en": "Badminton arrangements."
+          }
+        },
+        {
+          "id": "svakodnevni_15",
+          "name": {
+            "hr": "Roko Grgić",
+            "en": "Roko Grgić"
+          },
+          "number": "093 555 2114",
+          "note": {
+            "hr": "Preporuka za popravak bicikla.",
+            "en": "Bicycle repair recommendation."
+          }
+        },
+        {
+          "id": "svakodnevni_16",
+          "name": {
+            "hr": "Sara Vidović",
+            "en": "Sara Vidović"
+          },
+          "number": "093 555 2115",
+          "note": {
+            "hr": "Grupa s tečaja jezika.",
+            "en": "Language course group."
+          }
+        },
+        {
+          "id": "svakodnevni_17",
+          "name": {
+            "hr": "Tea Lončar",
+            "en": "Tea Lončar"
+          },
+          "number": "093 555 2116",
+          "note": {
+            "hr": "Susjed iz drugog ulaza.",
+            "en": "Neighbour from the next entrance."
+          }
+        },
+        {
+          "id": "svakodnevni_18",
+          "name": {
+            "hr": "Vedran Kralj",
+            "en": "Vedran Kralj"
+          },
+          "number": "093 555 2117",
+          "note": {
+            "hr": "Dogovor za badminton.",
+            "en": "Badminton arrangements."
+          }
+        },
+        {
+          "id": "svakodnevni_19",
+          "name": {
+            "hr": "Zora Marković",
+            "en": "Zora Marković"
+          },
+          "number": "093 555 2118",
+          "note": {
+            "hr": "Preporuka za popravak bicikla.",
+            "en": "Bicycle repair recommendation."
+          }
+        },
+        {
+          "id": "svakodnevni_20",
+          "name": {
+            "hr": "Željko Tomić",
+            "en": "Željko Tomić"
+          },
+          "number": "093 555 2119",
+          "note": {
+            "hr": "Grupa s tečaja jezika.",
+            "en": "Language course group."
+          }
+        }
+      ]
+    },
+    {
+      "id": "galerija",
+      "icon": "🖼",
+      "label": {
+        "hr": "Galerija",
+        "en": "Gallery"
+      },
+      "screen": "gallery",
+      "gallery": [
+        {
+          "id": "tablica",
+          "emoji": "🧾",
+          "caption": {
+            "hr": "Snimka zaslona: tablica bez naslova",
+            "en": "Screenshot: untitled table"
+          },
+          "img": "lc/gallery/tablica.svg"
+        },
+        {
+          "id": "ulaz",
+          "emoji": "🚪",
+          "caption": {
+            "hr": "Ulaz u zgradu, snimljen izdaleka",
+            "en": "Building entrance, photographed from a distance"
+          },
+          "img": "lc/gallery/ulaz.jpg"
+        },
+        {
+          "id": "potpis",
+          "emoji": "📄",
+          "caption": {
+            "hr": "Potpis, uvećan do zrna",
+            "en": "Signature, enlarged to the paper grain"
+          },
+          "img": "lc/gallery/potpis.svg"
+        },
+        {
+          "id": "registracija",
+          "emoji": "🚗",
+          "caption": {
+            "hr": "Registracija, kroz izlog",
+            "en": "Number plate, through a shop window"
+          },
+          "img": "lc/gallery/registracija.svg"
+        },
+        {
+          "id": "ana",
+          "emoji": "👩‍🦳",
+          "caption": {
+            "hr": "Ana P., za istim stolom",
+            "en": "Ana P., at the same table"
+          },
+          "img": "lc/gallery/ana.jpg"
+        },
+        {
+          "id": "rodjendan",
+          "emoji": "🎂",
+          "caption": {
+            "hr": "Rođendan, prije dvije godine",
+            "en": "Birthday, two years ago"
+          },
+          "img": "lc/gallery/rodjendan.jpg"
+        }
+      ]
+    },
+    {
+      "id": "datoteke",
+      "icon": "📁",
+      "label": {
+        "hr": "Datoteke",
+        "en": "Files"
+      },
+      "screen": "list",
+      "rows": [
+        {
+          "icon": "📥",
+          "primary": {
+            "hr": "Preuzimanja",
+            "en": "Downloads"
+          },
+          "rows": [
+            {
+              "icon": "📄",
+              "primary": "vozni_red_noc.pdf",
+              "secondary": {
+                "hr": "142 kB · čet 23:41",
+                "en": "142 kB · Thu 23:41"
+              },
+              "body": {
+                "hr": "Noćni vozni red. Zadnji tramvaj s njezine strane grada polazi u 00:12.\n\n<i>Preuzela ga je u 23:41. Trideset i jednu minutu prije polaska.</i>",
+                "en": "The night timetable. The last tram from her side of the city leaves at 00:12.\n\n<i>She downloaded it at 23:41. Thirty-one minutes before it left.</i>"
+              },
+              "document": {
+                "hr": "lc/documents/hr/vozni_red_noc.pdf",
+                "en": "lc/documents/en/vozni_red_noc.pdf"
+              },
+              "img": {
+                "hr": "lc/documents/hr/vozni_red_noc.png",
+                "en": "lc/documents/en/vozni_red_noc.png"
+              }
+            },
+            {
+              "icon": "📄",
+              "primary": "obrazac_pristup_arhivi.pdf",
+              "secondary": {
+                "hr": "88 kB · uto 16:20",
+                "en": "88 kB · Tue 16:20"
+              },
+              "body": {
+                "hr": "Zahtjev za pristup arhivskoj građi. Sva polja prazna osim jednog.\n\nU rubrici „svrha“ piše: <code>novinarska obrada</code>.\n\n<i>Nikad ga nije predala. Vjerojatno zato što bi ga netko morao odobriti.</i>",
+                "en": "A request for access to archived records. Every field blank but one.\n\nUnder \"purpose\" it says: <code>journalistic work</code>.\n\n<i>She never filed it. Probably because somebody would have had to approve it.</i>"
+              },
+              "document": {
+                "hr": "lc/documents/hr/obrazac_pristup_arhivi.pdf",
+                "en": "lc/documents/en/obrazac_pristup_arhivi.pdf"
+              },
+              "img": {
+                "hr": "lc/documents/hr/obrazac_pristup_arhivi.png",
+                "en": "lc/documents/en/obrazac_pristup_arhivi.png"
+              }
+            },
+            {
+              "icon": "📄",
+              "primary": "zet_101.pdf",
+              "body": {
+                "hr": "ZET-ov vozni red autobusne linije 101: Britanski trg – Šestine.",
+                "en": "ZET bus line 101 timetable: Britanski trg – Šestine."
+              },
+              "document": "lc/documents/zet_101_original.pdf",
+              "img": "lc/documents/zet_101_original.png"
+            }
+          ]
+        },
+        {
+          "icon": "📷",
+          "primary": {
+            "hr": "Skenovi",
+            "en": "Scans"
+          },
+          "rows": [
+            {
+              "icon": "🖊",
+              "primary": "potpis_1.jpg",
+              "secondary": {
+                "hr": "2,4 MB · sri 12:03",
+                "en": "2.4 MB · Wed 12:03"
+              },
+              "body": {
+                "hr": "Potpis, uvećan dok se ne vide zrna papira.\n\n<i>Isti potpis pojavljuje se na tri različita dokumenta iz tri različita mjeseca.</i>",
+                "en": "A signature, enlarged until the grain of the paper shows.\n\n<i>The same signature appears on three different documents from three different months.</i>"
+              },
+              "img": "lc/gallery/potpis.svg"
+            },
+            {
+              "icon": "📃",
+              "primary": "protokol_str14.jpg",
+              "secondary": {
+                "hr": "1,8 MB · sri 12:05",
+                "en": "1.8 MB · Wed 12:05"
+              },
+              "body": {
+                "hr": "Stranica 14 protokola. Suautori: Irena Vlahović, Darko Šimunić i Marko Bilić. Ime Darko Šimunić podvučeno je dvaput.\n\n<i>Podvukla ga je ona, ne skener.</i>",
+                "en": "Page 14 of the protocol. Co-authors: Irena Vlahović, Darko Šimunić and Marko Bilić. Darko Šimunić is underlined twice.\n\n<i>She underlined it, not the scanner.</i>"
+              },
+              "img": {
+                "hr": "lc/documents/hr/protokol_str14.png",
+                "en": "lc/documents/en/protokol_str14.png"
+              },
+              "document": {
+                "hr": "lc/documents/hr/protokol_str14.pdf",
+                "en": "lc/documents/en/protokol_str14.pdf"
+              }
+            }
+          ]
+        },
+        {
+          "icon": "🧾",
+          "primary": {
+            "hr": "Računi",
+            "en": "Receipts"
+          },
+          "rows": [
+            {
+              "icon": "☕",
+              "primary": "racun_kavana.jpg",
+              "secondary": {
+                "hr": "640 kB · čet 20:49",
+                "en": "640 kB · Thu 20:49"
+              },
+              "body": {
+                "hr": "Kavana Međukat, Prolaz starih satova 7, Zagreb.\n\nRačun 104/1/1, 10.09.2026. u <b>20:48</b>.\nDvije kave po 3,00 EUR. Ukupno <b>6,00 EUR</b>, plaćeno gotovinom.\n\n<i>Dvanaest minuta prije termina bez naslova. Dvije kave znače da nije čekala sama.</i>",
+                "en": "Kavana Međukat, Prolaz starih satova 7, Zagreb.\n\nReceipt 104/1/1, 10.09.2026 at <b>20:48</b>.\nTwo coffees at EUR 3.00 each. Total <b>EUR 6.00</b>, paid in cash.\n\n<i>Twelve minutes before the untitled appointment. Two coffees mean she was not waiting alone.</i>"
+              },
+              "img": {
+                "hr": "lc/documents/hr/racun_kavana.png",
+                "en": "lc/documents/en/racun_kavana.png"
+              },
+              "document": {
+                "hr": "lc/documents/hr/racun_kavana.pdf",
+                "en": "lc/documents/en/racun_kavana.pdf"
+              },
+              "qrLink": "lc/receipt-secret.html",
+              "qrBounds": {
+                "left": 26.991150442477874,
+                "top": 57.57575757575758,
+                "width": 46.017699115044245,
+                "height": 15.757575757575756
+              }
+            }
+          ]
+        },
+        {
+          "icon": "🗑",
+          "primary": {
+            "hr": "Nedavno obrisano",
+            "en": "Recently deleted"
+          },
+          "secondary": {
+            "hr": "briše se za 23 dana",
+            "en": "deletes in 23 days"
+          },
+          "rows": [
+            {
+              "icon": "🚫",
+              "primary": {
+                "hr": "7 datoteka obrisano u četvrtak",
+                "en": "7 files deleted on Thursday"
+              },
+              "secondary": {
+                "hr": "sve između 23:30 i 23:57",
+                "en": "all between 23:30 and 23:57"
+              },
+              "body": {
+                "hr": "Sedam datoteka obrisano je u istih dvadeset i sedam minuta.\n\nNijedna nije iz radne mape. Sve su fotografije, i sve su s istog rođendana.\n\n<i>Brisala je uspomene, a ostavila dokaze. Netko tko je mislio da će netko drugi ovo gledati.</i>",
+                "en": "Seven files were deleted inside the same twenty-seven minutes.\n\nNot one of them is from the working folder. They are all photographs, and all from the same birthday.\n\n<i>She deleted the memories and left the evidence. Somebody who expected another person to go through this.</i>"
+              }
+            }
+          ]
+        },
+        {
+          "icon": "🗂",
+          "primary": ".thumbnails",
+          "secondary": {
+            "hr": "predmemorija sličica",
+            "en": "thumbnail cache"
+          },
+          "rows": [
+            {
+              "icon": "📝",
+              "primary": "nacrt_v3.docx",
+              "secondary": {
+                "hr": "41 kB · čet 20:11",
+                "en": "41 kB · Thu 20:11"
+              },
+              "requires": "arhiva_price",
+              "body": {
+                "hr": "NACRT — v3\n\nTrinaest ljudi umrlo je u ispitivanju lijeka koje je službeno prekinuto zbog „slabog odaziva“.\n\nDevet od trinaest smrti naknadno je prekvalificirano u „nepovezane s ispitivanjem“. Sve devet potpisala je ista osoba, i to nakon što je podstudija zaustavljena.\n\n<i>Ispod, u zagradi: „ovo je treća verzija uvoda. Prva je bila točnija. Vidi nacrt_v1.“</i>",
+                "en": "DRAFT — v3\n\nThirteen people died in a drug trial that was officially halted for \"poor recruitment\".\n\nNine of the thirteen deaths were later reclassified as \"unrelated to the trial\". All nine were signed off by the same person, and signed after the substudy was stopped.\n\n<i>Below, in brackets: \"this is the third version of the intro. The first was more accurate. See draft_v1.\"</i>"
+              },
+              "document": {
+                "hr": "lc/documents/hr/nacrt_v3.docx",
+                "en": "lc/documents/en/nacrt_v3.docx"
+              }
+            },
+            {
+              "icon": "📝",
+              "primary": "nacrt_v1.docx",
+              "secondary": {
+                "hr": "38 kB · pon 02:40",
+                "en": "38 kB · Mon 02:40"
+              },
+              "requires": "arhiva_price",
+              "body": {
+                "hr": "NACRT — v1\n\nŠimunić je potpisao devet smrtovnica za ispitivanje u kojem je i sam bio suautor protokola.\n\nNitko ga nije pitao kako je to moguće, jer nitko izvan te zgrade nije znao da su te dvije stvari ista osoba.\n\n<i>Preko cijelog odlomka, žutim: „ovo ne prolazi pravnu. Ali je istina.“</i>",
+                "en": "DRAFT — v1\n\nŠimunić signed nine death certificates for a trial whose protocol he had co-authored.\n\nNobody asked him how that was possible, because nobody outside that building knew those two things were the same person.\n\n<i>Across the whole paragraph, in yellow: \"this will not clear legal. But it is true.\"</i>"
+              },
+              "document": {
+                "hr": "lc/documents/hr/nacrt_v1.docx",
+                "en": "lc/documents/en/nacrt_v1.docx"
+              }
+            },
+            {
+              "icon": "📊",
+              "primary": "popis_13.csv",
+              "secondary": {
+                "hr": "3 kB · ned 22:18",
+                "en": "3 kB · Sun 22:18"
+              },
+              "requires": "arhiva_price",
+              "body": {
+                "hr": "inicijali,dob,datum,prvi nalaz,preklasificirano\nM.K.,61,2016-04-02,da,da\nJ.B.,58,2016-05-19,da,da\nA.P.,44,2016-06-07,da,ne\nS.T.,72,2016-06-30,da,da\nV.M.,55,2016-08-11,da,da\n…\n\n<i>Trinaest redaka. Devet ih u zadnjem stupcu ima „da“.</i>\n\n<i>Treći red nije prekvalificiran. Treći red ima iste inicijale kao žena s fotografije.</i>",
+                "en": "initials,age,date,first finding,reclassified\nM.K.,61,2016-04-02,yes,yes\nJ.B.,58,2016-05-19,yes,yes\nA.P.,44,2016-06-07,yes,no\nS.T.,72,2016-06-30,yes,yes\nV.M.,55,2016-08-11,yes,yes\n…\n\n<i>Thirteen rows. Nine of them say \"yes\" in the last column.</i>\n\n<i>The third row was not reclassified. The third row has the same initials as the woman in the photograph.</i>"
+              },
+              "document": {
+                "hr": "lc/documents/hr/popis_13.csv",
+                "en": "lc/documents/en/popis_13.csv"
+              }
+            },
+            {
+              "icon": "🗓",
+              "primary": "kronologija.md",
+              "secondary": {
+                "hr": "9 kB · čet 19:02",
+                "en": "9 kB · Thu 19:02"
+              },
+              "requires": "arhiva_price",
+              "body": {
+                "hr": "# Kronologija\n\n**14.03.2016.** — prvi dan podstudije. (Ana ima fotografiju s tog dana.)\n**06.2016.** — A.P. umire. Jedina smrt koja NIJE prekvalificirana.\n**11.2016.** — podstudija zaustavljena, službeno zbog odaziva.\n**12.2016.** — devet prekvalifikacija, sve u tri tjedna, sve isti potpis.\n**03.2019.** — Ana P. (druga Ana, novinarka) dobiva popis. Umire prije nego ga preda.\n**ovaj tjedan** — N. pristaje govoriti.\n\n<i>Zadnji redak dopisan je drugom bojom.</i>",
+                "en": "# Chronology\n\n**14.03.2016** — first day of the substudy. (Ana has a photograph from that day.)\n**06.2016** — A.P. dies. The only death NOT reclassified.\n**11.2016** — substudy halted, officially over recruitment.\n**12.2016** — nine reclassifications, all within three weeks, all the same signature.\n**03.2019** — Ana P. (the other Ana, the reporter) gets the list. Dies before she can file it.\n**this week** — N. agrees to talk.\n\n<i>The last line was added in a different colour.</i>"
+              },
+              "document": {
+                "hr": "lc/documents/hr/kronologija.md",
+                "en": "lc/documents/en/kronologija.md"
+              }
+            },
+            {
+              "icon": "👤",
+              "primary": "izvori.txt",
+              "secondary": {
+                "hr": "1 kB · sub 09:30",
+                "en": "1 kB · Sat 09:30"
+              },
+              "requires": "arhiva_price",
+              "body": {
+                "hr": "IZVORI — nikad puna imena u ovoj datoteci\n\nN. — arhiva, pristup, jedini koji je pristao ići na zapis. Boji se, i ima pravo.\nD. — potvrdio protokol, neće se potpisati.\nM. — odbio. Dvaput.\nŽ. — poslao mi je jednu rečenicu i obrisao broj.\n\n<i>Ispod svega: „ako ovo netko drugi čita, nijedan od njih nije ti dao ovu datoteku.“</i>",
+                "en": "SOURCES — never full names in this file\n\nN. — the archive, the access, the only one who agreed to go on record. He is frightened, and he is right to be.\nD. — confirmed the protocol, will not put his name to it.\nM. — refused. Twice.\nŽ. — sent me one sentence and deleted his number.\n\n<i>Underneath all of it: \"if somebody else is reading this, not one of them gave you this file.\"</i>"
+              },
+              "document": {
+                "hr": "lc/documents/hr/izvori.txt",
+                "en": "lc/documents/en/izvori.txt"
+              }
+            },
+            {
+              "icon": "⚖️",
+              "primary": "pravna_provjera.pdf",
+              "secondary": {
+                "hr": "210 kB · pet 15:44",
+                "en": "210 kB · Fri 15:44"
+              },
+              "requires": "arhiva_price",
+              "body": {
+                "hr": "PRAVNA PROVJERA — bilješke uz nacrt v2\n\n1. „Ubio ih je“ — ne. Nikada. Ni u jednoj verziji.\n2. „Potpisao je devet prekvalifikacija“ — da, ako imate presliku sva tri potpisa.\n3. „Zataškavanje“ — ne dok netko to ne kaže na zapis.\n4. Ime izvora ne ide u tekst ni pod kojim uvjetima, ni sa suglasnošću.\n\n<i>Rukom, na margini, njezinim rukopisom: „4 je jedini savjet koji ću poslušati bez svađe.“</i>",
+                "en": "LEGAL CHECK — notes against draft v2\n\n1. \"He killed them\" — no. Never. Not in any version.\n2. \"He signed nine reclassifications\" — yes, if you hold copies of all three signatures.\n3. \"Cover-up\" — not until somebody says it on the record.\n4. The source's name does not go in the piece under any circumstances, consent or no consent.\n\n<i>By hand in the margin, in her writing: \"4 is the only advice I will take without arguing.\"</i>"
+              },
+              "document": {
+                "hr": "lc/documents/hr/pravna_provjera.pdf",
+                "en": "lc/documents/en/pravna_provjera.pdf"
+              },
+              "img": {
+                "hr": "lc/documents/hr/pravna_provjera.png",
+                "en": "lc/documents/en/pravna_provjera.png"
+              }
+            },
+            {
+              "icon": "❓",
+              "primary": "pitanja_za_simunica.docx",
+              "secondary": {
+                "hr": "26 kB · čet 18:20",
+                "en": "26 kB · Thu 18:20"
+              },
+              "requires": "arhiva_price",
+              "body": {
+                "hr": "PITANJA — za Š., pisano, s rokom od 48 sati\n\n1. Jeste li bili suautor protokola podstudije?\n2. Jeste li potpisali prekvalifikaciju devet smrti u toj istoj podstudiji?\n3. Je li itko izvan ustanove o tome obaviješten?\n4. Zašto A.P. nije prekvalificirana?\n\n<i>Na dnu, sitno: „poslati tek kad N. bude na sigurnom. Ne prije.“</i>",
+                "en": "QUESTIONS — for Š., in writing, 48 hours to respond\n\n1. Were you a co-author of the substudy protocol?\n2. Did you sign the reclassification of nine deaths in that same substudy?\n3. Was anybody outside the institution informed?\n4. Why was A.P. not reclassified?\n\n<i>At the bottom, small: \"send only once N. is somewhere safe. Not before.\"</i>"
+              },
+              "document": {
+                "hr": "lc/documents/hr/pitanja_za_simunica.docx",
+                "en": "lc/documents/en/pitanja_za_simunica.docx"
+              }
+            },
+            {
+              "icon": "✉️",
+              "primary": "za_vesnu_ne_saljem.eml",
+              "secondary": {
+                "hr": "4 kB · čet 23:58",
+                "en": "4 kB · Thu 23:58"
+              },
+              "requires": "arhiva_price",
+              "body": {
+                "hr": "Za: (prazno)\nPredmet: ako ne stignem\n\nVesna,\n\nAko ovo čitaš, tekst nije gotov i ja ti ga ne mogu obraniti.\n\nNemoj ga objaviti dok N. ne kaže da smije. Znam da ćeš htjeti. Nemoj.\n\nSve je u mapi koja izgleda kao da je prazna.\n\n<i>Polje „za“ nikad nije ispunila. Zato ni nije mogla poslati.</i>",
+                "en": "To: (empty)\nSubject: if I do not make it\n\nVesna,\n\nIf you are reading this, the piece is not finished and I cannot defend it for you.\n\nDo not run it until N. says it can run. I know you will want to. Do not.\n\nIt is all in the folder that looks empty.\n\n<i>She never filled in the \"to\" field. Which is why she could never send it.</i>"
+              },
+              "document": {
+                "hr": "lc/documents/hr/za_vesnu_ne_saljem.eml",
+                "en": "lc/documents/en/za_vesnu_ne_saljem.eml"
+              }
+            },
+            {
+              "icon": "🤍",
+              "primary": "sto_ako_grijesim.txt",
+              "secondary": {
+                "hr": "2 kB · čet 19:40",
+                "en": "2 kB · Thu 19:40"
+              },
+              "requires": "arhiva_price",
+              "body": {
+                "hr": "Što ako griješim.\n\nAko griješim, uništila sam čovjeku život zbog devet potpisa koje je možda potpisao jer mu je netko rekao da potpiše.\n\nAko sam u pravu, a šutim, onda ih je trinaest i nitko za njih nikad neće čuti.\n\nOvo nije hrabrost. Ovo je aritmetika.\n\n<i>Datoteka je otvarana četrdeset i jedan put.</i>",
+                "en": "What if I am wrong.\n\nIf I am wrong, I have destroyed a man over nine signatures he may have signed because somebody told him to sign them.\n\nIf I am right and I say nothing, then there are thirteen of them and nobody will ever hear about it.\n\nThis is not courage. This is arithmetic.\n\n<i>The file has been opened forty-one times.</i>"
+              },
+              "document": {
+                "hr": "lc/documents/hr/sto_ako_grijesim.txt",
+                "en": "lc/documents/en/sto_ako_grijesim.txt"
+              }
+            }
+          ]
+        },
+        {
+          "icon": "📁",
+          "primary": {
+            "hr": "Svakodnevno",
+            "en": "Everyday"
+          },
+          "rows": [
+            {
+              "icon": "📄",
+              "primary": "popis_za_trgovinu.txt",
+              "body": {
+                "hr": "TRGOVINA\n\nKava\nZobeno mlijeko\nVrećice za smeće\nBosiljak — ako je onaj na balkonu opet gotov.",
+                "en": "GROCERIES\n\nCoffee\nOat milk\nBin bags\nBasil — if the balcony plant has died again."
+              },
+              "document": {
+                "hr": "lc/documents/hr/popis_za_trgovinu.txt",
+                "en": "lc/documents/en/popis_za_trgovinu.txt"
+              }
+            },
+            {
+              "icon": "📄",
+              "primary": "servis_bicikla.txt",
+              "body": {
+                "hr": "SERVIS BICIKLA\n\nStražnja kočnica škripi. Provjeriti sajlu.\nNe mijenjati sjedalo. Nije problem u sjedalu.\nTermin: ponedjeljak, 08:30.",
+                "en": "BIKE SERVICE\n\nRear brake squeaks. Check cable.\nDo not replace saddle. The saddle is not the problem.\nAppointment: Monday, 08:30."
+              },
+              "document": {
+                "hr": "lc/documents/hr/servis_bicikla.txt",
+                "en": "lc/documents/en/servis_bicikla.txt"
+              }
+            },
+            {
+              "icon": "📄",
+              "primary": "rezervacija_4821.txt",
+              "body": {
+                "hr": "REZERVACIJA 4821\n\nBadminton, rekreacija.\nStatus: iskorišteno, prošli mjesec.\nKod vrijedi samo za ulazak u dvoranu u rezerviranom terminu.",
+                "en": "RESERVATION 4821\n\nRecreational badminton.\nStatus: used, last month.\nCode valid only for entry during the reserved session."
+              },
+              "document": {
+                "hr": "lc/documents/hr/rezervacija_4821.txt",
+                "en": "lc/documents/en/rezervacija_4821.txt"
+              }
+            },
+            {
+              "icon": "📄",
+              "primary": "jamstvo_perilica.txt",
+              "body": {
+                "hr": "SERVISNA BILJEŠKA\n\nPrijava: voda ispod vrata.\nNalaz: istrošena brtva.\nZahvat: zamjena brtve, provjera nepropusnosti.\nStatus: završeno.",
+                "en": "SERVICE NOTE\n\nReported: water beneath door.\nFinding: worn seal.\nWork: seal replacement and leak test.\nStatus: completed."
+              },
+              "document": {
+                "hr": "lc/documents/hr/jamstvo_perilica.txt",
+                "en": "lc/documents/en/jamstvo_perilica.txt"
+              }
+            },
+            {
+              "icon": "📄",
+              "primary": "knjiznica.txt",
+              "body": {
+                "hr": "MOJE POSUDBE\n\nKuharica za male kuhinje\nProduženje: dopušteno\nPodsjetnik: utorak, 10:00\n\nNe vraćati s papirićima između stranica.",
+                "en": "MY LOANS\n\nCooking in Small Kitchens\nRenewal: available\nReminder: Tuesday, 10:00\n\nRemove bookmarks before returning."
+              },
+              "document": {
+                "hr": "lc/documents/hr/knjiznica.txt",
+                "en": "lc/documents/en/knjiznica.txt"
+              }
+            },
+            {
+              "icon": "📄",
+              "primary": "urednicki_stil.md",
+              "body": {
+                "hr": "# Kratke najave\n\n- Najviše 1200 znakova.\n- Datum i mjesto u prvoj rečenici.\n- Bez „jedinstveno“, „spektakularno“ i „nezaboravno“.\n- Provjeriti ime organizatora.",
+                "en": "# Short listings\n\n- Maximum 1,200 characters.\n- Date and venue in the opening sentence.\n- Avoid “unique”, “spectacular” and “unforgettable”.\n- Check the organiser’s name."
+              },
+              "document": {
+                "hr": "lc/documents/hr/urednicki_stil.md",
+                "en": "lc/documents/en/urednicki_stil.md"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "kalendar",
+      "icon": "📅",
+      "label": {
+        "hr": "Kalendar",
+        "en": "Calendar"
+      },
+      "screen": "agenda",
+      "days": [
+        {
+          "date": "2026-09-07",
+          "label": {
+            "hr": "2026-09-07",
+            "en": "2026-09-07"
+          },
+          "entries": [
+            {
+              "from": "09:00",
+              "title": {
+                "hr": "Preuzeti rublje",
+                "en": "Collect laundry"
+              },
+              "note": {
+                "hr": "Potvrda je u džepu jakne.",
+                "en": "Receipt is in the jacket pocket."
+              },
+              "color": "#78909c"
+            },
+            {
+              "from": "13:00",
+              "title": {
+                "hr": "Urednički rok",
+                "en": "Editorial deadline"
+              },
+              "note": {
+                "hr": "Kratka kulturna najava, 1200 znakova.",
+                "en": "Short culture listing, 1,200 characters."
+              },
+              "color": "#78909c"
+            }
+          ]
+        },
+        {
+          "label": {
+            "hr": "utorak, 8. rujna",
+            "en": "Tuesday 8 September"
+          },
+          "entries": [
+            {
+              "from": "18:00",
+              "to": "19:00",
+              "repeat": true,
+              "color": "#4285f4",
+              "title": {
+                "hr": "H.",
+                "en": "H."
+              },
+              "note": {
+                "hr": "tjedno, bez naslova",
+                "en": "weekly, no title"
+              }
+            },
+            {
+              "from": "10:00",
+              "title": {
+                "hr": "Knjižnica — produžiti",
+                "en": "Renew library loan"
+              },
+              "note": {
+                "hr": "Kuharica. Produžiti online.",
+                "en": "Cookbook. Renew online."
+              },
+              "color": "#78909c"
+            }
+          ],
+          "date": "2026-09-08"
+        },
+        {
+          "label": {
+            "hr": "srijeda, 9. rujna",
+            "en": "Wednesday 9 September"
+          },
+          "empty": {
+            "hr": "Ništa zakazano.",
+            "en": "Nothing scheduled."
+          },
+          "entries": [],
+          "date": "2026-09-09"
+        },
+        {
+          "label": {
+            "hr": "četvrtak, 10. rujna",
+            "en": "Thursday 10 September"
+          },
+          "today": true,
+          "entries": [
+            {
+              "from": "21:00",
+              "color": "#ea4335",
+              "title": {
+                "hr": "(bez naslova)",
+                "en": "(no title)"
+              },
+              "note": {
+                "hr": "bez lokacije · bez gostiju",
+                "en": "no location · no guests"
+              },
+              "body": {
+                "hr": "Termin bez naslova, bez lokacije i bez ijednog gosta.\n\nUnesen je istog jutra, u 08:40.\n\n<i>U kalendaru koji seže godinu unatrag nema nijednog drugog termina bez naslova.</i>",
+                "en": "An appointment with no title, no location and no guests.\n\nEntered the same morning, at 08:40.\n\n<i>In a calendar going back a year there is not one other untitled entry.</i>"
+              }
+            },
+            {
+              "from": "09:30",
+              "title": {
+                "hr": "Račun za internet",
+                "en": "Internet bill"
+              },
+              "note": {
+                "hr": "Provjeriti trajni nalog.",
+                "en": "Check the standing order."
+              },
+              "color": "#78909c"
+            }
+          ],
+          "date": "2026-09-10"
+        },
+        {
+          "label": {
+            "hr": "petak, 11. rujna",
+            "en": "Friday 11 September"
+          },
+          "empty": {
+            "hr": "Ništa zakazano.",
+            "en": "Nothing scheduled."
+          },
+          "entries": [],
+          "date": "2026-09-11"
+        },
+        {
+          "label": {
+            "hr": "subota, 12. rujna",
+            "en": "Saturday 12 September"
+          },
+          "entries": [
+            {
+              "from": "11:00",
+              "to": "12:00",
+              "color": "#5f6368",
+              "title": {
+                "hr": "mama — kava, Kvatrić",
+                "en": "mama — coffee, Kvatrić"
+              },
+              "note": {
+                "hr": "uneseno prije dva tjedna",
+                "en": "entered a fortnight ago"
+              }
+            },
+            {
+              "from": "16:00",
+              "title": {
+                "hr": "Zaliti biljke",
+                "en": "Water plants"
+              },
+              "note": {
+                "hr": "Bosiljak na balkonu.",
+                "en": "Basil on the balcony."
+              },
+              "color": "#78909c"
+            }
+          ],
+          "date": "2026-09-12"
+        },
+        {
+          "date": "2026-09-14",
+          "label": {
+            "hr": "2026-09-14",
+            "en": "2026-09-14"
+          },
+          "entries": [
+            {
+              "from": "08:30",
+              "title": {
+                "hr": "Servis bicikla",
+                "en": "Bike service"
+              },
+              "note": {
+                "hr": "Stražnja kočnica škripi.",
+                "en": "Rear brake squeaks."
+              },
+              "color": "#78909c"
+            }
+          ]
+        },
+        {
+          "label": {
+            "hr": "utorak, 15. rujna",
+            "en": "Tuesday 15 September"
+          },
+          "entries": [
+            {
+              "from": "18:00",
+              "to": "19:00",
+              "repeat": true,
+              "color": "#4285f4",
+              "title": {
+                "hr": "H.",
+                "en": "H."
+              },
+              "note": {
+                "hr": "tjedno, bez naslova",
+                "en": "weekly, no title"
+              }
+            },
+            {
+              "from": "12:00",
+              "title": {
+                "hr": "Vratiti knjigu",
+                "en": "Return book"
+              },
+              "note": {
+                "hr": "Kuharica, ne bilježnica.",
+                "en": "Cookbook, not the notebook."
+              },
+              "color": "#78909c"
+            }
+          ],
+          "date": "2026-09-15"
+        }
+      ],
+      "weekStart": "2026-09-07"
+    },
+    {
+      "id": "povijest_pretrazivanja",
+      "icon": "🔎",
+      "label": {
+        "hr": "Povijest pretraživanja",
+        "en": "Search history"
+      },
+      "screen": "list",
+      "rows": [
+        {
+          "icon": "🔎",
+          "primary": {
+            "hr": "koliko se dugo čuvaju snimke nadzornih kamera",
+            "en": "how long is cctv footage kept"
+          },
+          "meta": "sri 11:20"
+        },
+        {
+          "icon": "🔎",
+          "primary": {
+            "hr": "kako dokazati da je dokument naknadno mijenjan",
+            "en": "how to prove a document was altered afterwards"
+          },
+          "meta": "sri 11:41"
+        },
+        {
+          "icon": "🔎",
+          "primary": {
+            "hr": "anonimna prijava prijetnje policiji",
+            "en": "anonymous threat report police"
+          },
+          "meta": "čet 14:06"
+        },
+        {
+          "icon": "🔎",
+          "primary": {
+            "hr": "noćni tramvaj vozni red",
+            "en": "night tram timetable"
+          },
+          "meta": "čet 23:41"
+        }
+      ]
+    },
+    {
+      "id": "nedovrsene_poruke",
+      "icon": "✍️",
+      "label": {
+        "hr": "Nedovršeno",
+        "en": "Drafts"
+      },
+      "screen": "list",
+      "rows": [
+        {
+          "icon": "📄",
+          "primary": {
+            "hr": "Za Vesnu — o tekstu",
+            "en": "To Vesna — the copy"
+          },
+          "secondary": {
+            "hr": "radna, dosadna",
+            "en": "work, dull"
+          }
+        },
+        {
+          "icon": "📄",
+          "primary": {
+            "hr": "Bilješke s terena",
+            "en": "Field notes"
+          },
+          "secondary": {
+            "hr": "nabrajanje, bez adresata",
+            "en": "a list, no addressee"
+          }
+        },
+        {
+          "icon": "✍️",
+          "primary": {
+            "hr": "Za Ivanu",
+            "en": "To Ivana"
+          },
+          "secondary": {
+            "hr": "kursor iza točke — nije obrisana ni poslana",
+            "en": "cursor after the full stop — not deleted, not sent"
+          },
+          "meta": "čet 23:58"
+        }
+      ]
+    },
+    {
+      "id": "glasovna_biljeska",
+      "icon": "🎙",
+      "label": {
+        "hr": "Glasovne bilješke",
+        "en": "Voice memos"
+      },
+      "screen": "player",
+      "seconds": 41,
+      "transcript": [
+        {
+          "hr": "…znači ne ide preko njega. Ide preko nekoga tko je to smio potpisati.",
+          "en": "…so it does not run through him. It runs through somebody who was allowed to sign it."
+        },
+        {
+          "hr": "Sutra tražim popis —",
+          "en": "Tomorrow I ask for the list —"
+        },
+        {
+          "hr": "(stanka — nešto se pomakne)",
+          "en": "(a pause — something moves)"
+        },
+        {
+          "hr": "Halo?",
+          "en": "Hello?"
+        },
+        {
+          "hr": "(snimka se prekida na 0:41)",
+          "en": "(the recording cuts at 0:41)"
+        }
+      ]
+    },
+    {
+      "id": "poslana_poruka",
+      "icon": "📤",
+      "label": {
+        "hr": "Poruke",
+        "en": "Messages"
+      },
+      "screen": "inbox",
+      "rows": [
+        {
+          "primary": {
+            "hr": "Vesna (redakcija)",
+            "en": "Vesna (newsroom)"
+          },
+          "contactId": "vesna_redakcija",
+          "meta": {
+            "hr": "jučer",
+            "en": "yesterday"
+          },
+          "thread": [
+            {
+              "sep": {
+                "hr": "Jučer",
+                "en": "Yesterday"
+              }
+            },
+            {
+              "from": "me",
+              "text": {
+                "hr": "Na terenu sam, sljedećih dana samo poruke. Ne zovite.",
+                "en": "On assignment, texts only for the next few days. Don’t ring."
+              },
+              "time": "07:14"
+            },
+            {
+              "sep": {
+                "hr": "Pročitano",
+                "en": "Read"
+              }
+            }
+          ]
+        },
+        {
+          "primary": {
+            "hr": "Ana P.",
+            "en": "Ana P."
+          },
+          "contactId": "ana_p",
+          "meta": {
+            "hr": "jučer",
+            "en": "yesterday"
+          },
+          "thread": [
+            {
+              "sep": {
+                "hr": "Jučer",
+                "en": "Yesterday"
+              }
+            },
+            {
+              "from": "me",
+              "text": {
+                "hr": "Na terenu sam, sljedećih dana samo poruke. Ne zovite.",
+                "en": "On assignment, texts only for the next few days. Don’t ring."
+              },
+              "time": "07:14"
+            },
+            {
+              "sep": {
+                "hr": "Pročitano",
+                "en": "Read"
+              }
+            }
+          ]
+        },
+        {
+          "primary": {
+            "hr": "dr. Horvat",
+            "en": "Dr Horvat"
+          },
+          "contactId": "horvat_kontakt",
+          "meta": {
+            "hr": "jučer",
+            "en": "yesterday"
+          },
+          "thread": [
+            {
+              "sep": {
+                "hr": "Jučer",
+                "en": "Yesterday"
+              }
+            },
+            {
+              "from": "me",
+              "text": {
+                "hr": "Na terenu sam, sljedećih dana samo poruke. Ne zovite.",
+                "en": "On assignment, texts only for the next few days. Don’t ring."
+              },
+              "time": "07:14"
+            },
+            {
+              "sep": {
+                "hr": "Pročitano",
+                "en": "Read"
+              }
+            }
+          ]
+        },
+        {
+          "primary": {
+            "hr": "Mama",
+            "en": "Mama"
+          },
+          "contactId": "mama",
+          "meta": {
+            "hr": "jučer",
+            "en": "yesterday"
+          },
+          "thread": [
+            {
+              "sep": {
+                "hr": "Jučer",
+                "en": "Yesterday"
+              }
+            },
+            {
+              "from": "me",
+              "text": {
+                "hr": "Sljedećih dana bit ću slabo dostupna. Piši mi, molim te, nemoj zvati. Javim se kad uhvatim vremena.",
+                "en": "I’ll be hard to reach for the next few days. Please text rather than call. I’ll reply when I get a moment."
+              },
+              "time": "07:14"
+            },
+            {
+              "sep": {
+                "hr": "Pročitano",
+                "en": "Read"
+              }
+            }
+          ]
+        },
+        {
+          "primary": {
+            "hr": "Ivana",
+            "en": "Ivana"
+          },
+          "contactId": "ivana",
+          "meta": {
+            "hr": "jučer",
+            "en": "yesterday"
+          },
+          "thread": [
+            {
+              "sep": {
+                "hr": "Jučer",
+                "en": "Yesterday"
+              }
+            },
+            {
+              "from": "me",
+              "text": {
+                "hr": "Sljedećih dana bit ću slabo dostupna. Piši mi, molim te, nemoj zvati. Javim se kad uhvatim vremena.",
+                "en": "I’ll be hard to reach for the next few days. Please text rather than call. I’ll reply when I get a moment."
+              },
+              "time": "07:14"
+            },
+            {
+              "sep": {
+                "hr": "Pročitano",
+                "en": "Read"
+              }
+            }
+          ]
+        },
+        {
+          "primary": {
+            "hr": "Boris Kovač",
+            "en": "Boris Kovač"
+          },
+          "contactId": "svakodnevni_1",
+          "meta": {
+            "hr": "jučer",
+            "en": "yesterday"
+          },
+          "thread": [
+            {
+              "sep": {
+                "hr": "Jučer",
+                "en": "Yesterday"
+              }
+            },
+            {
+              "from": "me",
+              "text": {
+                "hr": "Sljedećih dana bit ću slabo dostupna. Piši mi, molim te, nemoj zvati. Javim se kad uhvatim vremena.",
+                "en": "I’ll be hard to reach for the next few days. Please text rather than call. I’ll reply when I get a moment."
+              },
+              "time": "07:14"
+            },
+            {
+              "sep": {
+                "hr": "Pročitano",
+                "en": "Read"
+              }
+            }
+          ]
+        },
+        {
+          "primary": "Toma",
+          "contactId": "toma",
+          "meta": {
+            "hr": "uto",
+            "en": "Tue"
+          },
+          "thread": [
+            {
+              "sep": {
+                "hr": "Prošli utorak",
+                "en": "Last Tuesday"
+              }
+            },
+            {
+              "from": "me",
+              "text": {
+                "hr": "Ne mogu sad o nama. Daj mi tjedan dana da ovo završim, pa ću biti prisutna koliko god hoćeš.",
+                "en": "I can’t do us right now. Give me a week to finish this and then I’ll be as present as you want."
+              }
+            },
+            {
+              "from": "me",
+              "text": {
+                "hr": "Ako ti to nije dovoljno, razumjet ću i to.",
+                "en": "If that isn’t enough for you, I’ll understand that too."
+              }
+            },
+            {
+              "from": "them",
+              "text": {
+                "hr": "Dobro.",
+                "en": "All right."
+              }
+            }
+          ]
+        },
+        {
+          "primary": "Dora Marić",
+          "contactId": "svakodnevni_2",
+          "meta": {
+            "hr": "kolovoz",
+            "en": "August"
+          },
+          "thread": [
+            {
+              "sep": {
+                "hr": "Prošli mjesec",
+                "en": "Last month"
+              }
+            },
+            {
+              "from": "them",
+              "text": {
+                "hr": "Možeš mi vratiti plavu zdjelu kad stigneš?",
+                "en": "Can you bring back my blue bowl when you have time?"
+              },
+              "time": "16:22"
+            },
+            {
+              "from": "me",
+              "text": {
+                "hr": "Kod mene je zelena. Plavu ima Ivana.",
+                "en": "I have the green one. Ivana has the blue one."
+              },
+              "time": "16:25"
+            }
+          ]
+        },
+        {
+          "primary": "Ema Perić",
+          "contactId": "svakodnevni_3",
+          "meta": {
+            "hr": "kolovoz",
+            "en": "August"
+          },
+          "thread": [
+            {
+              "sep": {
+                "hr": "Prošli mjesec",
+                "en": "Last month"
+              }
+            },
+            {
+              "from": "them",
+              "text": {
+                "hr": "Šifra za rezervaciju je 4821.",
+                "en": "The reservation code is 4821."
+              },
+              "time": "16:22"
+            },
+            {
+              "from": "me",
+              "text": {
+                "hr": "Za badminton?",
+                "en": "For badminton?"
+              },
+              "time": "16:25"
+            },
+            {
+              "from": "them",
+              "text": {
+                "hr": "Da. Termin od prošle subote, već je istekao.",
+                "en": "Yes. Last Saturday’s slot; it has already expired."
+              },
+              "time": "16:26"
+            }
+          ]
+        },
+        {
+          "primary": "Filip Novak",
+          "contactId": "svakodnevni_4",
+          "meta": {
+            "hr": "kolovoz",
+            "en": "August"
+          },
+          "thread": [
+            {
+              "sep": {
+                "hr": "Prošli mjesec",
+                "en": "Last month"
+              }
+            },
+            {
+              "from": "them",
+              "text": {
+                "hr": "Ostavio sam ključ u kuverti.",
+                "en": "I left the key in an envelope."
+              },
+              "time": "16:22"
+            },
+            {
+              "from": "me",
+              "text": {
+                "hr": "Hvala. To je ključ biciklističkog lokota, onaj mali?",
+                "en": "Thanks. The little bike-lock key?"
+              },
+              "time": "16:25"
+            },
+            {
+              "from": "them",
+              "text": {
+                "hr": "Taj. Ništa dramatično.",
+                "en": "That one. Nothing dramatic."
+              },
+              "time": "16:26"
+            }
+          ]
+        },
+        {
+          "primary": "Goran Babić",
+          "contactId": "svakodnevni_5",
+          "meta": {
+            "hr": "kolovoz",
+            "en": "August"
+          },
+          "thread": [
+            {
+              "sep": {
+                "hr": "Prošli mjesec",
+                "en": "Last month"
+              }
+            },
+            {
+              "from": "them",
+              "text": {
+                "hr": "Paket nije kod mene. Pitaj na drugom katu.",
+                "en": "I don’t have the parcel. Try the second floor."
+              },
+              "time": "16:22"
+            },
+            {
+              "from": "me",
+              "text": {
+                "hr": "Našla sam ga. Filteri za usisavač.",
+                "en": "Found it. Vacuum filters."
+              },
+              "time": "16:25"
+            }
+          ]
+        },
+        {
+          "primary": "Helena Radić",
+          "contactId": "svakodnevni_6",
+          "meta": {
+            "hr": "kolovoz",
+            "en": "August"
+          },
+          "thread": [
+            {
+              "sep": {
+                "hr": "Prošli mjesec",
+                "en": "Last month"
+              }
+            },
+            {
+              "from": "them",
+              "text": {
+                "hr": "Još vrijedi dogovor za knjigu?",
+                "en": "Are we still exchanging the book?"
+              },
+              "time": "16:22"
+            },
+            {
+              "from": "me",
+              "text": {
+                "hr": "Da, kuharica je na polici kraj vrata.",
+                "en": "Yes, the cookbook is on the shelf by the door."
+              },
+              "time": "16:25"
+            }
+          ]
+        },
+        {
+          "primary": "Jasna Vuković",
+          "contactId": "svakodnevni_8",
+          "meta": {
+            "hr": "kolovoz",
+            "en": "August"
+          },
+          "thread": [
+            {
+              "sep": {
+                "hr": "Prošli mjesec",
+                "en": "Last month"
+              }
+            },
+            {
+              "from": "them",
+              "text": {
+                "hr": "Stigao je odgovor servisa.",
+                "en": "The repair shop replied."
+              },
+              "time": "16:22"
+            },
+            {
+              "from": "me",
+              "text": {
+                "hr": "Samo brtva perilice, srećom.",
+                "en": "Just the washing-machine seal, fortunately."
+              },
+              "time": "16:25"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

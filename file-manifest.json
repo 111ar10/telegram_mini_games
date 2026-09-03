@@ -1,0 +1,709 @@
+{
+  "status": "local delivery, not deployed",
+  "github_pages": [
+    {
+      "destination": "android-phone.html",
+      "source": "academy-bot/src/minigames/android-phone.html",
+      "sha256": "4d41e051df2acbd3a3675e72c1db73db8b1e4a2adfe71e8ba790858e4b324405"
+    },
+    {
+      "destination": "last-call-review.html",
+      "source": "academy-bot/src/minigames/last-call-review.html",
+      "sha256": "e1418c5b4ae527d8517eba9f3b90e8b9add11f27322601e977a6daa83962998f"
+    },
+    {
+      "destination": "last_call_phone.config.json",
+      "source": "academy-bot/src/minigames/last_call_phone.config.json",
+      "sha256": "2bfda3dcaa615b9224ea4184f3da587921ace00a069c3458ff89aa280a9e7707"
+    },
+    {
+      "destination": "lc/documents/en/izvori.txt",
+      "source": "academy-bot/src/minigames/lc/documents/en/izvori.txt",
+      "sha256": "ad8f377c2fb1ed4722555cd747edcea9a52611f23313c1fc6008b131b6bc9638"
+    },
+    {
+      "destination": "lc/documents/en/jamstvo_perilica.txt",
+      "source": "academy-bot/src/minigames/lc/documents/en/jamstvo_perilica.txt",
+      "sha256": "455eac8480913dd2721ceefa7836d40ffb32438570a88ade2ebabced1d06b8fa"
+    },
+    {
+      "destination": "lc/documents/en/knjiznica.txt",
+      "source": "academy-bot/src/minigames/lc/documents/en/knjiznica.txt",
+      "sha256": "3745a6965c0feb00d5f9c27dad70ffe0dabd47d72284b3117059eb2488fa7e44"
+    },
+    {
+      "destination": "lc/documents/en/kronologija.md",
+      "source": "academy-bot/src/minigames/lc/documents/en/kronologija.md",
+      "sha256": "8a36828cb7d6c259d4f59639df82bbb8daee6cb24ecbfc3035afc4c0621bd05c"
+    },
+    {
+      "destination": "lc/documents/en/nacrt_v1.docx",
+      "source": "academy-bot/src/minigames/lc/documents/en/nacrt_v1.docx",
+      "sha256": "9597f8da623c8df45b708c588067342b669c7a06b165095717c5195f50e82778"
+    },
+    {
+      "destination": "lc/documents/en/nacrt_v3.docx",
+      "source": "academy-bot/src/minigames/lc/documents/en/nacrt_v3.docx",
+      "sha256": "d7023bf3e43f9045a00ea53b21fd21829eb8eaa99711b475885babf76e820ee9"
+    },
+    {
+      "destination": "lc/documents/en/obrazac_pristup_arhivi.pdf",
+      "source": "academy-bot/src/minigames/lc/documents/en/obrazac_pristup_arhivi.pdf",
+      "sha256": "61eda4f2e0c96c75e02b5a3c3428a04c42813146a57cfe3d5e5fe8faa17f8c34"
+    },
+    {
+      "destination": "lc/documents/en/obrazac_pristup_arhivi.png",
+      "source": "academy-bot/src/minigames/lc/documents/en/obrazac_pristup_arhivi.png",
+      "sha256": "09711b006faa846d177f63d301de4731d521fed8de65539309c717dd19d884af"
+    },
+    {
+      "destination": "lc/documents/en/pitanja_za_simunica.docx",
+      "source": "academy-bot/src/minigames/lc/documents/en/pitanja_za_simunica.docx",
+      "sha256": "f2dbb87725509386687e0001be9aedfada3b1c386ff306d907413d904d1d9128"
+    },
+    {
+      "destination": "lc/documents/en/popis_13.csv",
+      "source": "academy-bot/src/minigames/lc/documents/en/popis_13.csv",
+      "sha256": "0fdae375e9ac8fb915f96bc44786043c06ae709bb5c7bdff5f53b12217506763"
+    },
+    {
+      "destination": "lc/documents/en/popis_za_trgovinu.txt",
+      "source": "academy-bot/src/minigames/lc/documents/en/popis_za_trgovinu.txt",
+      "sha256": "239ec6884b3da96350f0dc7ba65f55652fb208c0a77a5d44c0691fb844e3d0e6"
+    },
+    {
+      "destination": "lc/documents/en/pravna_provjera.pdf",
+      "source": "academy-bot/src/minigames/lc/documents/en/pravna_provjera.pdf",
+      "sha256": "9d31c9f581c77d9630fb2bc3ddefdb3eaa5cc8faa903fdd57f4421d1d0b3a752"
+    },
+    {
+      "destination": "lc/documents/en/pravna_provjera.png",
+      "source": "academy-bot/src/minigames/lc/documents/en/pravna_provjera.png",
+      "sha256": "39607a715ce4fd95aaa41791fbc8daf10a5cdfc1a87c068c78f5d7594bd0a2d8"
+    },
+    {
+      "destination": "lc/documents/en/protokol_str14.pdf",
+      "source": "academy-bot/src/minigames/lc/documents/en/protokol_str14.pdf",
+      "sha256": "e9c6327d03b033b160312eb334d524aa2f3b5b10529699a0ede8773ef77502e4"
+    },
+    {
+      "destination": "lc/documents/en/protokol_str14.png",
+      "source": "academy-bot/src/minigames/lc/documents/en/protokol_str14.png",
+      "sha256": "3d17063cdbb211b315416dbdfcd1d8873bd40e8a6f92397c5b82fed11a4c65a1"
+    },
+    {
+      "destination": "lc/documents/en/racun_kavana.pdf",
+      "source": "academy-bot/src/minigames/lc/documents/en/racun_kavana.pdf",
+      "sha256": "47695e945c5ab2627bc8542796df5fd4e1f6cf13c14b8987aefae822e0018161"
+    },
+    {
+      "destination": "lc/documents/en/racun_kavana.png",
+      "source": "academy-bot/src/minigames/lc/documents/en/racun_kavana.png",
+      "sha256": "199c2cdc5e1e50138b3f9b5e5c9a50a049a822d9012d1d8511266b0ba3ffce08"
+    },
+    {
+      "destination": "lc/documents/en/rezervacija_4821.txt",
+      "source": "academy-bot/src/minigames/lc/documents/en/rezervacija_4821.txt",
+      "sha256": "b243899aa7b200a78002fed575584e61f9c9d1749ad8bb91a368bc353f4ffbeb"
+    },
+    {
+      "destination": "lc/documents/en/servis_bicikla.txt",
+      "source": "academy-bot/src/minigames/lc/documents/en/servis_bicikla.txt",
+      "sha256": "8985f6e4f447d02913088dbdcfff0871b3ff19005257717a99d6b4b64278eba6"
+    },
+    {
+      "destination": "lc/documents/en/sto_ako_grijesim.txt",
+      "source": "academy-bot/src/minigames/lc/documents/en/sto_ako_grijesim.txt",
+      "sha256": "dec083a1cbbd66769d83ddaa34b60a0666f868eb77a1396c17db756943559305"
+    },
+    {
+      "destination": "lc/documents/en/urednicki_stil.md",
+      "source": "academy-bot/src/minigames/lc/documents/en/urednicki_stil.md",
+      "sha256": "e41645a7a18c15f136ac9b4793dac2f32658cde0377b5897a88722a7d153846a"
+    },
+    {
+      "destination": "lc/documents/en/vozni_red_noc.pdf",
+      "source": "academy-bot/src/minigames/lc/documents/en/vozni_red_noc.pdf",
+      "sha256": "90407eb60a12102da582a61a0fc51e03d6dccece2b05cd946adbe9006b5dbc9e"
+    },
+    {
+      "destination": "lc/documents/en/vozni_red_noc.png",
+      "source": "academy-bot/src/minigames/lc/documents/en/vozni_red_noc.png",
+      "sha256": "99afbfa500736fc2fd4d308c3591a87d2d9817e62038182936d233a4ee7890eb"
+    },
+    {
+      "destination": "lc/documents/en/za_vesnu_ne_saljem.eml",
+      "source": "academy-bot/src/minigames/lc/documents/en/za_vesnu_ne_saljem.eml",
+      "sha256": "fed12a19899b9f4409196ab2bf5876ea5c13d442b08d3a7806601824ca85ae7d"
+    },
+    {
+      "destination": "lc/documents/hr/izvori.txt",
+      "source": "academy-bot/src/minigames/lc/documents/hr/izvori.txt",
+      "sha256": "8c6745ab86f02892f43551cb7b45c5ae571686aa627dc028bae28fd974d62ee4"
+    },
+    {
+      "destination": "lc/documents/hr/jamstvo_perilica.txt",
+      "source": "academy-bot/src/minigames/lc/documents/hr/jamstvo_perilica.txt",
+      "sha256": "01bac3ff67bfd314d8c09be95de19638d54c98955ebf633d400c568a38a7824f"
+    },
+    {
+      "destination": "lc/documents/hr/knjiznica.txt",
+      "source": "academy-bot/src/minigames/lc/documents/hr/knjiznica.txt",
+      "sha256": "ef73ebf35543de9d18855e8e8e24fe33b2187c02f5585ac6e19e7a59b0666824"
+    },
+    {
+      "destination": "lc/documents/hr/kronologija.md",
+      "source": "academy-bot/src/minigames/lc/documents/hr/kronologija.md",
+      "sha256": "10959bb2cb424bca269f33b3b31e41f95590a07d01490d732129ef55a238dc4f"
+    },
+    {
+      "destination": "lc/documents/hr/nacrt_v1.docx",
+      "source": "academy-bot/src/minigames/lc/documents/hr/nacrt_v1.docx",
+      "sha256": "732c53f4a4ea925f5ecb742750de954d71a0d65a5145feae3d0fd3bb975a1368"
+    },
+    {
+      "destination": "lc/documents/hr/nacrt_v3.docx",
+      "source": "academy-bot/src/minigames/lc/documents/hr/nacrt_v3.docx",
+      "sha256": "c42439bd6122705cea5ac59e86b15860b4db5a9bfb27ccaf47a9c4ef457283a3"
+    },
+    {
+      "destination": "lc/documents/hr/obrazac_pristup_arhivi.pdf",
+      "source": "academy-bot/src/minigames/lc/documents/hr/obrazac_pristup_arhivi.pdf",
+      "sha256": "0dcad54f42a0edef5244746e994cf7c4d5d7fb90cb9d543c72ece10de2d784de"
+    },
+    {
+      "destination": "lc/documents/hr/obrazac_pristup_arhivi.png",
+      "source": "academy-bot/src/minigames/lc/documents/hr/obrazac_pristup_arhivi.png",
+      "sha256": "896e55ee4023fd6d28ae1958e9a5539683a2ab363dab267c358e273d938acc27"
+    },
+    {
+      "destination": "lc/documents/hr/pitanja_za_simunica.docx",
+      "source": "academy-bot/src/minigames/lc/documents/hr/pitanja_za_simunica.docx",
+      "sha256": "b14e216325f324003e224820710c844a432536ca216ba8c350e5ef853058d9f3"
+    },
+    {
+      "destination": "lc/documents/hr/popis_13.csv",
+      "source": "academy-bot/src/minigames/lc/documents/hr/popis_13.csv",
+      "sha256": "3635eacd5de4913cba3697d750d2c564ac141687b0be01e4e198e01ef04570bd"
+    },
+    {
+      "destination": "lc/documents/hr/popis_za_trgovinu.txt",
+      "source": "academy-bot/src/minigames/lc/documents/hr/popis_za_trgovinu.txt",
+      "sha256": "e546ee5247f0db7b6aa27f29f112c4de73c86dffad2febf1d5f6bf93088678b8"
+    },
+    {
+      "destination": "lc/documents/hr/pravna_provjera.pdf",
+      "source": "academy-bot/src/minigames/lc/documents/hr/pravna_provjera.pdf",
+      "sha256": "313d7c6b8f75d420c082c3f51aea4e15945fbc06957f2f7b7e09e951675951bd"
+    },
+    {
+      "destination": "lc/documents/hr/pravna_provjera.png",
+      "source": "academy-bot/src/minigames/lc/documents/hr/pravna_provjera.png",
+      "sha256": "6b45fc6d6a6e21317e032842a0afd31cee13c427940e739d92647411ad1afbe0"
+    },
+    {
+      "destination": "lc/documents/hr/protokol_str14.pdf",
+      "source": "academy-bot/src/minigames/lc/documents/hr/protokol_str14.pdf",
+      "sha256": "7c2da6fae1357bbd4f785883695e04ccb8b360f9c2f24cb7777cfbd3c8dc0be7"
+    },
+    {
+      "destination": "lc/documents/hr/protokol_str14.png",
+      "source": "academy-bot/src/minigames/lc/documents/hr/protokol_str14.png",
+      "sha256": "d61694c2fed69f6f56e01f158bf33b963cb1c7abfd991ae39752df67fcdf2886"
+    },
+    {
+      "destination": "lc/documents/hr/racun_kavana.pdf",
+      "source": "academy-bot/src/minigames/lc/documents/hr/racun_kavana.pdf",
+      "sha256": "d85d05d8fb591f8dc204180a2d89b81fe6ec1596f2bb48bab28fd494aa7f5de0"
+    },
+    {
+      "destination": "lc/documents/hr/racun_kavana.png",
+      "source": "academy-bot/src/minigames/lc/documents/hr/racun_kavana.png",
+      "sha256": "3c3aca2180992de9057e631306ea71f031dd1a71d8be3a3706541ea476982adf"
+    },
+    {
+      "destination": "lc/documents/hr/rezervacija_4821.txt",
+      "source": "academy-bot/src/minigames/lc/documents/hr/rezervacija_4821.txt",
+      "sha256": "77b203aba396fa0b56232d65226b4bd309ba5e82b3fedb02c7a42cfb7ea0b77a"
+    },
+    {
+      "destination": "lc/documents/hr/servis_bicikla.txt",
+      "source": "academy-bot/src/minigames/lc/documents/hr/servis_bicikla.txt",
+      "sha256": "1db49dc3f3b31e3c33911c5c3e00246c80774ba8929fe51e0bf14dc0e9c6c5eb"
+    },
+    {
+      "destination": "lc/documents/hr/sto_ako_grijesim.txt",
+      "source": "academy-bot/src/minigames/lc/documents/hr/sto_ako_grijesim.txt",
+      "sha256": "a93512d5335f54be210cc567d537f9d0e87db9b5389cca323289e48c702fa6f4"
+    },
+    {
+      "destination": "lc/documents/hr/urednicki_stil.md",
+      "source": "academy-bot/src/minigames/lc/documents/hr/urednicki_stil.md",
+      "sha256": "9467820eb7fa206915341b6777a51f7df9279368b5c68fe540fca58def541ca9"
+    },
+    {
+      "destination": "lc/documents/hr/vozni_red_noc.pdf",
+      "source": "academy-bot/src/minigames/lc/documents/hr/vozni_red_noc.pdf",
+      "sha256": "8beb54bf91f74a72c943eaed758c9c57e3da8a32a2dc540aaf468b82decc57f6"
+    },
+    {
+      "destination": "lc/documents/hr/vozni_red_noc.png",
+      "source": "academy-bot/src/minigames/lc/documents/hr/vozni_red_noc.png",
+      "sha256": "e6c29b5bb1daccb1211d69d4e057b21f62d3932a1f68bc4675062fb8b0b69079"
+    },
+    {
+      "destination": "lc/documents/hr/za_vesnu_ne_saljem.eml",
+      "source": "academy-bot/src/minigames/lc/documents/hr/za_vesnu_ne_saljem.eml",
+      "sha256": "6f80a1697aef06476e8ba98956bc902641cdb2c1906bb39e308346e7107d4a02"
+    },
+    {
+      "destination": "lc/documents/zet_101_original.pdf",
+      "source": "academy-bot/src/minigames/lc/documents/zet_101_original.pdf",
+      "sha256": "28fb2bb121e80f8a8eb1181b5088a4a667b3f2ef8a5df3971e6f6fdda3ff4529"
+    },
+    {
+      "destination": "lc/documents/zet_101_original.png",
+      "source": "academy-bot/src/minigames/lc/documents/zet_101_original.png",
+      "sha256": "5942fbbfe75e1e1953f766552359fb193c30defecaf3868836d50c7a603e2ed2"
+    },
+    {
+      "destination": "lc/gallery/ana.jpg",
+      "source": "academy-bot/src/minigames/lc/gallery/ana.jpg",
+      "sha256": "a437caf4af70103763124ffa2904da7589b01d46ddb8caef2d68d6310285e917"
+    },
+    {
+      "destination": "lc/gallery/potpis.svg",
+      "source": "academy-bot/src/minigames/lc/gallery/potpis.svg",
+      "sha256": "a1aa35a8e89adc40a2a72d4c7b9daecc2b9cf50f1d2935b68c4371d9fadac9ae"
+    },
+    {
+      "destination": "lc/gallery/registracija.svg",
+      "source": "academy-bot/src/minigames/lc/gallery/registracija.svg",
+      "sha256": "3f02995692535fb0965cee2bf4f0ccab1a5662d45ddd2abcc28719cfe9b42cbd"
+    },
+    {
+      "destination": "lc/gallery/rodjendan.jpg",
+      "source": "academy-bot/src/minigames/lc/gallery/rodjendan.jpg",
+      "sha256": "c1ea9213773ebf3c9400981556ae7346e5191f4e8264617efffac8523897cde7"
+    },
+    {
+      "destination": "lc/gallery/tablica.svg",
+      "source": "academy-bot/src/minigames/lc/gallery/tablica.svg",
+      "sha256": "37b4b8fcf87b7c630730c4adb848ea6716008d98a3d8066007eab0d80cb66efa"
+    },
+    {
+      "destination": "lc/gallery/ulaz.jpg",
+      "source": "academy-bot/src/minigames/lc/gallery/ulaz.jpg",
+      "sha256": "8e33397d77786bcd470f6c5030f542cf3a088420dd4490abbb3c8dfbc2240498"
+    },
+    {
+      "destination": "lc/receipt-secret.html",
+      "source": "academy-bot/src/minigames/lc/receipt-secret.html",
+      "sha256": "a2da714519b1fc6de96f4cdb27f53a0455b2fbb396a31c23690ea3f57381ad40"
+    },
+    {
+      "destination": "lozinka_biljeznice.config.json",
+      "source": "academy-bot/src/games/where_is_mia/minigames/lozinka_biljeznice.config.json",
+      "sha256": "2ee36020d204001b618791ced2c70950a5a58c780dec145b67906dd46da33bbf"
+    },
+    {
+      "destination": "tablet-lock.html",
+      "source": "academy-bot/src/minigames/tablet-lock.html",
+      "sha256": "a6ca6109e159e9835128a8ce9c7b2c39d894d5b0803e63e0ef0ff1c57c0bc29a"
+    }
+  ],
+  "cumulative_source_delivery": [
+    {
+      "path": "academy-bot/docs/CREATING-GAMES.md",
+      "sha256": "e3a5b88b4b895fd8dc579ed7777d005fd0775b8f396114ef1bd38c17e6b0ac8d"
+    },
+    {
+      "path": "academy-bot/docs/IMAGE-PROMPTS.md",
+      "sha256": "71c510a0514f0bc412d12466eb2d885df66468c68b5379622af516dd1ab1c71b"
+    },
+    {
+      "path": "academy-bot/src/bot/flows/inventory.ts",
+      "sha256": "f82c0b14d0f71d808c461b71e79baf0c56c92b7a6c989d6e548ee9a5efdd90d9"
+    },
+    {
+      "path": "academy-bot/src/bot/flows/puzzles.ts",
+      "sha256": "061668eec41e45d4384f8b8cd897fe606e1c47405a4cf142ee6f6bd46ea87047"
+    },
+    {
+      "path": "academy-bot/src/content/schema/common.ts",
+      "sha256": "7ee7b47844d80b1cdfd2550c02a19ec469e4f9bf7faba5fccc6fff418e712664"
+    },
+    {
+      "path": "academy-bot/src/content/schema/item.ts",
+      "sha256": "c0439ef904f7298995739978d4ce16bb086e1221206c1a5f55451a0390e642ea"
+    },
+    {
+      "path": "academy-bot/src/content/system/strings.json",
+      "sha256": "97a54639467e148ca0ccf3f94eb1d8d5dbd54b231eb8d369f21f7b453969f4a6"
+    },
+    {
+      "path": "academy-bot/src/games/last_call/content/items.json",
+      "sha256": "31abc07b8f5e73df7e2de8b7959043174612c031b6d305dac7a181255ae36ce2"
+    },
+    {
+      "path": "academy-bot/src/games/last_call/content/puzzles.json",
+      "sha256": "5a258784ab88f947c596bfe3e16d9e37982ccbea2093ae4685884621ffaeeb85"
+    },
+    {
+      "path": "academy-bot/src/games/last_call/content/randomEvents.json",
+      "sha256": "9bacf1dedad6e890e7b48618f6a7bb948713fabb73dff596028d380fb5fc5ced"
+    },
+    {
+      "path": "academy-bot/src/games/last_call/media/items/kartice-20260903.png",
+      "sha256": "0230bcd46716e48e69f1ec49d0947bfa93ca5209e9da0be6c7ab3afa72442f58"
+    },
+    {
+      "path": "academy-bot/src/games/last_call/media/items/kusur-20260903.png",
+      "sha256": "c06ac037a58adfb0b08fa496fd2027c06744defa85163c6caa78b9205814f641"
+    },
+    {
+      "path": "academy-bot/src/games/last_call/media/items/osobna_iskaznica-20260903-v4.png",
+      "sha256": "d51b770705086b232d79327e2b9779639077a5d7493ea6256dc171d8a248f461"
+    },
+    {
+      "path": "academy-bot/src/games/last_call/media/items/papiric-en-20260903.png",
+      "sha256": "bee7f0df2db635b46f5b9a2ac3a9b7c07c2e0ee2339b03ea7969a881b2495ca3"
+    },
+    {
+      "path": "academy-bot/src/games/last_call/media/items/papiric-hr-20260903.png",
+      "sha256": "2a5a7d37a0fcc63e3f9ad3c0fe62f08a328d0b95b3f6dbfb3a7868ded6e685e5"
+    },
+    {
+      "path": "academy-bot/src/games/last_call/media/items/potvrda_paketa-20260903-v2.png",
+      "sha256": "4418fac8ead7e94c9149bd48fdba336ce0d094f199da8f79a28cb99fee9454fa"
+    },
+    {
+      "path": "academy-bot/src/games/last_call/media/items/stara_vozna_karta-20260903-v4.png",
+      "sha256": "c3e2058b75ff6f6e9425dc54473981fc09429884be9e900cdbff0978bf9f5b58"
+    },
+    {
+      "path": "academy-bot/src/games/where_is_mia/minigames/lozinka_biljeznice.config.json",
+      "sha256": "2ee36020d204001b618791ced2c70950a5a58c780dec145b67906dd46da33bbf"
+    },
+    {
+      "path": "academy-bot/src/minigames/android-phone.html",
+      "sha256": "4d41e051df2acbd3a3675e72c1db73db8b1e4a2adfe71e8ba790858e4b324405"
+    },
+    {
+      "path": "academy-bot/src/minigames/last-call-review.html",
+      "sha256": "e1418c5b4ae527d8517eba9f3b90e8b9add11f27322601e977a6daa83962998f"
+    },
+    {
+      "path": "academy-bot/src/minigames/last_call_phone.config.json",
+      "sha256": "2bfda3dcaa615b9224ea4184f3da587921ace00a069c3458ff89aa280a9e7707"
+    },
+    {
+      "path": "academy-bot/src/minigames/lc/documents/en/izvori.txt",
+      "sha256": "ad8f377c2fb1ed4722555cd747edcea9a52611f23313c1fc6008b131b6bc9638"
+    },
+    {
+      "path": "academy-bot/src/minigames/lc/documents/en/jamstvo_perilica.txt",
+      "sha256": "455eac8480913dd2721ceefa7836d40ffb32438570a88ade2ebabced1d06b8fa"
+    },
+    {
+      "path": "academy-bot/src/minigames/lc/documents/en/knjiznica.txt",
+      "sha256": "3745a6965c0feb00d5f9c27dad70ffe0dabd47d72284b3117059eb2488fa7e44"
+    },
+    {
+      "path": "academy-bot/src/minigames/lc/documents/en/kronologija.md",
+      "sha256": "8a36828cb7d6c259d4f59639df82bbb8daee6cb24ecbfc3035afc4c0621bd05c"
+    },
+    {
+      "path": "academy-bot/src/minigames/lc/documents/en/nacrt_v1.docx",
+      "sha256": "9597f8da623c8df45b708c588067342b669c7a06b165095717c5195f50e82778"
+    },
+    {
+      "path": "academy-bot/src/minigames/lc/documents/en/nacrt_v3.docx",
+      "sha256": "d7023bf3e43f9045a00ea53b21fd21829eb8eaa99711b475885babf76e820ee9"
+    },
+    {
+      "path": "academy-bot/src/minigames/lc/documents/en/obrazac_pristup_arhivi.pdf",
+      "sha256": "61eda4f2e0c96c75e02b5a3c3428a04c42813146a57cfe3d5e5fe8faa17f8c34"
+    },
+    {
+      "path": "academy-bot/src/minigames/lc/documents/en/obrazac_pristup_arhivi.png",
+      "sha256": "09711b006faa846d177f63d301de4731d521fed8de65539309c717dd19d884af"
+    },
+    {
+      "path": "academy-bot/src/minigames/lc/documents/en/pitanja_za_simunica.docx",
+      "sha256": "f2dbb87725509386687e0001be9aedfada3b1c386ff306d907413d904d1d9128"
+    },
+    {
+      "path": "academy-bot/src/minigames/lc/documents/en/popis_13.csv",
+      "sha256": "0fdae375e9ac8fb915f96bc44786043c06ae709bb5c7bdff5f53b12217506763"
+    },
+    {
+      "path": "academy-bot/src/minigames/lc/documents/en/popis_za_trgovinu.txt",
+      "sha256": "239ec6884b3da96350f0dc7ba65f55652fb208c0a77a5d44c0691fb844e3d0e6"
+    },
+    {
+      "path": "academy-bot/src/minigames/lc/documents/en/pravna_provjera.pdf",
+      "sha256": "9d31c9f581c77d9630fb2bc3ddefdb3eaa5cc8faa903fdd57f4421d1d0b3a752"
+    },
+    {
+      "path": "academy-bot/src/minigames/lc/documents/en/pravna_provjera.png",
+      "sha256": "39607a715ce4fd95aaa41791fbc8daf10a5cdfc1a87c068c78f5d7594bd0a2d8"
+    },
+    {
+      "path": "academy-bot/src/minigames/lc/documents/en/protokol_str14.pdf",
+      "sha256": "e9c6327d03b033b160312eb334d524aa2f3b5b10529699a0ede8773ef77502e4"
+    },
+    {
+      "path": "academy-bot/src/minigames/lc/documents/en/protokol_str14.png",
+      "sha256": "3d17063cdbb211b315416dbdfcd1d8873bd40e8a6f92397c5b82fed11a4c65a1"
+    },
+    {
+      "path": "academy-bot/src/minigames/lc/documents/en/racun_kavana.pdf",
+      "sha256": "47695e945c5ab2627bc8542796df5fd4e1f6cf13c14b8987aefae822e0018161"
+    },
+    {
+      "path": "academy-bot/src/minigames/lc/documents/en/racun_kavana.png",
+      "sha256": "199c2cdc5e1e50138b3f9b5e5c9a50a049a822d9012d1d8511266b0ba3ffce08"
+    },
+    {
+      "path": "academy-bot/src/minigames/lc/documents/en/rezervacija_4821.txt",
+      "sha256": "b243899aa7b200a78002fed575584e61f9c9d1749ad8bb91a368bc353f4ffbeb"
+    },
+    {
+      "path": "academy-bot/src/minigames/lc/documents/en/servis_bicikla.txt",
+      "sha256": "8985f6e4f447d02913088dbdcfff0871b3ff19005257717a99d6b4b64278eba6"
+    },
+    {
+      "path": "academy-bot/src/minigames/lc/documents/en/sto_ako_grijesim.txt",
+      "sha256": "dec083a1cbbd66769d83ddaa34b60a0666f868eb77a1396c17db756943559305"
+    },
+    {
+      "path": "academy-bot/src/minigames/lc/documents/en/urednicki_stil.md",
+      "sha256": "e41645a7a18c15f136ac9b4793dac2f32658cde0377b5897a88722a7d153846a"
+    },
+    {
+      "path": "academy-bot/src/minigames/lc/documents/en/vozni_red_noc.pdf",
+      "sha256": "90407eb60a12102da582a61a0fc51e03d6dccece2b05cd946adbe9006b5dbc9e"
+    },
+    {
+      "path": "academy-bot/src/minigames/lc/documents/en/vozni_red_noc.png",
+      "sha256": "99afbfa500736fc2fd4d308c3591a87d2d9817e62038182936d233a4ee7890eb"
+    },
+    {
+      "path": "academy-bot/src/minigames/lc/documents/en/za_vesnu_ne_saljem.eml",
+      "sha256": "fed12a19899b9f4409196ab2bf5876ea5c13d442b08d3a7806601824ca85ae7d"
+    },
+    {
+      "path": "academy-bot/src/minigames/lc/documents/hr/izvori.txt",
+      "sha256": "8c6745ab86f02892f43551cb7b45c5ae571686aa627dc028bae28fd974d62ee4"
+    },
+    {
+      "path": "academy-bot/src/minigames/lc/documents/hr/jamstvo_perilica.txt",
+      "sha256": "01bac3ff67bfd314d8c09be95de19638d54c98955ebf633d400c568a38a7824f"
+    },
+    {
+      "path": "academy-bot/src/minigames/lc/documents/hr/knjiznica.txt",
+      "sha256": "ef73ebf35543de9d18855e8e8e24fe33b2187c02f5585ac6e19e7a59b0666824"
+    },
+    {
+      "path": "academy-bot/src/minigames/lc/documents/hr/kronologija.md",
+      "sha256": "10959bb2cb424bca269f33b3b31e41f95590a07d01490d732129ef55a238dc4f"
+    },
+    {
+      "path": "academy-bot/src/minigames/lc/documents/hr/nacrt_v1.docx",
+      "sha256": "732c53f4a4ea925f5ecb742750de954d71a0d65a5145feae3d0fd3bb975a1368"
+    },
+    {
+      "path": "academy-bot/src/minigames/lc/documents/hr/nacrt_v3.docx",
+      "sha256": "c42439bd6122705cea5ac59e86b15860b4db5a9bfb27ccaf47a9c4ef457283a3"
+    },
+    {
+      "path": "academy-bot/src/minigames/lc/documents/hr/obrazac_pristup_arhivi.pdf",
+      "sha256": "0dcad54f42a0edef5244746e994cf7c4d5d7fb90cb9d543c72ece10de2d784de"
+    },
+    {
+      "path": "academy-bot/src/minigames/lc/documents/hr/obrazac_pristup_arhivi.png",
+      "sha256": "896e55ee4023fd6d28ae1958e9a5539683a2ab363dab267c358e273d938acc27"
+    },
+    {
+      "path": "academy-bot/src/minigames/lc/documents/hr/pitanja_za_simunica.docx",
+      "sha256": "b14e216325f324003e224820710c844a432536ca216ba8c350e5ef853058d9f3"
+    },
+    {
+      "path": "academy-bot/src/minigames/lc/documents/hr/popis_13.csv",
+      "sha256": "3635eacd5de4913cba3697d750d2c564ac141687b0be01e4e198e01ef04570bd"
+    },
+    {
+      "path": "academy-bot/src/minigames/lc/documents/hr/popis_za_trgovinu.txt",
+      "sha256": "e546ee5247f0db7b6aa27f29f112c4de73c86dffad2febf1d5f6bf93088678b8"
+    },
+    {
+      "path": "academy-bot/src/minigames/lc/documents/hr/pravna_provjera.pdf",
+      "sha256": "313d7c6b8f75d420c082c3f51aea4e15945fbc06957f2f7b7e09e951675951bd"
+    },
+    {
+      "path": "academy-bot/src/minigames/lc/documents/hr/pravna_provjera.png",
+      "sha256": "6b45fc6d6a6e21317e032842a0afd31cee13c427940e739d92647411ad1afbe0"
+    },
+    {
+      "path": "academy-bot/src/minigames/lc/documents/hr/protokol_str14.pdf",
+      "sha256": "7c2da6fae1357bbd4f785883695e04ccb8b360f9c2f24cb7777cfbd3c8dc0be7"
+    },
+    {
+      "path": "academy-bot/src/minigames/lc/documents/hr/protokol_str14.png",
+      "sha256": "d61694c2fed69f6f56e01f158bf33b963cb1c7abfd991ae39752df67fcdf2886"
+    },
+    {
+      "path": "academy-bot/src/minigames/lc/documents/hr/racun_kavana.pdf",
+      "sha256": "d85d05d8fb591f8dc204180a2d89b81fe6ec1596f2bb48bab28fd494aa7f5de0"
+    },
+    {
+      "path": "academy-bot/src/minigames/lc/documents/hr/racun_kavana.png",
+      "sha256": "3c3aca2180992de9057e631306ea71f031dd1a71d8be3a3706541ea476982adf"
+    },
+    {
+      "path": "academy-bot/src/minigames/lc/documents/hr/rezervacija_4821.txt",
+      "sha256": "77b203aba396fa0b56232d65226b4bd309ba5e82b3fedb02c7a42cfb7ea0b77a"
+    },
+    {
+      "path": "academy-bot/src/minigames/lc/documents/hr/servis_bicikla.txt",
+      "sha256": "1db49dc3f3b31e3c33911c5c3e00246c80774ba8929fe51e0bf14dc0e9c6c5eb"
+    },
+    {
+      "path": "academy-bot/src/minigames/lc/documents/hr/sto_ako_grijesim.txt",
+      "sha256": "a93512d5335f54be210cc567d537f9d0e87db9b5389cca323289e48c702fa6f4"
+    },
+    {
+      "path": "academy-bot/src/minigames/lc/documents/hr/urednicki_stil.md",
+      "sha256": "9467820eb7fa206915341b6777a51f7df9279368b5c68fe540fca58def541ca9"
+    },
+    {
+      "path": "academy-bot/src/minigames/lc/documents/hr/vozni_red_noc.pdf",
+      "sha256": "8beb54bf91f74a72c943eaed758c9c57e3da8a32a2dc540aaf468b82decc57f6"
+    },
+    {
+      "path": "academy-bot/src/minigames/lc/documents/hr/vozni_red_noc.png",
+      "sha256": "e6c29b5bb1daccb1211d69d4e057b21f62d3932a1f68bc4675062fb8b0b69079"
+    },
+    {
+      "path": "academy-bot/src/minigames/lc/documents/hr/za_vesnu_ne_saljem.eml",
+      "sha256": "6f80a1697aef06476e8ba98956bc902641cdb2c1906bb39e308346e7107d4a02"
+    },
+    {
+      "path": "academy-bot/src/minigames/lc/documents/zet_101_original.pdf",
+      "sha256": "28fb2bb121e80f8a8eb1181b5088a4a667b3f2ef8a5df3971e6f6fdda3ff4529"
+    },
+    {
+      "path": "academy-bot/src/minigames/lc/documents/zet_101_original.png",
+      "sha256": "5942fbbfe75e1e1953f766552359fb193c30defecaf3868836d50c7a603e2ed2"
+    },
+    {
+      "path": "academy-bot/src/minigames/lc/gallery/ana.jpg",
+      "sha256": "a437caf4af70103763124ffa2904da7589b01d46ddb8caef2d68d6310285e917"
+    },
+    {
+      "path": "academy-bot/src/minigames/lc/gallery/potpis.svg",
+      "sha256": "a1aa35a8e89adc40a2a72d4c7b9daecc2b9cf50f1d2935b68c4371d9fadac9ae"
+    },
+    {
+      "path": "academy-bot/src/minigames/lc/gallery/registracija.svg",
+      "sha256": "3f02995692535fb0965cee2bf4f0ccab1a5662d45ddd2abcc28719cfe9b42cbd"
+    },
+    {
+      "path": "academy-bot/src/minigames/lc/gallery/rodjendan.jpg",
+      "sha256": "c1ea9213773ebf3c9400981556ae7346e5191f4e8264617efffac8523897cde7"
+    },
+    {
+      "path": "academy-bot/src/minigames/lc/gallery/tablica.svg",
+      "sha256": "37b4b8fcf87b7c630730c4adb848ea6716008d98a3d8066007eab0d80cb66efa"
+    },
+    {
+      "path": "academy-bot/src/minigames/lc/gallery/ulaz.jpg",
+      "sha256": "8e33397d77786bcd470f6c5030f542cf3a088420dd4490abbb3c8dfbc2240498"
+    },
+    {
+      "path": "academy-bot/src/minigames/lc/receipt-secret.html",
+      "sha256": "a2da714519b1fc6de96f4cdb27f53a0455b2fbb396a31c23690ea3f57381ad40"
+    },
+    {
+      "path": "academy-bot/src/minigames/tablet-lock.html",
+      "sha256": "a6ca6109e159e9835128a8ce9c7b2c39d894d5b0803e63e0ef0ff1c57c0bc29a"
+    },
+    {
+      "path": "academy-bot/src/presentation/message.ts",
+      "sha256": "323c7a0f881ccbb15f43e90424ca273d297bd321d943f67472a1aefd206258c0"
+    },
+    {
+      "path": "academy-bot/test/item-action-results.test.ts",
+      "sha256": "29bab4ae802565b6a07d12889980aebaad7607389f0bd691dc146d9f4f41d351"
+    },
+    {
+      "path": "academy-bot/test/last-call-reveal-order.test.ts",
+      "sha256": "461d2ebfbda2998ceead415d86a5a58eef8f02b332ff094b4cf6c79d6ea705a3"
+    },
+    {
+      "path": "academy-bot/test/media-variants.test.ts",
+      "sha256": "7409c169aba595ece01cf3563ab4bd8ac74332d8b9c9de194245df3265955fb9"
+    },
+    {
+      "path": "academy-bot/test/puzzle-dud-option.test.ts",
+      "sha256": "b814df81dd4686c92e4ca26b9c5fde856a74094db80fbba1b2e32852c95702c3"
+    },
+    {
+      "path": "academy-bot/test/puzzle-hint-resume.test.ts",
+      "sha256": "9800eb235f5207d937fea124e8f61c528f2a5219e7acbdc7c3f14c5c49e6d2ca"
+    },
+    {
+      "path": "academy-bot/tools/build-last-call-documents.py",
+      "sha256": "01c2a2f68eba7686e6aacb594ffb8a2df24de5ab03c36b66aad4e142b1fdff3f"
+    },
+    {
+      "path": "academy-bot/tools/build-last-call-props.py",
+      "sha256": "ca1d3df4c82c50c78669ecd8dca6397ea4d8cdda86453831c74f48b0d983f451"
+    },
+    {
+      "path": "game-studio/scripts/last-call-phone-check.mjs",
+      "sha256": "b6f69f9b7d6a1e9aa4bf45375b74d236a76e0932afdc6ecc9e43dd731e2e6a47"
+    },
+    {
+      "path": "game-studio/src/app/emulator/page.tsx",
+      "sha256": "a453493b832437dd31ba6ca371ad567a4d6a1f2f56436be110f39b670c9fe200"
+    },
+    {
+      "path": "game-studio/src/components/ItemsEditor.tsx",
+      "sha256": "f42eb48dcda2bceacbb362e19c29623923db344d77ae4c22b37cc7040d4f4d97"
+    },
+    {
+      "path": "game-studio/src/components/PuzzleLab.tsx",
+      "sha256": "3f2a0ae0e0520fe22c943ee0105418e747e48fff0e3033bbe0aabcbb4c9cadc2"
+    },
+    {
+      "path": "game-studio/src/components/fields.tsx",
+      "sha256": "8500f731200569e2d78145ecd6137d5167b375b8cb5e818da405a69b67cc6a28"
+    },
+    {
+      "path": "game-studio/src/lib/engine/bot/flows/inventory.ts",
+      "sha256": "c22aa5a1453e70713bb6ef8f7d42cfd959db5b2b2c928ef432492d9b4094b057"
+    },
+    {
+      "path": "game-studio/src/lib/engine/bot/flows/puzzles.ts",
+      "sha256": "65203ff438658f600f57c09b9e99cf2e669d68232cdc26d03f038ac99b2a4de1"
+    },
+    {
+      "path": "game-studio/src/lib/engine/presentation/message.ts",
+      "sha256": "62469e8ae54c7a75c45bb864d87d55f470c996e644ee4b75f1fbadbb20dd8865"
+    },
+    {
+      "path": "game-studio/src/lib/engine/systemUiData.ts",
+      "sha256": "036760dd9ed6ce1591bc06cde4b70ec5ae4a359aa5aecac28fc0b86e8604bdf0"
+    },
+    {
+      "path": "game-studio/src/lib/schema/common.ts",
+      "sha256": "926231bef06f4f76b660864199de30ce8e7b55d4d303b293785eed3845212a55"
+    },
+    {
+      "path": "game-studio/src/lib/schema/item.ts",
+      "sha256": "e9603049a6d826559289fd023b5e689f4392f15aa20f204ea5787d458a378b24"
+    }
+  ]
+}

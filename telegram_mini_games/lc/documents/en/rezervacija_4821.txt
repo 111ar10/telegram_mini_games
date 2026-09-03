@@ -1,0 +1,5 @@
+RESERVATION 4821
+
+Recreational badminton.
+Status: used, last month.
+Code valid only for entry during the reserved session.

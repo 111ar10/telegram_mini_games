@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Tablet Lock</title>
+
+  <!-- Telegram Web App SDK (same as the other mini-games in this repo) -->
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+  <!--
+    GENERIC TABLET LOCK SCREEN  (reusable across games — config-driven, SERVER-AUTHORITATIVE)
+    ----------------------------------------------------------------------------------------------
+    A tablet lockscreen with either a numeric PIN pad or an Android-style dot pattern. The code/pattern
+    is NEVER passed here. UNLOCK reports whatever the player entered as `submission`; the engine checks
+    it against the puzzle's answer server-side (same path as an in-chat text answer) — exactly the same
+    discipline as padlock.html. Tapping unlock always plays the same cosmetic "swipe to home screen" beat
+    regardless of whether the code is right, so nothing about correctness ever leaks client-side.
+
+    Params (URL query, all optional):
+      STRUCTURAL (not secret):
+        mode       "pin" (default) | "pattern"
+        digits     pin mode: code length, default 4 (min 3, max 8)
+        gridSize   pattern mode: NxN dot grid, default 3 (min 3, max 5)
+      COSMETIC (pure flavor — never used for validation):
+        owner        name on the lock screen, e.g. "Mia's Tablet"
+        clock        HH:MM shown as the lockscreen clock (default: viewer's current local time)
+        dateLabel    date line under the clock, e.g. "Friday, 14 July" (decodeURIComponent)
+        bg / bg2     lockscreen wallpaper gradient colors, hex w/ or w/o "#" (default dark blue)
+        bgImage      lockscreen wallpaper photo URL — overrides bg/bg2 if set
+        homeWallpaper  wallpaper for the brief post-unlock home-screen beat (defaults to bg/bgImage)
+        homeApps     JSON array of {icon,label} for the home-screen icon grid shown during that beat,
+                     e.g. [{"icon":"💬","label":"Messages"},{"icon":"🖼️","label":"Gallery"}]
+        title        header title (mode default: "Enter Passcode" / "Draw Pattern")
+        tag          italic subtitle/clue line (decodeURIComponent)
+      lang       "en" | "hr" (else Telegram user lang)
+      sessionId / userId  passed straight back in the result payload
+    Result (Telegram.WebApp.sendData):
+      pin mode:      { sessionId, userId, gameId:'tablet-lock', submission:"<digits>", timestamp }
+      pattern mode:  { sessionId, userId, gameId:'tablet-lock', submission:"<node-indices joined by '-'>", timestamp }
+      give up:       { sessionId, userId, gameId:'tablet-lock', success:false, outcome:'abandoned', timestamp }
+  -->
+  <style>
+    :root {
+      --bg: #0b0d10; --panel: #14161c; --ink: #e8e6df; --muted: #8b90a0;
+      --brass: #c9a24b; --brass-dark: #8a6d2c; --steel: #b9c0cc;
+      --shadow: rgba(0,0,0,.55); --success: #4caf7d; --dot: rgba(255,255,255,.85);
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    html, body { height: 100%; }
+    body {
+      background: radial-gradient(120% 90% at 50% 0%, #191c22 0%, var(--bg) 65%);
+      color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      display: flex; flex-direction: column; align-items: center; min-height: 100%;
+      padding: 18px 12px 26px; user-select: none;
+    }
+
+    /* Tablet chassis */
+    .tablet {
+      /* Height from the viewport, not a fixed 3:4. That ratio is a tablet's, and as a phone it left the
+         keypad's last row (0 and ⌫) clipped below `overflow: hidden` — on a 6-digit PIN containing a
+         zero, that is a code nobody can enter. The clamp keeps it phone-shaped on a laptop too. */
+      width: 320px; max-width: 92vw; height: clamp(430px, 82vh, 620px); border-radius: 26px; position: relative;
+      background: #0d0f13; border: 8px solid #1b1e25; box-shadow: 0 20px 46px var(--shadow), inset 0 0 0 1px #2a2f3a;
+      overflow: hidden;
+    }
+    :root { --key: clamp(46px, 12.5vw, 62px); --kgap: clamp(8px, 2.2vw, 12px); }
+    .cam { position: absolute; top: 10px; left: 50%; transform: translateX(-50%); width: 6px; height: 6px;
+      border-radius: 50%; background: #05070a; box-shadow: inset 0 0 2px #000; z-index: 6; }
+
+    .screen { position: absolute; inset: 0; overflow: hidden; }
+    .layer { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center;
+      background-size: cover; background-position: center; transition: transform .5s ease, opacity .5s ease; }
+
+    /* Lock layer */
+    #lockLayer { padding: clamp(18px, 4vh, 34px) 16px 14px; justify-content: flex-start; }
+    .lclock { font-size: 40px; font-weight: 300; letter-spacing: 1px; text-shadow: 0 2px 8px rgba(0,0,0,.5); margin-top: 6px; }
+    .ldate { font-size: 13px; color: rgba(255,255,255,.85); margin-top: 4px; text-shadow: 0 1px 4px rgba(0,0,0,.5); }
+    .owner { margin-top: 18px; font-size: 14px; font-weight: 600; color: rgba(255,255,255,.92); text-shadow: 0 1px 4px rgba(0,0,0,.5); }
+    .tag { margin-top: 6px; font-size: 12px; color: rgba(255,255,255,.75); font-style: italic; max-width: 240px;
+      text-align: center; line-height: 1.35; text-shadow: 0 1px 4px rgba(0,0,0,.5); }
+
+    .padwrap { margin-top: auto; width: 100%; display: flex; flex-direction: column; align-items: center; padding-bottom: 6px; }
+
+    /* PIN dots */
+    .dots { display: flex; gap: 12px; margin-bottom: clamp(10px, 2vh, 16px); }
+    .dot { width: 13px; height: 13px; border-radius: 50%; border: 1.5px solid rgba(255,255,255,.7); background: transparent; transition: background .15s, transform .15s; }
+    .dot.filled { background: var(--ink); transform: scale(1.05); }
+
+    /* Keypad */
+    /* Keys shrink on a narrow screen rather than overflowing the device. Belt and braces with the
+       height above: either alone still clips on a short viewport. */
+    .keys { display: grid; grid-template-columns: repeat(3, var(--key)); gap: var(--kgap); justify-content: center; }
+    .key { width: var(--key); height: var(--key); border-radius: 50%; border: none; cursor: pointer;
+      background: rgba(255,255,255,.14); backdrop-filter: blur(2px); color: var(--ink); font-size: 21px; font-weight: 600;
+      display: flex; align-items: center; justify-content: center; transition: background .1s, transform .06s; }
+    .key:active { background: rgba(255,255,255,.28); transform: scale(.94); }
+    .key.ghost { background: transparent; cursor: default; }
+    .key.ghost:active { transform: none; background: transparent; }
+
+    /* Pattern grid */
+    .patwrap { margin-top: auto; padding-bottom: 10px; touch-action: none; }
+    svg#patSvg { display: block; }
+    .pnode circle { fill: rgba(255,255,255,.16); stroke: rgba(255,255,255,.65); stroke-width: 1.5; }
+    .pnode.on circle { fill: var(--brass); stroke: var(--brass); }
+    .pline { stroke: var(--brass); stroke-width: 4; fill: none; stroke-linecap: round; opacity: .9; }
+
+    .msgrow { margin-top: 12px; font-size: 12.5px; color: rgba(255,255,255,.7); text-align: center; min-height: 16px; }
+    .giveup { margin-top: 6px; background: none; border: none; color: rgba(255,255,255,.6);
+      font-size: 12.5px; text-decoration: underline; cursor: pointer; }
+
+    /* Home-screen beat (cosmetic only, shown after unlock regardless of correctness) */
+    #homeLayer { justify-content: flex-start; padding: 30px 20px; opacity: 0; pointer-events: none; }
+    #homeLayer.show { opacity: 1; }
+    .homeclock { font-size: 30px; font-weight: 300; text-shadow: 0 2px 8px rgba(0,0,0,.5); }
+    .homegrid { margin-top: 26px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; width: 100%; }
+    .homeapp { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+    .homeicon { width: 48px; height: 48px; border-radius: 13px; background: rgba(255,255,255,.16);
+      display: flex; align-items: center; justify-content: center; font-size: 22px; box-shadow: 0 3px 8px rgba(0,0,0,.35); }
+    .homelabel { font-size: 10.5px; color: rgba(255,255,255,.85); text-shadow: 0 1px 3px rgba(0,0,0,.5); }
+
+    footer { margin-top: 14px; }
+
+    /* Result overlay */
+    .overlay { position: fixed; inset: 0; background: rgba(6,7,9,.88); backdrop-filter: blur(3px);
+      display: none; align-items: center; justify-content: center; z-index: 20; padding: 24px; }
+    .overlay.show { display: flex; }
+    .card { background: var(--panel); border: 1px solid #333a46; border-radius: 18px; padding: 28px 24px;
+      text-align: center; max-width: 320px; width: 100%; box-shadow: 0 20px 50px var(--shadow); }
+    .card .emoji { font-size: 42px; } .card h2 { margin: 12px 0 6px; font-size: 20px; }
+    .card p { color: var(--muted); font-size: 14px; line-height: 1.5; }
+    body { padding:0; min-height:0; height:100dvh; overflow:hidden; }
+    .tablet { width:100%; max-width:none; height:var(--lock-height,100dvh); flex:none; border:0; border-radius:0; box-shadow:none; }
+    #lockLayer { padding-top:max(18px,env(safe-area-inset-top),var(--tg-top,0px)); padding-bottom:max(10px,env(safe-area-inset-bottom),var(--tg-bottom,0px)); }
+    @media(max-height:560px) { .lclock{font-size:26px}.owner{margin-top:6px}:root{--key:42px;--kgap:6px} .tag{display:none!important} }
+  </style>
+</head>
+<body>
+  <div class="tablet" id="tablet">
+    <div class="cam"></div>
+    <div class="screen">
+      <div class="layer" id="lockLayer">
+        <div class="lclock" id="lclock"></div>
+        <div class="ldate" id="ldate"></div>
+        <div class="owner" id="owner"></div>
+        <div class="tag" id="tag" style="display:none"></div>
+
+        <div class="padwrap" id="pinWrap">
+          <div class="dots" id="dots"></div>
+          <div class="keys" id="keys"></div>
+        </div>
+
+        <div class="patwrap" id="patWrap" style="display:none"></div>
+
+        <div class="msgrow" id="msg"></div>
+        <button class="giveup" id="giveup">Give up</button>
+      </div>
+
+      <div class="layer" id="homeLayer">
+        <div class="homeclock" id="hclock"></div>
+        <div class="homegrid" id="homegrid"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="overlay" id="overlay">
+    <div class="card">
+      <div class="emoji" id="rEmoji">🔓</div>
+      <h2 id="rTitle">Unlocked</h2>
+      <p id="rBody"></p>
+    </div>
+  </div>
+
+  <!-- `type="module"` for the top-level `await` in `loadConfigInto` below. Module scope also means
+       nothing here leaks to `window` implicitly, so any test hook must be assigned explicitly. -->
+  <script type="module">
+    // ------- Hosted config (MINIGAMES.md → "Keep launch URLs small") -------
+    // `config` names a JSON file — normally a bare filename beside this app — whose keys stand in for
+    // URL params, so a launch carrying a whole hint ladder and home-screen app list stays a couple of
+    // hundred characters instead of running past the ~2 KB some proxies and older WebViews refuse.
+    // A param spelled out in the URL always wins over the file.
+    //
+    // Non-string values are re-encoded rather than passed through: the readers below expect exactly
+    // the `encodeURIComponent(JSON.stringify(x))` shape the engine's `buildWebAppUrl` produces.
+    async function loadConfigInto(params) {
+      const configParam = params.get('config');
+      if (!configParam) return; // no `config` → nothing awaited, behaviour identical to before
+      const configUrl = new URL(configParam, window.location.href).href;
+      try {
+        const res = await fetch(configUrl);
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        for (const [k, v] of Object.entries(await res.json())) {
+          if (params.has(k)) continue;
+          params.set(k, typeof v === 'string' ? v : encodeURIComponent(JSON.stringify(v)));
+        }
+      } catch (e) {
+        console.error('config: failed to load', configUrl, e);
+      }
+      // ------- Hint gate (engine-emitted `hintsAllowed`) -------
+      // A sidecar is a static file, so a hint ladder inside one cannot trim itself the way
+      // `gateWebAppHints` trims an inline `hints` param. The launch carries the count this
+      // difficulty earned; slicing to it here is what keeps the solution rung out of reach on
+      // normal/hard. No-op when the ladder came from the URL — the engine already cut that one.
+      const allowedRaw = params.get('hintsAllowed');
+      if (allowedRaw !== null) {
+        const allowed = Math.max(0, parseInt(allowedRaw, 10) || 0);
+        const rawHints = params.get('hints');
+        if (rawHints) {
+          try {
+            let all;
+            try { all = JSON.parse(decodeURIComponent(rawHints)); } catch (e) { all = JSON.parse(rawHints); }
+            if (Array.isArray(all) && all.length > allowed) {
+              params.set('hints', encodeURIComponent(JSON.stringify(all.slice(0, allowed))));
+            }
+          } catch (e) { /* not a JSON array — leave whatever the content authored */ }
+        }
+      }
+    }
+
+    // ------- Telegram bootstrap (mirrors padlock.html) -------
+    const tg = window.Telegram ? window.Telegram.WebApp : null;
+    if (tg) { tg.ready(); tg.expand(); try { if(tg.isVersionAtLeast?.('8.0')) tg.requestFullscreen?.(); } catch {} }
+    const syncSafeArea=()=>{const safe=tg?.safeAreaInset||{},content=tg?.contentSafeAreaInset||{};document.documentElement.style.setProperty('--tg-top',((safe.top||0)+(content.top||0))+'px');document.documentElement.style.setProperty('--tg-bottom',((safe.bottom||0)+(content.bottom||0))+'px');};
+    syncSafeArea();tg?.onEvent?.('safeAreaChanged',syncSafeArea);tg?.onEvent?.('contentSafeAreaChanged',syncSafeArea);
+    const fitLock=()=>document.documentElement.style.setProperty('--lock-height',(window.visualViewport?.height||innerHeight)+'px');fitLock();window.visualViewport?.addEventListener('resize',fitLock);window.addEventListener('resize',fitLock);tg?.onEvent?.('viewportChanged',fitLock);
+    const haptic = (kind) => {
+      try {
+        if (!tg || !tg.HapticFeedback) return;
+        if (kind === 'tick') tg.HapticFeedback.selectionChanged();
+        else if (kind === 'ok') tg.HapticFeedback.notificationOccurred('success');
+        else if (kind === 'err') tg.HapticFeedback.notificationOccurred('error');
+      } catch (e) {}
+    };
+
+    const q = new URLSearchParams(window.location.search);
+    await loadConfigInto(q);
+    const sessionId = q.get('sessionId');
+    const userId = (tg && tg.initDataUnsafe && tg.initDataUnsafe.user) ? tg.initDataUnsafe.user.id : q.get('userId');
+
+    let lang = (q.get('lang') || (tg && tg.initDataUnsafe && tg.initDataUnsafe.user && tg.initDataUnsafe.user.language_code) || 'en')
+                 .split('-')[0].toLowerCase();
+
+    const STR = {
+      en: { pinTitle: 'Enter Passcode', patTitle: 'Draw Pattern', give: 'Give up',
+            sent: 'Sent', sentBody: 'Check the chat for the verdict.',
+            gaveTitle: 'Left locked', gaveBody: 'You set the tablet back down.' },
+      hr: { pinTitle: 'Unesi šifru', patTitle: 'Nacrtaj uzorak', give: 'Odustani',
+            sent: 'Poslano', sentBody: 'Provjeri chat za ishod.',
+            gaveTitle: 'Ostalo zaključano', gaveBody: 'Odložiš tablet natrag.' },
+    };
+    const S = STR[lang] || STR.en;
+    document.documentElement.lang = lang;
+
+    function hex(v, fallback) {
+      if (!v) return fallback;
+      return v.startsWith('#') ? v : ('#' + v);
+    }
+
+    // ------- Cosmetic params -------
+    const mode = q.get('mode') === 'pattern' ? 'pattern' : 'pin';
+    const bgImage = q.get('bgImage');
+    const bg = hex(q.get('bg'), '#1c2b45');
+    const bg2 = hex(q.get('bg2'), '#0a1220');
+    const homeWallpaper = q.get('homeWallpaper') || bgImage;
+    const owner = q.get('owner') ? decodeURIComponent(q.get('owner')) : '';
+    const dateLabel = q.get('dateLabel') ? decodeURIComponent(q.get('dateLabel')) : '';
+    const tagText = q.get('tag');
+    const title = q.get('title') ? decodeURIComponent(q.get('title')) : (mode === 'pattern' ? S.patTitle : S.pinTitle);
+    document.title = title;
+
+    const lockLayer = document.getElementById('lockLayer');
+    const homeLayer = document.getElementById('homeLayer');
+    function wallpaperCss(img, c1, c2) {
+      return img ? `url("${img}") center/cover no-repeat, linear-gradient(160deg, ${c1}, ${c2})`
+                 : `linear-gradient(160deg, ${c1}, ${c2})`;
+    }
+    lockLayer.style.background = wallpaperCss(bgImage, bg, bg2);
+    homeLayer.style.background = wallpaperCss(homeWallpaper, bg, bg2);
+
+    document.getElementById('owner').textContent = owner;
+    document.getElementById('ldate').textContent = dateLabel;
+    if (tagText) {
+      const t = document.getElementById('tag');
+      t.textContent = decodeURIComponent(tagText);
+      t.style.display = 'block';
+    }
+    document.getElementById('giveup').textContent = S.give;
+
+    function clockText() {
+      const explicit = q.get('clock');
+      if (explicit) return explicit;
+      const d = new Date();
+      return String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
+    }
+    document.getElementById('lclock').textContent = clockText();
+    document.getElementById('hclock').textContent = clockText();
+
+    // Home-screen app grid (cosmetic only — shown after unlock regardless of correctness)
+    (function buildHomeGrid() {
+      const raw = q.get('homeApps');
+      let apps = [
+        { icon: '💬', label: 'Messages' }, { icon: '🖼️', label: 'Gallery' }, { icon: '📝', label: 'Notes' },
+      ];
+      if (raw) { try { const parsed = JSON.parse(raw); if (Array.isArray(parsed) && parsed.length) apps = parsed; } catch (e) {} }
+      const grid = document.getElementById('homegrid');
+      apps.slice(0, 6).forEach((a) => {
+        const cell = document.createElement('div'); cell.className = 'homeapp';
+        cell.innerHTML = `<div class="homeicon">${a.icon || '▫️'}</div><div class="homelabel"></div>`;
+        cell.querySelector('.homelabel').textContent = a.label || '';
+        grid.appendChild(cell);
+      });
+    })();
+
+    // ------- Result reporting (server-authoritative, same discipline as padlock.html) -------
+    let solved = false;
+    function send(payload) {
+      const result = { sessionId, userId, gameId: 'tablet-lock', timestamp: Date.now(), ...payload };
+      console.log('📤 tablet-lock result', result);
+      try { if (window.parent && window.parent !== window) window.parent.postMessage({ type: 'MINIGAME_RESULT', payload: result }, '*'); } catch (e) {}
+      try {
+        if (tg && typeof tg.sendData === 'function') tg.sendData(JSON.stringify(result));
+        else localStorage.setItem('tablet-lock_result_latest', JSON.stringify(result));
+      } catch (e) { console.error('sendData failed', e); }
+    }
+
+    function showOverlay(gaveUp) {
+      const ov = document.getElementById('overlay');
+      document.getElementById('rEmoji').textContent = gaveUp ? '🔒' : '📲';
+      document.getElementById('rTitle').textContent = gaveUp ? S.gaveTitle : S.sent;
+      document.getElementById('rBody').textContent = gaveUp ? S.gaveBody : S.sentBody;
+      ov.classList.add('show');
+    }
+
+    // Cosmetic "swipe to home" beat — identical for right/wrong code, so it can never leak correctness.
+    function playUnlockBeat(submission) {
+      if (solved) return;
+      solved = true;
+      haptic('ok');
+      document.getElementById('lockLayer').style.transform = 'translateY(-100%)';
+      document.getElementById('lockLayer').style.opacity = '0';
+      homeLayer.classList.add('show');
+      send({ submission });
+      setTimeout(() => showOverlay(false), 1100);
+    }
+
+    document.getElementById('giveup').addEventListener('click', () => {
+      if (solved) return;
+      solved = true;
+      send({ success: false, outcome: 'abandoned' });
+      setTimeout(() => showOverlay(true), 200);
+    });
+
+    // ------- PIN mode -------
+    if (mode === 'pin') {
+      document.getElementById('patWrap').style.display = 'none';
+      const N = Math.min(8, Math.max(3, parseInt(q.get('digits') || '4', 10)));
+      let entered = '';
+      const dotsEl = document.getElementById('dots');
+      for (let i = 0; i < N; i++) { const d = document.createElement('div'); d.className = 'dot'; dotsEl.appendChild(d); }
+      function renderDots() {
+        [...dotsEl.children].forEach((d, i) => d.classList.toggle('filled', i < entered.length));
+      }
+      const keysEl = document.getElementById('keys');
+      const layout = ['1','2','3','4','5','6','7','8','9','','0','⌫'];
+      layout.forEach((k) => {
+        const b = document.createElement('button');
+        b.className = 'key' + (k === '' ? ' ghost' : '');
+        b.textContent = k;
+        if (k !== '') {
+          b.addEventListener('click', () => {
+            if (solved) return;
+            if (k === '⌫') { entered = entered.slice(0, -1); renderDots(); haptic('tick'); return; }
+            if (entered.length >= N) return;
+            entered += k; renderDots(); haptic('tick');
+            if (entered.length === N) setTimeout(() => playUnlockBeat(entered), 180);
+          });
+        }
+        keysEl.appendChild(b);
+      });
+    }
+
+    // ------- Pattern mode -------
+    if (mode === 'pattern') {
+      document.getElementById('pinWrap').style.display = 'none';
+      const G = Math.min(5, Math.max(3, parseInt(q.get('gridSize') || '3', 10)));
+      const patWrap = document.getElementById('patWrap');
+      patWrap.style.display = 'block';
+      const size = 240, pad = 30;
+      const step = (size - pad * 2) / (G - 1);
+      const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      svg.setAttribute('id', 'patSvg');
+      svg.setAttribute('width', size); svg.setAttribute('height', size);
+      svg.setAttribute('viewBox', `0 0 ${size} ${size}`);
+      patWrap.appendChild(svg);
+
+      const pathEl = document.createElementNS(svg.namespaceURI, 'path');
+      pathEl.setAttribute('class', 'pline');
+      svg.appendChild(pathEl);
+
+      const nodes = [];
+      for (let r = 0; r < G; r++) {
+        for (let c = 0; c < G; c++) {
+          const cx = pad + c * step, cy = pad + r * step;
+          const g = document.createElementNS(svg.namespaceURI, 'g');
+          g.setAttribute('class', 'pnode');
+          const circle = document.createElementNS(svg.namespaceURI, 'circle');
+          circle.setAttribute('cx', cx); circle.setAttribute('cy', cy); circle.setAttribute('r', 13);
+          g.appendChild(circle);
+          svg.appendChild(g);
+          nodes.push({ x: cx, y: cy, el: g, idx: r * G + c });
+        }
+      }
+
+      let path = [];
+      let dragging = false;
+
+      function updatePath() {
+        pathEl.setAttribute('d', path.length ? ('M ' + path.map((i) => `${nodes[i].x} ${nodes[i].y}`).join(' L ')) : '');
+      }
+      function nodeAt(clientX, clientY) {
+        const rect = svg.getBoundingClientRect();
+        const x = (clientX - rect.left) * (size / rect.width);
+        const y = (clientY - rect.top) * (size / rect.height);
+        for (const n of nodes) { if (Math.hypot(n.x - x, n.y - y) <= 18) return n; }
+        return null;
+      }
+      function addNode(n) {
+        if (path.includes(n.idx)) return;
+        path.push(n.idx); n.el.classList.add('on'); updatePath(); haptic('tick');
+      }
+      function reset() {
+        path = []; nodes.forEach((n) => n.el.classList.remove('on')); updatePath();
+      }
+
+      svg.addEventListener('pointerdown', (e) => {
+        if (solved) return;
+        reset(); dragging = true; svg.setPointerCapture(e.pointerId);
+        const n = nodeAt(e.clientX, e.clientY); if (n) addNode(n);
+      });
+      svg.addEventListener('pointermove', (e) => {
+        if (!dragging || solved) return;
+        const n = nodeAt(e.clientX, e.clientY); if (n) addNode(n);
+      });
+      function finish() {
+        if (!dragging || solved) return;
+        dragging = false;
+        if (path.length >= 2) setTimeout(() => playUnlockBeat(path.join('-')), 180);
+        else reset();
+      }
+      svg.addEventListener('pointerup', finish);
+      svg.addEventListener('pointercancel', finish);
+    }
+  </script>
+</body>
+</html>
