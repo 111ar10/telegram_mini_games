@@ -4,10 +4,10 @@
       "id": "poruke",
       "icon": "💬",
       "label": {
-        "hr": "Poruke",
-        "en": "Messages"
+        "hr": "Arhiva poruka",
+        "en": "Message archive"
       },
-      "screen": "list",
+      "screen": "inbox",
       "rows": [
         {
           "icon": "🚬",
@@ -103,7 +103,8 @@
                 "en": "Fri 14:02"
               }
             }
-          ]
+          ],
+          "contactId": "toma"
         },
         {
           "icon": "👩‍🦳",
@@ -191,7 +192,8 @@
                 "en": "I finally got the list today. Thirteen days too late."
               }
             }
-          ]
+          ],
+          "contactId": "ana_p"
         },
         {
           "icon": "☎️",
@@ -268,7 +270,9 @@
               },
               "time": "23:53"
             }
-          ]
+          ],
+          "contactId": "bez_imena",
+          "number": "01 4600 —"
         },
         {
           "icon": "📇",
@@ -342,7 +346,8 @@
               },
               "time": "22:30"
             }
-          ]
+          ],
+          "contactId": "vesna_redakcija"
         }
       ]
     },
@@ -531,13 +536,10 @@
         {
           "id": "bez_imena",
           "name": {
-            "hr": "01 4600 —",
-            "en": "01 4600 —"
+            "hr": "",
+            "en": ""
           },
-          "number": {
-            "hr": "bez imena",
-            "en": "no name saved"
-          },
+          "number": "01 4600 —",
           "note": {
             "hr": "Spremljen bez imena, a spremljen je.\n\n<i>Jedini kontakt u imeniku koji nema ime. Netko koga je htjela moći nazvati, a ne htjela da itko vidi koga zove.</i>",
             "en": "Saved with no name — but saved.\n\n<i>The only contact in the phonebook without a name. Somebody she wanted to be able to ring, and did not want anybody to see her ringing.</i>"
@@ -553,6 +555,246 @@
           "note": {
             "hr": "Zvali su tri puta u tjedan dana, uvijek s istog broja, uvijek u uredovno vrijeme.\n\n<i>Prve tri znamenke iste su kao kod kontakta bez imena. Ista centrala, druga osoba.</i>",
             "en": "They rang three times in a week, always from the same number, always in office hours.\n\n<i>The first digits match the contact with no name. Same switchboard, different person.</i>"
+          }
+        },
+        {
+          "id": "svakodnevni_1",
+          "name": {
+            "hr": "Boris Kovač",
+            "en": "Boris Kovač"
+          },
+          "number": "093 555 2100",
+          "note": {
+            "hr": "Susjed iz drugog ulaza.",
+            "en": "Neighbour from the next entrance."
+          }
+        },
+        {
+          "id": "svakodnevni_2",
+          "name": {
+            "hr": "Dora Marić",
+            "en": "Dora Marić"
+          },
+          "number": "093 555 2101",
+          "note": {
+            "hr": "Dogovor za badminton.",
+            "en": "Badminton arrangements."
+          }
+        },
+        {
+          "id": "svakodnevni_3",
+          "name": {
+            "hr": "Ema Perić",
+            "en": "Ema Perić"
+          },
+          "number": "093 555 2102",
+          "note": {
+            "hr": "Preporuka za popravak bicikla.",
+            "en": "Bicycle repair recommendation."
+          }
+        },
+        {
+          "id": "svakodnevni_4",
+          "name": {
+            "hr": "Filip Novak",
+            "en": "Filip Novak"
+          },
+          "number": "093 555 2103",
+          "note": {
+            "hr": "Grupa s tečaja jezika.",
+            "en": "Language course group."
+          }
+        },
+        {
+          "id": "svakodnevni_5",
+          "name": {
+            "hr": "Goran Babić",
+            "en": "Goran Babić"
+          },
+          "number": "093 555 2104",
+          "note": {
+            "hr": "Susjed iz drugog ulaza.",
+            "en": "Neighbour from the next entrance."
+          }
+        },
+        {
+          "id": "svakodnevni_6",
+          "name": {
+            "hr": "Helena Radić",
+            "en": "Helena Radić"
+          },
+          "number": "093 555 2105",
+          "note": {
+            "hr": "Dogovor za badminton.",
+            "en": "Badminton arrangements."
+          }
+        },
+        {
+          "id": "svakodnevni_7",
+          "name": {
+            "hr": "Irena Matić",
+            "en": "Irena Matić"
+          },
+          "number": "093 555 2106",
+          "note": {
+            "hr": "Preporuka za popravak bicikla.",
+            "en": "Bicycle repair recommendation."
+          }
+        },
+        {
+          "id": "svakodnevni_8",
+          "name": {
+            "hr": "Jasna Vuković",
+            "en": "Jasna Vuković"
+          },
+          "number": "093 555 2107",
+          "note": {
+            "hr": "Grupa s tečaja jezika.",
+            "en": "Language course group."
+          }
+        },
+        {
+          "id": "svakodnevni_9",
+          "name": {
+            "hr": "Karlo Jurić",
+            "en": "Karlo Jurić"
+          },
+          "number": "093 555 2108",
+          "note": {
+            "hr": "Susjed iz drugog ulaza.",
+            "en": "Neighbour from the next entrance."
+          }
+        },
+        {
+          "id": "svakodnevni_10",
+          "name": {
+            "hr": "Lucija Horvat",
+            "en": "Lucija Horvat"
+          },
+          "number": "093 555 2109",
+          "note": {
+            "hr": "Dogovor za badminton.",
+            "en": "Badminton arrangements."
+          }
+        },
+        {
+          "id": "svakodnevni_11",
+          "name": {
+            "hr": "Marin Pavlović",
+            "en": "Marin Pavlović"
+          },
+          "number": "093 555 2110",
+          "note": {
+            "hr": "Preporuka za popravak bicikla.",
+            "en": "Bicycle repair recommendation."
+          }
+        },
+        {
+          "id": "svakodnevni_12",
+          "name": {
+            "hr": "Nika Šarić",
+            "en": "Nika Šarić"
+          },
+          "number": "093 555 2111",
+          "note": {
+            "hr": "Grupa s tečaja jezika.",
+            "en": "Language course group."
+          }
+        },
+        {
+          "id": "svakodnevni_13",
+          "name": {
+            "hr": "Ognjen Petrović",
+            "en": "Ognjen Petrović"
+          },
+          "number": "093 555 2112",
+          "note": {
+            "hr": "Susjed iz drugog ulaza.",
+            "en": "Neighbour from the next entrance."
+          }
+        },
+        {
+          "id": "svakodnevni_14",
+          "name": {
+            "hr": "Petra Božić",
+            "en": "Petra Božić"
+          },
+          "number": "093 555 2113",
+          "note": {
+            "hr": "Dogovor za badminton.",
+            "en": "Badminton arrangements."
+          }
+        },
+        {
+          "id": "svakodnevni_15",
+          "name": {
+            "hr": "Roko Grgić",
+            "en": "Roko Grgić"
+          },
+          "number": "093 555 2114",
+          "note": {
+            "hr": "Preporuka za popravak bicikla.",
+            "en": "Bicycle repair recommendation."
+          }
+        },
+        {
+          "id": "svakodnevni_16",
+          "name": {
+            "hr": "Sara Vidović",
+            "en": "Sara Vidović"
+          },
+          "number": "093 555 2115",
+          "note": {
+            "hr": "Grupa s tečaja jezika.",
+            "en": "Language course group."
+          }
+        },
+        {
+          "id": "svakodnevni_17",
+          "name": {
+            "hr": "Tea Lončar",
+            "en": "Tea Lončar"
+          },
+          "number": "093 555 2116",
+          "note": {
+            "hr": "Susjed iz drugog ulaza.",
+            "en": "Neighbour from the next entrance."
+          }
+        },
+        {
+          "id": "svakodnevni_18",
+          "name": {
+            "hr": "Vedran Kralj",
+            "en": "Vedran Kralj"
+          },
+          "number": "093 555 2117",
+          "note": {
+            "hr": "Dogovor za badminton.",
+            "en": "Badminton arrangements."
+          }
+        },
+        {
+          "id": "svakodnevni_19",
+          "name": {
+            "hr": "Zora Marković",
+            "en": "Zora Marković"
+          },
+          "number": "093 555 2118",
+          "note": {
+            "hr": "Preporuka za popravak bicikla.",
+            "en": "Bicycle repair recommendation."
+          }
+        },
+        {
+          "id": "svakodnevni_20",
+          "name": {
+            "hr": "Željko Tomić",
+            "en": "Željko Tomić"
+          },
+          "number": "093 555 2119",
+          "note": {
+            "hr": "Grupa s tečaja jezika.",
+            "en": "Language course group."
           }
         }
       ]
@@ -652,6 +894,10 @@
               "document": {
                 "hr": "lc/documents/hr/vozni_red_noc.pdf",
                 "en": "lc/documents/en/vozni_red_noc.pdf"
+              },
+              "img": {
+                "hr": "lc/documents/hr/vozni_red_noc.png",
+                "en": "lc/documents/en/vozni_red_noc.png"
               }
             },
             {
@@ -668,7 +914,21 @@
               "document": {
                 "hr": "lc/documents/hr/obrazac_pristup_arhivi.pdf",
                 "en": "lc/documents/en/obrazac_pristup_arhivi.pdf"
+              },
+              "img": {
+                "hr": "lc/documents/hr/obrazac_pristup_arhivi.png",
+                "en": "lc/documents/en/obrazac_pristup_arhivi.png"
               }
+            },
+            {
+              "icon": "📄",
+              "primary": "zet_101.pdf",
+              "body": {
+                "hr": "ZET-ov vozni red autobusne linije 101: Britanski trg – Šestine.",
+                "en": "ZET bus line 101 timetable: Britanski trg – Šestine."
+              },
+              "document": "lc/documents/zet_101_original.pdf",
+              "img": "lc/documents/zet_101_original.png"
             }
           ]
         },
@@ -700,10 +960,17 @@
                 "en": "1.8 MB · Wed 12:05"
               },
               "body": {
-                "hr": "Stranica 14 protokola. Popis suautora, i jedno ime podvučeno dvaput.\n\n<i>Podvukla ga je ona, ne skener.</i>",
-                "en": "Page 14 of the protocol. The list of co-authors, with one name underlined twice.\n\n<i>She underlined it, not the scanner.</i>"
+                "hr": "Stranica 14 protokola. Suautori: Irena Vlahović, Darko Šimunić i Marko Bilić. Ime Darko Šimunić podvučeno je dvaput.\n\n<i>Podvukla ga je ona, ne skener.</i>",
+                "en": "Page 14 of the protocol. Co-authors: Irena Vlahović, Darko Šimunić and Marko Bilić. Darko Šimunić is underlined twice.\n\n<i>She underlined it, not the scanner.</i>"
               },
-              "img": "lc/documents/protokol_str14-20260903.png"
+              "img": {
+                "hr": "lc/documents/hr/protokol_str14.png",
+                "en": "lc/documents/en/protokol_str14.png"
+              },
+              "document": {
+                "hr": "lc/documents/hr/protokol_str14.pdf",
+                "en": "lc/documents/en/protokol_str14.pdf"
+              }
             }
           ]
         },
@@ -725,7 +992,21 @@
                 "hr": "Kavana Međukat, Prolaz starih satova 7, Zagreb.\n\nRačun 104/1/1, 10.09.2026. u <b>20:48</b>.\nDvije kave po 3,00 EUR. Ukupno <b>6,00 EUR</b>, plaćeno gotovinom.\n\n<i>Dvanaest minuta prije termina bez naslova. Dvije kave znače da nije čekala sama.</i>",
                 "en": "Kavana Međukat, Prolaz starih satova 7, Zagreb.\n\nReceipt 104/1/1, 10.09.2026 at <b>20:48</b>.\nTwo coffees at EUR 3.00 each. Total <b>EUR 6.00</b>, paid in cash.\n\n<i>Twelve minutes before the untitled appointment. Two coffees mean she was not waiting alone.</i>"
               },
-              "img": "lc/documents/racun_kavana-20260903-v2.png"
+              "img": {
+                "hr": "lc/documents/hr/racun_kavana.png",
+                "en": "lc/documents/en/racun_kavana.png"
+              },
+              "document": {
+                "hr": "lc/documents/hr/racun_kavana.pdf",
+                "en": "lc/documents/en/racun_kavana.pdf"
+              },
+              "qrLink": "lc/receipt-secret.html",
+              "qrBounds": {
+                "left": 26.991150442477874,
+                "top": 57.57575757575758,
+                "width": 46.017699115044245,
+                "height": 15.757575757575756
+              }
             }
           ]
         },
@@ -865,6 +1146,10 @@
               "document": {
                 "hr": "lc/documents/hr/pravna_provjera.pdf",
                 "en": "lc/documents/en/pravna_provjera.pdf"
+              },
+              "img": {
+                "hr": "lc/documents/hr/pravna_provjera.png",
+                "en": "lc/documents/en/pravna_provjera.png"
               }
             },
             {
@@ -895,6 +1180,10 @@
               "body": {
                 "hr": "Za: (prazno)\nPredmet: ako ne stignem\n\nVesna,\n\nAko ovo čitaš, tekst nije gotov i ja ti ga ne mogu obraniti.\n\nNemoj ga objaviti dok N. ne kaže da smije. Znam da ćeš htjeti. Nemoj.\n\nSve je u mapi koja izgleda kao da je prazna.\n\n<i>Polje „za“ nikad nije ispunila. Zato ni nije mogla poslati.</i>",
                 "en": "To: (empty)\nSubject: if I do not make it\n\nVesna,\n\nIf you are reading this, the piece is not finished and I cannot defend it for you.\n\nDo not run it until N. says it can run. I know you will want to. Do not.\n\nIt is all in the folder that looks empty.\n\n<i>She never filled in the \"to\" field. Which is why she could never send it.</i>"
+              },
+              "document": {
+                "hr": "lc/documents/hr/za_vesnu_ne_saljem.eml",
+                "en": "lc/documents/en/za_vesnu_ne_saljem.eml"
               }
             },
             {
@@ -947,7 +1236,8 @@
                 "en": "weekly, no title"
               }
             }
-          ]
+          ],
+          "date": "2026-09-08"
         },
         {
           "label": {
@@ -958,7 +1248,8 @@
             "hr": "Ništa zakazano.",
             "en": "Nothing scheduled."
           },
-          "entries": []
+          "entries": [],
+          "date": "2026-09-09"
         },
         {
           "label": {
@@ -983,7 +1274,8 @@
                 "en": "An appointment with no title, no location and no guests.\n\nEntered the same morning, at 08:40.\n\n<i>In a calendar going back a year there is not one other untitled entry.</i>"
               }
             }
-          ]
+          ],
+          "date": "2026-09-10"
         },
         {
           "label": {
@@ -994,7 +1286,8 @@
             "hr": "Ništa zakazano.",
             "en": "Nothing scheduled."
           },
-          "entries": []
+          "entries": [],
+          "date": "2026-09-11"
         },
         {
           "label": {
@@ -1015,7 +1308,8 @@
                 "en": "entered a fortnight ago"
               }
             }
-          ]
+          ],
+          "date": "2026-09-12"
         },
         {
           "label": {
@@ -1037,9 +1331,11 @@
                 "en": "weekly, no title"
               }
             }
-          ]
+          ],
+          "date": "2026-09-15"
         }
-      ]
+      ],
+      "weekStart": "2026-09-07"
     },
     {
       "id": "povijest_pretrazivanja",
@@ -1133,8 +1429,8 @@
       "id": "glasovna_biljeska",
       "icon": "🎙",
       "label": {
-        "hr": "Glasovna bilješka — 0:41",
-        "en": "Voice memo — 0:41"
+        "hr": "Glasovne bilješke",
+        "en": "Voice memos"
       },
       "screen": "player",
       "seconds": 41,
@@ -1165,14 +1461,81 @@
       "id": "poslana_poruka",
       "icon": "📤",
       "label": {
-        "hr": "Poslane poruke — 07:14",
-        "en": "Sent messages — 07:14"
+        "hr": "Poruke",
+        "en": "Messages"
       },
-      "screen": "note",
-      "body": {
-        "hr": "Grupna poruka, poslana jučer ujutro, njima šestero odjednom:\n\n<code>Na terenu sam, sljedećih dana samo poruke. Ne zovite.</code>\n\nPotvrde o čitanju: svih šest.\n\nPoslana je jučer u 07:14. Sljedećih dan i pol nitko od njih šestero nije očekivao ni riječ.\n\n—\n\nIspod toga, u razgovoru s Tomom, zadnje što mu je poslala prošli utorak:\n\n<code>Ne mogu sad o nama. Daj mi tjedan dana da ovo završim, pa ću biti prisutna koliko god hoćeš.</code>\n\n<code>Ako ti to nije dovoljno, razumjet ću i to.</code>\n\nOn je odgovorio jednom riječju: <code>Dobro.</code>\n\nPrije osam dana tražila je od njega tjedan dana šutnje. Zato joj ga i daje.",
-        "en": "A group message, sent yesterday morning, to all six of them at once:\n\n<code>On assignment, texts only for the next few days. Don’t ring.</code>\n\nRead receipts: all six.\n\nSent yesterday at 07:14. For the next day and a half not one of the six was expecting a word.\n\n—\n\nBelow it, in the thread with Toma, the last thing she sent him this time last week:\n\n<code>I can’t do us right now. Give me a week to finish this and then I’ll be as present as you want.</code>\n\n<code>If that isn’t enough for you, I’ll understand that too.</code>\n\nHe answered with one word: <code>All right.</code>\n\nEight days ago she asked him for a week of silence. That is why he is giving her one."
-      }
+      "screen": "inbox",
+      "rows": [
+        {
+          "primary": {
+            "hr": "Grupa · 6 primatelja",
+            "en": "Group · 6 recipients"
+          },
+          "meta": {
+            "hr": "jučer",
+            "en": "yesterday"
+          },
+          "thread": [
+            {
+              "sep": {
+                "hr": "Jučer",
+                "en": "Yesterday"
+              }
+            },
+            {
+              "from": "me",
+              "text": {
+                "hr": "Na terenu sam, sljedećih dana samo poruke. Ne zovite.",
+                "en": "On assignment, texts only for the next few days. Don’t ring."
+              },
+              "time": "07:14"
+            },
+            {
+              "sep": {
+                "hr": "Pročitano · svih šest",
+                "en": "Read · all six"
+              }
+            }
+          ]
+        },
+        {
+          "primary": "Toma",
+          "contactId": "toma",
+          "meta": {
+            "hr": "uto",
+            "en": "Tue"
+          },
+          "thread": [
+            {
+              "sep": {
+                "hr": "Prošli utorak",
+                "en": "Last Tuesday"
+              }
+            },
+            {
+              "from": "me",
+              "text": {
+                "hr": "Ne mogu sad o nama. Daj mi tjedan dana da ovo završim, pa ću biti prisutna koliko god hoćeš.",
+                "en": "I can’t do us right now. Give me a week to finish this and then I’ll be as present as you want."
+              }
+            },
+            {
+              "from": "me",
+              "text": {
+                "hr": "Ako ti to nije dovoljno, razumjet ću i to.",
+                "en": "If that isn’t enough for you, I’ll understand that too."
+              }
+            },
+            {
+              "from": "them",
+              "text": {
+                "hr": "Dobro.",
+                "en": "All right."
+              }
+            }
+          ]
+        }
+      ]
     }
   ]
 }

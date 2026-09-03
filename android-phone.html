@@ -377,7 +377,45 @@
     .filedownload { display: inline-block; white-space: normal; color: #a8c7fa; padding: 12px 18px; }
     .recent { padding: 24px; display: grid; gap: 16px; }
     .recent button { padding: 30px 18px; color: var(--ink); background: #272d39; border: 1px solid #414958; border-radius: 18px; font: inherit; text-align: left; }
-  </style>
+
+    html, body { width:100%; height:100%; overflow:hidden; }
+    body { padding:0; min-height:0; background:var(--device); }
+    .device { width:100%; max-width:none; height:var(--app-height,100dvh); max-height:none; margin:0; border:0; border-radius:0; box-shadow:none; }
+    .screen { min-height:0; }
+    .statusbar { padding-top:max(8px,env(safe-area-inset-top)); }
+    .footerbar { padding:6px 14px; }
+    .applist { align-content:start; grid-template-columns:repeat(auto-fit,minmax(88px,1fr)); gap:22px 10px; }
+    .inbox { background:#f8fafd; color:#202124; flex:1; }
+    .inboxrow { display:flex; gap:14px; padding:18px 20px; width:100%; border:0; background:none; text-align:left; color:inherit; cursor:pointer; }
+    .inboxrow .avatar { width:44px; height:44px; flex:0 0 44px; border-radius:50%; display:grid; place-items:center; color:#fff; }
+    .inboxbody { flex:1; min-width:0; }
+    .inboxtop { display:flex; gap:12px; justify-content:space-between; align-items:center; }
+    .inboxtop b { font-size:16px; font-weight:600; }
+    .inboxtop time { color:#68717c; font-size:11px; flex-shrink:0; }
+    .inboxpreview { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; color:#5f6368; font-size:14px; margin-top:5px; }
+    .thread { background:#f8fafd; flex:1; gap:12px; padding:20px 16px; }
+    .threadsep { color:#647080; }
+    .bubblerow.them .bubble { background:#e8edf3; color:#202124; border-radius:20px 20px 20px 4px; }
+    .bubblerow.me .bubble { background:#d3e3fd; color:#102949; border-radius:20px 20px 4px 20px; }
+    .bubble .btime,.bubblerow.me .bubble .btime { color:#5d6f83; }
+    .booksearch { margin:14px; padding:14px; border:1px solid #546071; border-radius:24px; color:var(--ink); background:#252b35; font:inherit; width:calc(100% - 28px); }
+    .week { display:flex; flex-direction:column; flex:1; min-height:0; background:#fff; color:#202124; }
+    .weektoolbar { display:flex; align-items:center; justify-content:space-between; padding:10px 14px; gap:12px; }
+    .weektoolbar button { border:0; background:#e8f0fe; color:#185abc; border-radius:18px; padding:10px 16px; cursor:pointer; }
+    .weekscroll { flex:1; min-height:0; overflow:auto; }
+    .weekhead { display:grid; grid-template-columns:38px repeat(7,minmax(0,1fr)); position:sticky; top:0; z-index:3; background:#fff; border-bottom:1px solid #dadce0; }
+    .weekhead span { display:flex; flex-direction:column; align-items:center; padding:8px 0; font-size:10px; color:#5f6368; }
+    .weekhead b { border-radius:50%; padding:5px; font-size:17px; font-weight:400; }
+    .weekhead .today b { background:#1a73e8; color:#fff; }
+    .weekbody { position:relative; height:960px; margin-left:38px; background:repeating-linear-gradient(to bottom,transparent 0,transparent 39px,#e8eaed 39px,#e8eaed 40px); }
+    .weekline { position:absolute; top:0; bottom:0; border-left:1px solid #e8eaed; width:14.2857%; }
+    .weekhour { position:absolute; left:-36px; width:31px; text-align:right; font-size:10px; color:#70757a; transform:translateY(-6px); }
+    .weekevent { position:absolute; z-index:1; width:calc(14.2857% - 3px); border:0; border-radius:5px; padding:4px 3px; text-align:left; background:#d2e3fc; color:#14335b; font-size:11px; overflow:hidden; cursor:pointer; border-left:3px solid var(--event-color,#1a73e8); }
+    .weekevent time { display:block; font-size:9px; margin-bottom:3px; }
+
+  .row[hidden] { display:none; }
+.filepreview {position:relative;line-height:0;margin-bottom:14px}.filepreview .fileimage{display:block;margin:0}.receiptqr{position:absolute;display:block}.receiptqr:focus-visible{outline:2px solid #185abc;outline-offset:2px}
+</style>
 </head>
 <body>
   <div class="device">
@@ -434,6 +472,8 @@
     // ------- Telegram bootstrap (mirrors padlock.html) -------
     const tg = window.Telegram ? window.Telegram.WebApp : null;
     if (tg) { tg.ready(); tg.expand(); }
+    const fitViewport = () => document.documentElement.style.setProperty('--app-height', `${window.visualViewport?.height || window.innerHeight}px`);
+    fitViewport(); window.visualViewport?.addEventListener('resize', fitViewport); window.addEventListener('resize', fitViewport);
     const haptic = (kind) => {
       try {
         if (!tg || !tg.HapticFeedback) return;
@@ -497,13 +537,13 @@
             typeMsg: 'Type a message…', noContacts: 'No contacts.', confirmed: 'Confirmed', confirmedBody: 'Noted.',
             gaveTitle: 'Screen locked', gaveBody: 'You put the phone down.',
             unlock: 'Unlock', locked: 'Locked',
-            back: 'Back', home: 'Home', recent: 'Recent apps', noRecent: 'No recent apps.', openFile: 'Open document', fileError: 'Preview unavailable. The description remains below.', hint: '💡 Hint', noMoreHints: '💡 No more hints', emptyFolder: 'Empty folder.', agendaEmpty: 'Nothing scheduled.' },
+            week: 'Week', previousWeek: 'Previous week', nextWeek: 'Next week', searchContacts: 'Search contacts', back: 'Back', home: 'Home', recent: 'Recent apps', noRecent: 'No recent apps.', openFile: 'Open document', fileError: 'Preview unavailable. The description remains below.', hint: '💡 Hint', noMoreHints: '💡 No more hints', emptyFolder: 'Empty folder.', agendaEmpty: 'Nothing scheduled.' },
       hr: { title: 'Telefon', give: 'Odustani', call: 'Telefon', contacts: 'Kontakti', messages: 'Poruke', gallery: 'Galerija',
             sent: 'Poslano', sentBody: 'Provjeri chat za ishod.', to: 'Za',
             typeMsg: 'Upiši poruku…', noContacts: 'Nema kontakata.', confirmed: 'Potvrđeno', confirmedBody: 'Zabilježeno.',
             gaveTitle: 'Zaključan zaslon', gaveBody: 'Odložiš telefon.',
             unlock: 'Otključaj', locked: 'Zaključano',
-            back: 'Natrag', home: 'Početni zaslon', recent: 'Nedavne aplikacije', noRecent: 'Nema nedavnih aplikacija.', openFile: 'Otvori dokument', fileError: 'Pregled nije dostupan. Opis je i dalje ispod.', hint: '💡 Savjet', noMoreHints: '💡 Nema više savjeta', emptyFolder: 'Prazna mapa.', agendaEmpty: 'Ništa zakazano.' },
+            week: 'Tjedan', previousWeek: 'Prethodni tjedan', nextWeek: 'Sljedeći tjedan', searchContacts: 'Pretraži kontakte', back: 'Natrag', home: 'Početni zaslon', recent: 'Nedavne aplikacije', noRecent: 'Nema nedavnih aplikacija.', openFile: 'Otvori dokument', fileError: 'Pregled nije dostupan. Opis je i dalje ispod.', hint: '💡 Savjet', noMoreHints: '💡 Nema više savjeta', emptyFolder: 'Prazna mapa.', agendaEmpty: 'Ništa zakazano.' },
     };
     const S = STR[lang] || STR.en;
     function loc(v) { if (v == null) return ''; if (typeof v === 'object') return v[lang] || v.en || Object.values(v)[0] || ''; return String(v); }
@@ -697,6 +737,7 @@
       recentApps.unshift(a);
       switch (a.screen) {
         case 'list': return renderList(a);
+        case 'inbox': return renderInbox(a);
         case 'note': return renderNote(a);
         case 'player': return renderPlayer(a);
         case 'gallery': return renderGallery(a.gallery || gallery, loc(a.label) || S.gallery);
@@ -707,6 +748,23 @@
         case 'messages': return renderMessages();
         default: return renderNote(a);
       }
+    }
+
+    function renderInbox(a) {
+      const wrap=document.createElement('div'); wrap.className='inbox';
+      (a.rows || []).filter(r=>!r.requires || owned.has(r.requires)).forEach(r=>{
+        const contact=owned.has('imenik') ? (apps.find(x=>x.id==='imenik')?.contacts || []).find(c=>c.id===r.contactId) : null;
+        const title=loc(contact?.name) || loc(r.number) || loc(r.primary);
+        const row=document.createElement('button'); row.type='button'; row.className='inboxrow';
+        const avatar=document.createElement('span'); avatar.className='avatar'; avatar.style.background=colorFor(r.contactId || title); avatar.textContent=title[0] || '#';
+        const body=document.createElement('div');body.className='inboxbody';
+        const top=document.createElement('div');top.className='inboxtop';const name=document.createElement('b');name.textContent=title;
+        const time=document.createElement('time');time.textContent=loc(r.meta);top.append(name,time);
+        const preview=document.createElement('div');preview.className='inboxpreview';
+        const last=[...(r.thread||[])].reverse().find(m=>m.text);preview.textContent=loc(last?.text) || loc(r.secondary);
+        body.append(top,preview);row.append(avatar,body);row.onclick=()=>renderThread(r.thread,title,()=>renderInbox(a));wrap.appendChild(row);
+      });
+      showScreen(wrap,{title:loc(a.label),showBack:true});
     }
 
     // ------- LIST -------
@@ -743,7 +801,7 @@
           const backHere = () => renderList(a, back);
           if (r.rows) renderList(r, backHere);
           else if (r.thread) renderThread(r.thread, loc(r.primary), backHere);
-          else renderNote({ label: r.primary, meta: r.meta, body: r.body, img: r.img, document: r.document, file: /\.(pdf|docx|csv|md|txt|jpg|png)$/i.test(loc(r.primary)) }, backHere);
+          else renderNote({ label: r.primary, meta: r.meta, body: r.body, img: r.img, document: r.document, qrLink: r.qrLink, qrBounds: r.qrBounds, file: /\.(pdf|docx|csv|md|txt|eml|jpg|png)$/i.test(loc(r.primary)) }, backHere);
         });
         wrap.appendChild(row);
       });
@@ -776,7 +834,9 @@
       };
       if (a.img && safeAsset(a.img)) {
         const img = document.createElement('img'); img.className = 'fileimage'; img.src = safeAsset(a.img); img.alt = loc(a.label);
-        const full = document.createElement('a'); full.href = img.src; full.target = '_blank'; full.rel = 'noopener noreferrer'; full.appendChild(img);
+        const full = document.createElement('div'); full.className='filepreview';
+        const imageLink=document.createElement('a');imageLink.href=img.src;imageLink.target='_blank';imageLink.rel='noopener noreferrer';imageLink.appendChild(img);full.appendChild(imageLink);
+        if(a.qrLink && a.qrBounds && safeAsset(a.qrLink)) { const qr=document.createElement('a');qr.className='receiptqr';qr.href=safeAsset(a.qrLink);qr.target='_blank';qr.rel='noopener noreferrer';qr.setAttribute('aria-label','QR');for(const k of ['left','top','width','height'])qr.style[k]=a.qrBounds[k]+'%';full.appendChild(qr); }
         img.onerror = () => { img.remove(); const error = document.createElement('p'); error.textContent = S.fileError; wrap.prepend(error); }; wrap.appendChild(full);
       }
       if (a.document && safeAsset(a.document)) {
@@ -792,11 +852,43 @@
       else if (parent) backBtn.onclick = () => renderList(parent);
     }
 
+    function renderWeek(a, back, start) {
+      const first=new Date(start+'T12:00:00Z');
+      const dateKey=d=>d.toISOString().slice(0,10);
+      const dayAt=n=>new Date(first.getTime()+n*86400000);
+      const wrap=document.createElement('div');wrap.className='week';
+      const bar=document.createElement('div');bar.className='weektoolbar';
+      const previous=document.createElement('button');previous.textContent='‹';previous.setAttribute('aria-label',S.previousWeek);
+      const next=document.createElement('button');next.textContent='›';next.setAttribute('aria-label',S.nextWeek);
+      const title=document.createElement('strong');title.textContent=first.toLocaleDateString(lang,{month:'long',year:'numeric',timeZone:'UTC'});
+      previous.onclick=()=>renderWeek(a,back,dateKey(dayAt(-7)));next.onclick=()=>renderWeek(a,back,dateKey(dayAt(7)));bar.append(previous,title,next);
+      const scroll=document.createElement('div');scroll.className='weekscroll';
+      const head=document.createElement('div');head.className='weekhead';head.appendChild(document.createElement('span'));
+      const grid=document.createElement('div');grid.className='weekbody';
+      for(let hour=0;hour<24;hour++){const tick=document.createElement('span');tick.className='weekhour';tick.style.top=(hour*40)+'px';tick.textContent=String(hour).padStart(2,'0')+':00';grid.appendChild(tick);}
+      for(let day=0;day<7;day++){
+        const date=dayAt(day);const data=(a.days||[]).find(d=>d.date===dateKey(date));
+        const label=document.createElement('span');label.className=data?.today?'today':'';
+        label.append(document.createTextNode(date.toLocaleDateString(lang,{weekday:'short',timeZone:'UTC'})));const num=document.createElement('b');num.textContent=String(date.getUTCDate());label.appendChild(num);head.appendChild(label);
+        const line=document.createElement('div');line.className='weekline';line.style.left=(day*100/7)+'%';grid.appendChild(line);
+        (data?.entries||[]).filter(e=>!e.requires||owned.has(e.requires)).forEach(e=>{
+          const mins=t=>{const parts=t.split(':').map(Number);return parts[0]*60+parts[1];};
+          const from=mins(e.from);const to=e.to?mins(e.to):from+60;
+          const event=document.createElement('button');event.type='button';event.className='weekevent';event.style.left=(day*100/7)+'%';event.style.top=(from*40/60)+'px';event.style.height=Math.max(38,(to-from)*40/60)+'px';event.style.setProperty('--event-color',e.color||'#1a73e8');
+          const time=document.createElement('time');time.textContent=e.from;event.append(time,document.createTextNode(loc(e.title)));event.setAttribute('aria-label',loc(data.label)+' '+e.from+' '+loc(e.title));
+          event.onclick=()=>renderNote({label:e.title,meta:loc(data.label)+' · '+e.from+(e.to?'–'+e.to:''),body:e.body||e.note||''},()=>renderWeek(a,back,start));grid.appendChild(event);
+        });
+      }
+      scroll.append(head,grid);wrap.append(bar,scroll);showScreen(wrap,{title:loc(a.label)+' · '+S.week,showBack:true});if(back)backBtn.onclick=back;
+      requestAnimationFrame(()=>scroll.scrollTop=8*40);
+    }
+
     // ------- AGENDA (a calendar) -------
     // `days: [{ label, today?, entries: [{ from, to?, title, note?, color?, repeat?, body? }] }]`.
     // A day with no entries still draws its header and says so — an empty evening is information in a
     // game about a week somebody did not finish. An entry carrying `body` opens as a note.
     function renderAgenda(a, back) {
+      if (a.weekStart) return renderWeek(a, back, a.weekStart);
       const wrap = document.createElement('div'); wrap.className = 'agenda';
       (a.days || []).forEach((d) => {
         const head = document.createElement('div');
@@ -1019,14 +1111,15 @@
     function renderContacts(roll, title) {
       const book = Array.isArray(roll) && roll.length ? roll : contacts;
       const list = document.createElement('div');
+      const search=document.createElement('input');search.type='search';search.className='booksearch';search.placeholder=S.searchContacts;search.setAttribute('aria-label',S.searchContacts);list.appendChild(search);search.oninput=()=>{for(const row of list.querySelectorAll('.row'))row.hidden=!row.textContent.toLocaleLowerCase(lang).includes(search.value.toLocaleLowerCase(lang));};
       if (!book.length) { const empty = document.createElement('div'); empty.className = 'tag'; empty.textContent = S.noContacts; list.appendChild(empty); }
       book.forEach((c) => {
-        const row = document.createElement('div'); row.className = 'row';
+        const row = document.createElement('button'); row.type='button'; row.className = 'row';
         const av = document.createElement('div'); av.className = 'avatar'; av.style.background = c.color || colorFor(c.id);
-        av.textContent = (loc(c.name)[0] || '?').toUpperCase();
+        av.textContent = ((loc(c.name) || loc(c.number))[0] || '#').toUpperCase();
         const body = document.createElement('div'); body.className = 'rowbody';
-        const name = document.createElement('div'); name.className = 'rowname'; name.textContent = loc(c.name);
-        const num = document.createElement('div'); num.className = 'rownum'; num.textContent = c.number || '';
+        const name = document.createElement('div'); name.className = 'rowname'; name.textContent = loc(c.name) || loc(c.number);
+        const num = document.createElement('div'); num.className = 'rownum'; num.textContent = loc(c.number);
         body.append(name, num);
         row.append(av, body);
         row.addEventListener('click', () => {
@@ -1036,7 +1129,7 @@
             send({ submission: c.id });
             setTimeout(() => showOverlay('sent'), 400);
           } else if (c.note) {
-            renderNote({ label: c.name, meta: c.number, body: c.note }, () => renderContacts(roll, title));
+            renderNote({ label: loc(c.name) || loc(c.number), meta: c.number, body: c.note }, () => renderContacts(roll, title));
           } else {
             dialerPrefill = c.number || '';
             renderDialer();
