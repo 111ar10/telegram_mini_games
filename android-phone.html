@@ -342,6 +342,41 @@
     .card { background: var(--panel); border: 1px solid #333a46; border-radius: 18px; padding: 28px 24px;
       text-align: center; max-width: 320px; width: 100%; box-shadow: 0 20px 50px var(--shadow); }
     .card .emoji { font-size: 42px; } .card h2 { margin: 12px 0 6px; font-size: 20px; } .card p { color: var(--muted); font-size: 14px; line-height: 1.5; }
+    /* Android-inspired material surfaces, with persistent three-button navigation. */
+    .device { border-radius: 22px; }
+    .apphead { text-align: left; padding: 14px 20px 18px 48px; background: #1c2028; }
+    .apphead h1 { font-size: 20px; font-weight: 500; }
+    .apphead .back { top: 10px; color: #c2e7ff; }
+    .screen { background: #111318; }
+    .applist { gap: 26px 16px; padding: 36px 20px; background: radial-gradient(ellipse at top, #29434c, #171b28 75%); flex: 1; }
+    .appicon .glyph { border-radius: 50%; width: 58px; height: 58px; background: #c2e7ff; color: #12344b; box-shadow: none; }
+    .appicon:nth-child(3n+2) .glyph { background: #c4eed0; color: #164b35; }
+    .appicon:nth-child(3n) .glyph { background: #e9ddff; color: #4f378b; }
+    .appicon span { color: #e2e2e9; font-size: 12px; }
+    .glyph svg { width: 29px; height: 29px; }
+    .row { padding: 16px; border-bottom-color: #292c33; }
+    .row .rglyph { border-radius: 50%; background: #263238; }
+    .androidnav { display: flex; order: 10; flex-shrink: 0; background: #101216; padding-bottom: env(safe-area-inset-bottom, 0px); }
+    .androidnav button { width: 33.333%; min-height: 44px; border: 0; background: transparent; color: #dfe3eb; font-size: 25px; cursor: pointer; }
+    .androidnav button:focus-visible { outline: 2px solid #a8c7fa; outline-offset: -4px; }
+    .agenda { background: #f8fafd; color: #202124; min-height: 100%; }
+    .agday { background: #f8fafd; color: #5f6368; font-size: 13px; text-transform: none; letter-spacing: 0; padding: 18px 18px 10px; border: 0; }
+    .agday.today { color: #1967d2; font-weight: 700; border-left: 4px solid #1967d2; }
+    .agrow, .agrow.tap { padding: 7px 14px; background: transparent; }
+    .agtime, .agtime b { color: #5f6368; padding-top: 8px; }
+    .agbar { display: none; }
+    .agbody { background: #d3e3fd; color: #172b4d; border-left: 4px solid var(--event-color, #1967d2); border-radius: 7px; padding: 12px; }
+    .agtitle { font-weight: 600; }
+    .agnote { color: #394c66; }
+    .agrow.tap:active .agbody { background: #b9d3fb; }
+    .document { background: #f8f5ed; color: #202124; margin: 14px; padding: 24px 18px; box-shadow: 0 2px 8px #0004; user-select: text; }
+    .document i, .document .nmeta { color: #5f6368; }
+    .document code { background: #e7e8ec; }
+    .document .filedownload { color: #185abc; }
+    .fileimage { width: 100%; height: auto; margin-bottom: 14px; }
+    .filedownload { display: inline-block; white-space: normal; color: #a8c7fa; padding: 12px 18px; }
+    .recent { padding: 24px; display: grid; gap: 16px; }
+    .recent button { padding: 30px 18px; color: var(--ink); background: #272d39; border: 1px solid #414958; border-radius: 18px; font: inherit; text-align: left; }
   </style>
 </head>
 <body>
@@ -360,6 +395,11 @@
     <div class="tag" id="tag" style="display:none"></div>
 
     <div class="screen" id="screen"></div>
+    <nav class="androidnav" aria-label="Android">
+      <button id="navrecent" type="button">≡</button>
+      <button id="navhome" type="button">□</button>
+      <button id="navback" type="button">◁</button>
+    </nav>
 
     <div class="lightbox" id="lightbox">
       <button class="lbclose" id="lbclose">✕</button>
@@ -457,13 +497,13 @@
             typeMsg: 'Type a message…', noContacts: 'No contacts.', confirmed: 'Confirmed', confirmedBody: 'Noted.',
             gaveTitle: 'Screen locked', gaveBody: 'You put the phone down.',
             unlock: 'Unlock', locked: 'Locked',
-            hint: '💡 Hint', noMoreHints: '💡 No more hints', emptyFolder: 'Empty folder.', agendaEmpty: 'Nothing scheduled.' },
+            back: 'Back', home: 'Home', recent: 'Recent apps', noRecent: 'No recent apps.', openFile: 'Open document', fileError: 'Preview unavailable. The description remains below.', hint: '💡 Hint', noMoreHints: '💡 No more hints', emptyFolder: 'Empty folder.', agendaEmpty: 'Nothing scheduled.' },
       hr: { title: 'Telefon', give: 'Odustani', call: 'Telefon', contacts: 'Kontakti', messages: 'Poruke', gallery: 'Galerija',
             sent: 'Poslano', sentBody: 'Provjeri chat za ishod.', to: 'Za',
             typeMsg: 'Upiši poruku…', noContacts: 'Nema kontakata.', confirmed: 'Potvrđeno', confirmedBody: 'Zabilježeno.',
             gaveTitle: 'Zaključan zaslon', gaveBody: 'Odložiš telefon.',
             unlock: 'Otključaj', locked: 'Zaključano',
-            hint: '💡 Savjet', noMoreHints: '💡 Nema više savjeta', emptyFolder: 'Prazna mapa.', agendaEmpty: 'Ništa zakazano.' },
+            back: 'Natrag', home: 'Početni zaslon', recent: 'Nedavne aplikacije', noRecent: 'Nema nedavnih aplikacija.', openFile: 'Otvori dokument', fileError: 'Pregled nije dostupan. Opis je i dalje ispod.', hint: '💡 Savjet', noMoreHints: '💡 Nema više savjeta', emptyFolder: 'Prazna mapa.', agendaEmpty: 'Ništa zakazano.' },
     };
     const S = STR[lang] || STR.en;
     function loc(v) { if (v == null) return ''; if (typeof v === 'object') return v[lang] || v.en || Object.values(v)[0] || ''; return String(v); }
@@ -562,6 +602,36 @@
     const screenEl = document.getElementById('screen');
     const backBtn = document.getElementById('back');
     let dialerPrefill = '';
+    const recentApps = [];
+    for (const [id, label] of [['navrecent', S.recent], ['navhome', S.home], ['navback', S.back]]) {
+      document.getElementById(id).setAttribute('aria-label', label);
+    }
+    document.getElementById('navhome').onclick = () => { document.getElementById('lightbox').classList.remove('show'); renderHome(); };
+    document.getElementById('navback').onclick = () => {
+      const lb = document.getElementById('lightbox');
+      if (lb.classList.contains('show')) lb.classList.remove('show');
+      else if (backBtn.onclick) backBtn.onclick();
+    };
+    document.getElementById('navrecent').onclick = () => {
+      document.getElementById('lightbox').classList.remove('show');
+      const wrap = document.createElement('div'); wrap.className = 'recent';
+      if (!recentApps.length) wrap.textContent = S.noRecent;
+      recentApps.forEach((a) => { const b = document.createElement('button'); b.type = 'button'; b.textContent = loc(a.label); b.onclick = () => openApp(a); wrap.appendChild(b); });
+      showScreen(wrap, { title: S.recent, showBack: true });
+    };
+    const APP_PATHS = {
+      poruke: 'M4 4h16v12H8l-4 4Z',
+      poslana_poruka: 'M3 5h18v14H3ZM3 5l9 7 9-7',
+      dnevnik_poziva: 'M6 3h4l2 5-3 2a15 15 0 0 0 5 5l2-3 5 2v4c0 2-2 3-4 2A21 21 0 0 1 3 7c-1-2 1-4 3-4Z',
+      imenik: 'M4 3h16v18H4ZM9 8a3 3 0 1 0 6 0a3 3 0 1 0-6 0M7 18c0-5 10-5 10 0',
+      galerija: 'M3 4h18v16H3ZM3 17l6-6 4 4 3-3 5 5M15 8h2',
+      datoteke: 'M3 6h7l2 2h9v12H3Z',
+      kalendar: 'M4 5h16v16H4ZM4 10h16M8 3v5M16 3v5M8 14h2M14 14h2M8 18h2',
+      povijest_pretrazivanja: 'M16 16l5 5M3 10a7 7 0 1 0 14 0a7 7 0 1 0-14 0',
+      glasovna_biljeska: 'M9 5a3 3 0 0 1 6 0v7a3 3 0 0 1-6 0ZM6 10v2a6 6 0 0 0 12 0v-2M12 18v4M8 22h8',
+      nedovrsene_poruke: 'M4 3h12l4 4v14H4ZM8 11h8M8 15h8M8 18h5',
+      arhiva_price: 'M3 4h18v5H3ZM5 9v12h14V9M9 13h6',
+    };
 
     function showScreen(node, { title, showBack }) {
       screenEl.replaceChildren(node);
@@ -579,7 +649,7 @@
       const grid = document.createElement('div'); grid.className = 'applist';
       const entries = apps.length
         ? apps.map((a) => ({
-            icon: a.icon || '📱',
+            id: a.id, icon: a.icon || '📱',
             label: loc(a.label) || a.id,
             locked: !owned.has(a.id),
             go: () => openApp(a),
@@ -593,7 +663,11 @@
       entries.forEach((a) => {
         const btn = document.createElement('button'); btn.className = 'appicon' + (a.locked ? ' locked' : '');
         const wrap = document.createElement('span'); wrap.className = 'iconwrap';
-        const g = document.createElement('div'); g.className = 'glyph'; g.textContent = a.icon;
+        const g = document.createElement('div'); g.className = 'glyph';
+        if (APP_PATHS[a.id]) {
+          const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg'); svg.setAttribute('viewBox', '0 0 24 24'); svg.setAttribute('aria-hidden', 'true');
+          const path = document.createElementNS(svg.namespaceURI, 'path'); path.setAttribute('d', APP_PATHS[a.id]); path.setAttribute('fill', 'none'); path.setAttribute('stroke', 'currentColor'); path.setAttribute('stroke-width', '1.8'); path.setAttribute('stroke-linecap', 'round'); path.setAttribute('stroke-linejoin', 'round'); svg.appendChild(path); g.appendChild(svg);
+        } else g.textContent = a.icon;
         wrap.appendChild(g);
         if (a.locked) { const lk = document.createElement('span'); lk.className = 'lockbadge'; lk.textContent = '🔒'; wrap.appendChild(lk); }
         const lb = document.createElement('span'); lb.textContent = a.label;
@@ -619,6 +693,8 @@
         if (btn) { btn.classList.remove('shaking'); void btn.offsetWidth; btn.classList.add('shaking'); }
         return;
       }
+      const previous = recentApps.indexOf(a); if (previous >= 0) recentApps.splice(previous, 1);
+      recentApps.unshift(a);
       switch (a.screen) {
         case 'list': return renderList(a);
         case 'note': return renderNote(a);
@@ -647,7 +723,7 @@
         // a hidden folder must not, or it isn't hidden.
         if (r.requires && !owned.has(r.requires)) return;
         drawn++;
-        const tappable = !!(r.body || r.rows || r.thread);
+        const tappable = !!(r.body || r.rows || r.thread || r.img || r.document);
         const row = document.createElement(tappable ? 'button' : 'div');
         row.className = 'row' + (tappable ? ' tap' : '');
         if (tappable) row.type = 'button';
@@ -667,7 +743,7 @@
           const backHere = () => renderList(a, back);
           if (r.rows) renderList(r, backHere);
           else if (r.thread) renderThread(r.thread, loc(r.primary), backHere);
-          else renderNote({ label: r.primary, meta: r.meta, body: r.body }, backHere);
+          else renderNote({ label: r.primary, meta: r.meta, body: r.body, img: r.img, document: r.document, file: /\.(pdf|docx|csv|md|txt|jpg|png)$/i.test(loc(r.primary)) }, backHere);
         });
         wrap.appendChild(row);
       });
@@ -694,7 +770,18 @@
     }
 
     function renderNote(a, parent) {
-      const wrap = document.createElement('div'); wrap.className = 'note';
+      const wrap = document.createElement('div'); wrap.className = 'note' + (a.file ? ' document' : '');
+      const safeAsset = (value) => {
+        try { const u = new URL(loc(value), window.location.href); return ['http:', 'https:'].includes(u.protocol) ? u.href : null; } catch { return null; }
+      };
+      if (a.img && safeAsset(a.img)) {
+        const img = document.createElement('img'); img.className = 'fileimage'; img.src = safeAsset(a.img); img.alt = loc(a.label);
+        const full = document.createElement('a'); full.href = img.src; full.target = '_blank'; full.rel = 'noopener noreferrer'; full.appendChild(img);
+        img.onerror = () => { img.remove(); const error = document.createElement('p'); error.textContent = S.fileError; wrap.prepend(error); }; wrap.appendChild(full);
+      }
+      if (a.document && safeAsset(a.document)) {
+        const link = document.createElement('a'); link.className = 'filedownload'; link.href = safeAsset(a.document); link.target = '_blank'; link.rel = 'noopener noreferrer'; link.textContent = S.openFile; wrap.appendChild(link);
+      }
       if (a.meta) { const m = document.createElement('div'); m.className = 'nmeta'; m.textContent = loc(a.meta); wrap.appendChild(m); }
       const b = document.createElement('div'); richText(b, loc(a.body)); wrap.appendChild(b);
       showScreen(wrap, { title: loc(a.label) || S.title, showBack: true });
@@ -732,7 +819,7 @@
           time.appendChild(b);
           if (e.to) { const t2 = document.createElement('span'); t2.textContent = loc(e.to); time.appendChild(t2); }
           const bar = document.createElement('div'); bar.className = 'agbar';
-          if (e.color) bar.style.background = e.color;
+          if (e.color) { bar.style.background = e.color; row.style.setProperty('--event-color', e.color); }
           const body = document.createElement('div'); body.className = 'agbody';
           const title = document.createElement('div'); title.className = 'agtitle';
           title.textContent = (e.repeat ? '\u21ba ' : '') + loc(e.title);
@@ -857,7 +944,7 @@
       shownGallery.forEach((g, i) => {
         const tile = document.createElement('button'); tile.className = 'gtile'; tile.type = 'button';
         if (g.img) {
-          const img = document.createElement('img'); img.src = g.img; img.loading = 'lazy'; tile.appendChild(img);
+          const img = document.createElement('img'); img.src = g.img; img.alt = loc(g.caption) || loc(g.label) || S.gallery; img.loading = 'lazy'; tile.appendChild(img);
         } else {
           const glyph = document.createElement('div'); glyph.className = 'glyph'; glyph.textContent = g.emoji || '🖼️'; tile.appendChild(glyph);
         }

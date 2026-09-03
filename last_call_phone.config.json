@@ -359,8 +359,8 @@
           "icon": "↗️",
           "primary": "N.",
           "secondary": {
-            "hr": "Odlazni · 14 s",
-            "en": "Outgoing · 14s"
+            "hr": "Odlazni · 00:14",
+            "en": "Outgoing · 00:14"
           },
           "meta": {
             "hr": "čet 23:52",
@@ -374,8 +374,8 @@
             "en": "01 4600 —"
           },
           "secondary": {
-            "hr": "Dolazni · 9 min 11 s",
-            "en": "Incoming · 9 min 11s"
+            "hr": "Dolazni · 09:11",
+            "en": "Incoming · 09:11"
           },
           "meta": {
             "hr": "čet 21:40",
@@ -386,8 +386,8 @@
           "icon": "↗️",
           "primary": "Ana P. (4)",
           "secondary": {
-            "hr": "Odlazni · 3 s, 2 s, 5 s, 2 s",
-            "en": "Outgoing · 3s, 2s, 5s, 2s"
+            "hr": "Odlazni · 00:03, 00:02, 00:05, 00:02",
+            "en": "Outgoing · 00:03, 00:02, 00:05, 00:02"
           },
           "meta": {
             "hr": "čet 14:02",
@@ -422,8 +422,8 @@
           "icon": "↗️",
           "primary": "Ana P. (2)",
           "secondary": {
-            "hr": "Odlazni · 4 s, 2 s",
-            "en": "Outgoing · 4s, 2s"
+            "hr": "Odlazni · 00:04, 00:02",
+            "en": "Outgoing · 00:04, 00:02"
           },
           "meta": {
             "hr": "sri 11:55",
@@ -437,8 +437,8 @@
             "en": "Vesna (newsroom)"
           },
           "secondary": {
-            "hr": "Odlazni · 6 min 40 s",
-            "en": "Outgoing · 6 min 40s"
+            "hr": "Odlazni · 06:40",
+            "en": "Outgoing · 06:40"
           },
           "meta": {
             "hr": "uto 10:15",
@@ -569,37 +569,55 @@
         {
           "id": "tablica",
           "emoji": "🧾",
-          "caption": "Snimka zaslona: tablica bez naslova",
+          "caption": {
+            "hr": "Snimka zaslona: tablica bez naslova",
+            "en": "Screenshot: untitled table"
+          },
           "img": "lc/gallery/tablica.svg"
         },
         {
           "id": "ulaz",
           "emoji": "🚪",
-          "caption": "Ulaz u zgradu, snimljen izdaleka",
+          "caption": {
+            "hr": "Ulaz u zgradu, snimljen izdaleka",
+            "en": "Building entrance, photographed from a distance"
+          },
           "img": "lc/gallery/ulaz.jpg"
         },
         {
           "id": "potpis",
           "emoji": "📄",
-          "caption": "Potpis, uvećan do zrna",
+          "caption": {
+            "hr": "Potpis, uvećan do zrna",
+            "en": "Signature, enlarged to the paper grain"
+          },
           "img": "lc/gallery/potpis.svg"
         },
         {
           "id": "registracija",
           "emoji": "🚗",
-          "caption": "Registracija, kroz izlog",
+          "caption": {
+            "hr": "Registracija, kroz izlog",
+            "en": "Number plate, through a shop window"
+          },
           "img": "lc/gallery/registracija.svg"
         },
         {
           "id": "ana",
           "emoji": "👩‍🦳",
-          "caption": "Ana P., za istim stolom",
+          "caption": {
+            "hr": "Ana P., za istim stolom",
+            "en": "Ana P., at the same table"
+          },
           "img": "lc/gallery/ana.jpg"
         },
         {
           "id": "rodjendan",
           "emoji": "🎂",
-          "caption": "Rođendan, prije dvije godine",
+          "caption": {
+            "hr": "Rođendan, prije dvije godine",
+            "en": "Birthday, two years ago"
+          },
           "img": "lc/gallery/rodjendan.jpg"
         }
       ]
@@ -630,6 +648,10 @@
               "body": {
                 "hr": "Noćni vozni red. Zadnji tramvaj s njezine strane grada polazi u 00:12.\n\n<i>Preuzela ga je u 23:41. Trideset i jednu minutu prije polaska.</i>",
                 "en": "The night timetable. The last tram from her side of the city leaves at 00:12.\n\n<i>She downloaded it at 23:41. Thirty-one minutes before it left.</i>"
+              },
+              "document": {
+                "hr": "lc/documents/hr/vozni_red_noc.pdf",
+                "en": "lc/documents/en/vozni_red_noc.pdf"
               }
             },
             {
@@ -642,6 +664,10 @@
               "body": {
                 "hr": "Zahtjev za pristup arhivskoj građi. Sva polja prazna osim jednog.\n\nU rubrici „svrha“ piše: <code>novinarska obrada</code>.\n\n<i>Nikad ga nije predala. Vjerojatno zato što bi ga netko morao odobriti.</i>",
                 "en": "A request for access to archived records. Every field blank but one.\n\nUnder \"purpose\" it says: <code>journalistic work</code>.\n\n<i>She never filed it. Probably because somebody would have had to approve it.</i>"
+              },
+              "document": {
+                "hr": "lc/documents/hr/obrazac_pristup_arhivi.pdf",
+                "en": "lc/documents/en/obrazac_pristup_arhivi.pdf"
               }
             }
           ]
@@ -663,7 +689,8 @@
               "body": {
                 "hr": "Potpis, uvećan dok se ne vide zrna papira.\n\n<i>Isti potpis pojavljuje se na tri različita dokumenta iz tri različita mjeseca.</i>",
                 "en": "A signature, enlarged until the grain of the paper shows.\n\n<i>The same signature appears on three different documents from three different months.</i>"
-              }
+              },
+              "img": "lc/gallery/potpis.svg"
             },
             {
               "icon": "📃",
@@ -675,7 +702,8 @@
               "body": {
                 "hr": "Stranica 14 protokola. Popis suautora, i jedno ime podvučeno dvaput.\n\n<i>Podvukla ga je ona, ne skener.</i>",
                 "en": "Page 14 of the protocol. The list of co-authors, with one name underlined twice.\n\n<i>She underlined it, not the scanner.</i>"
-              }
+              },
+              "img": "lc/documents/protokol_str14-20260903.png"
             }
           ]
         },
@@ -696,7 +724,8 @@
               "body": {
                 "hr": "Dvije kave. Plaćeno gotovinom u 20:48, dvanaest minuta prije termina bez naslova.\n\n<i>Dvije kave znače da nije čekala sama.</i>",
                 "en": "Two coffees. Paid in cash at 20:48, twelve minutes before the untitled appointment.\n\n<i>Two coffees mean she was not waiting alone.</i>"
-              }
+              },
+              "img": "lc/documents/racun_kavana-20260903.png"
             }
           ]
         },
@@ -747,6 +776,10 @@
               "body": {
                 "hr": "NACRT — v3\n\nTrinaest ljudi umrlo je u ispitivanju lijeka koje je službeno prekinuto zbog „slabog odaziva“.\n\nDevet od trinaest smrti naknadno je prekvalificirano u „nepovezane s ispitivanjem“. Sve devet potpisala je ista osoba, i to nakon što je podstudija zaustavljena.\n\n<i>Ispod, u zagradi: „ovo je treća verzija uvoda. Prva je bila točnija. Vidi nacrt_v1.“</i>",
                 "en": "DRAFT — v3\n\nThirteen people died in a drug trial that was officially halted for \"poor recruitment\".\n\nNine of the thirteen deaths were later reclassified as \"unrelated to the trial\". All nine were signed off by the same person, and signed after the substudy was stopped.\n\n<i>Below, in brackets: \"this is the third version of the intro. The first was more accurate. See draft_v1.\"</i>"
+              },
+              "document": {
+                "hr": "lc/documents/hr/nacrt_v3.docx",
+                "en": "lc/documents/en/nacrt_v3.docx"
               }
             },
             {
@@ -760,6 +793,10 @@
               "body": {
                 "hr": "NACRT — v1\n\nŠimunić je potpisao devet smrtovnica za ispitivanje u kojem je i sam bio suautor protokola.\n\nNitko ga nije pitao kako je to moguće, jer nitko izvan te zgrade nije znao da su te dvije stvari ista osoba.\n\n<i>Preko cijelog odlomka, žutim: „ovo ne prolazi pravnu. Ali je istina.“</i>",
                 "en": "DRAFT — v1\n\nŠimunić signed nine death certificates for a trial whose protocol he had co-authored.\n\nNobody asked him how that was possible, because nobody outside that building knew those two things were the same person.\n\n<i>Across the whole paragraph, in yellow: \"this will not clear legal. But it is true.\"</i>"
+              },
+              "document": {
+                "hr": "lc/documents/hr/nacrt_v1.docx",
+                "en": "lc/documents/en/nacrt_v1.docx"
               }
             },
             {
@@ -773,6 +810,10 @@
               "body": {
                 "hr": "inicijali,dob,datum,prvi nalaz,preklasificirano\nM.K.,61,2016-04-02,da,da\nJ.B.,58,2016-05-19,da,da\nA.P.,44,2016-06-07,da,ne\nS.T.,72,2016-06-30,da,da\nV.M.,55,2016-08-11,da,da\n…\n\n<i>Trinaest redaka. Devet ih u zadnjem stupcu ima „da“.</i>\n\n<i>Treći red nije prekvalificiran. Treći red ima iste inicijale kao žena s fotografije.</i>",
                 "en": "initials,age,date,first finding,reclassified\nM.K.,61,2016-04-02,yes,yes\nJ.B.,58,2016-05-19,yes,yes\nA.P.,44,2016-06-07,yes,no\nS.T.,72,2016-06-30,yes,yes\nV.M.,55,2016-08-11,yes,yes\n…\n\n<i>Thirteen rows. Nine of them say \"yes\" in the last column.</i>\n\n<i>The third row was not reclassified. The third row has the same initials as the woman in the photograph.</i>"
+              },
+              "document": {
+                "hr": "lc/documents/hr/popis_13.csv",
+                "en": "lc/documents/en/popis_13.csv"
               }
             },
             {
@@ -786,6 +827,10 @@
               "body": {
                 "hr": "# Kronologija\n\n**14.03.2016.** — prvi dan podstudije. (Ana ima fotografiju s tog dana.)\n**06.2016.** — A.P. umire. Jedina smrt koja NIJE prekvalificirana.\n**11.2016.** — podstudija zaustavljena, službeno zbog odaziva.\n**12.2016.** — devet prekvalifikacija, sve u tri tjedna, sve isti potpis.\n**03.2019.** — Ana P. (druga Ana, novinarka) dobiva popis. Umire prije nego ga preda.\n**ovaj tjedan** — N. pristaje govoriti.\n\n<i>Zadnji redak dopisan je drugom bojom.</i>",
                 "en": "# Chronology\n\n**14.03.2016** — first day of the substudy. (Ana has a photograph from that day.)\n**06.2016** — A.P. dies. The only death NOT reclassified.\n**11.2016** — substudy halted, officially over recruitment.\n**12.2016** — nine reclassifications, all within three weeks, all the same signature.\n**03.2019** — Ana P. (the other Ana, the reporter) gets the list. Dies before she can file it.\n**this week** — N. agrees to talk.\n\n<i>The last line was added in a different colour.</i>"
+              },
+              "document": {
+                "hr": "lc/documents/hr/kronologija.md",
+                "en": "lc/documents/en/kronologija.md"
               }
             },
             {
@@ -799,6 +844,10 @@
               "body": {
                 "hr": "IZVORI — nikad puna imena u ovoj datoteci\n\nN. — arhiva, pristup, jedini koji je pristao ići na zapis. Boji se, i ima pravo.\nD. — potvrdio protokol, neće se potpisati.\nM. — odbio. Dvaput.\nŽ. — poslao mi je jednu rečenicu i obrisao broj.\n\n<i>Ispod svega: „ako ovo netko drugi čita, nijedan od njih nije ti dao ovu datoteku.“</i>",
                 "en": "SOURCES — never full names in this file\n\nN. — the archive, the access, the only one who agreed to go on record. He is frightened, and he is right to be.\nD. — confirmed the protocol, will not put his name to it.\nM. — refused. Twice.\nŽ. — sent me one sentence and deleted his number.\n\n<i>Underneath all of it: \"if somebody else is reading this, not one of them gave you this file.\"</i>"
+              },
+              "document": {
+                "hr": "lc/documents/hr/izvori.txt",
+                "en": "lc/documents/en/izvori.txt"
               }
             },
             {
@@ -812,6 +861,10 @@
               "body": {
                 "hr": "PRAVNA PROVJERA — bilješke uz nacrt v2\n\n1. „Ubio ih je“ — ne. Nikada. Ni u jednoj verziji.\n2. „Potpisao je devet prekvalifikacija“ — da, ako imate presliku sva tri potpisa.\n3. „Zataškavanje“ — ne dok netko to ne kaže na zapis.\n4. Ime izvora ne ide u tekst ni pod kojim uvjetima, ni sa suglasnošću.\n\n<i>Rukom, na margini, njezinim rukopisom: „4 je jedini savjet koji ću poslušati bez svađe.“</i>",
                 "en": "LEGAL CHECK — notes against draft v2\n\n1. \"He killed them\" — no. Never. Not in any version.\n2. \"He signed nine reclassifications\" — yes, if you hold copies of all three signatures.\n3. \"Cover-up\" — not until somebody says it on the record.\n4. The source's name does not go in the piece under any circumstances, consent or no consent.\n\n<i>By hand in the margin, in her writing: \"4 is the only advice I will take without arguing.\"</i>"
+              },
+              "document": {
+                "hr": "lc/documents/hr/pravna_provjera.pdf",
+                "en": "lc/documents/en/pravna_provjera.pdf"
               }
             },
             {
@@ -825,6 +878,10 @@
               "body": {
                 "hr": "PITANJA — za Š., pisano, s rokom od 48 sati\n\n1. Jeste li bili suautor protokola podstudije?\n2. Jeste li potpisali prekvalifikaciju devet smrti u toj istoj podstudiji?\n3. Je li itko izvan ustanove o tome obaviješten?\n4. Zašto A.P. nije prekvalificirana?\n\n<i>Na dnu, sitno: „poslati tek kad N. bude na sigurnom. Ne prije.“</i>",
                 "en": "QUESTIONS — for Š., in writing, 48 hours to respond\n\n1. Were you a co-author of the substudy protocol?\n2. Did you sign the reclassification of nine deaths in that same substudy?\n3. Was anybody outside the institution informed?\n4. Why was A.P. not reclassified?\n\n<i>At the bottom, small: \"send only once N. is somewhere safe. Not before.\"</i>"
+              },
+              "document": {
+                "hr": "lc/documents/hr/pitanja_za_simunica.docx",
+                "en": "lc/documents/en/pitanja_za_simunica.docx"
               }
             },
             {
@@ -851,6 +908,10 @@
               "body": {
                 "hr": "Što ako griješim.\n\nAko griješim, uništila sam čovjeku život zbog devet potpisa koje je možda potpisao jer mu je netko rekao da potpiše.\n\nAko sam u pravu, a šutim, onda ih je trinaest i nitko za njih nikad neće čuti.\n\nOvo nije hrabrost. Ovo je aritmetika.\n\n<i>Datoteka je otvarana četrdeset i jedan put.</i>",
                 "en": "What if I am wrong.\n\nIf I am wrong, I have destroyed a man over nine signatures he may have signed because somebody told him to sign them.\n\nIf I am right and I say nothing, then there are thirteen of them and nobody will ever hear about it.\n\nThis is not courage. This is arithmetic.\n\n<i>The file has been opened forty-one times.</i>"
+              },
+              "document": {
+                "hr": "lc/documents/hr/sto_ako_grijesim.txt",
+                "en": "lc/documents/en/sto_ako_grijesim.txt"
               }
             }
           ]
@@ -1099,6 +1160,19 @@
           "en": "(the recording cuts at 0:41)"
         }
       ]
+    },
+    {
+      "id": "poslana_poruka",
+      "icon": "📤",
+      "label": {
+        "hr": "Poslane poruke — 07:14",
+        "en": "Sent messages — 07:14"
+      },
+      "screen": "note",
+      "body": {
+        "hr": "Grupna poruka, poslana jučer ujutro, njima šestero odjednom:\n\n<code>Na terenu sam, sljedećih dana samo poruke. Ne zovite.</code>\n\nPotvrde o čitanju: svih šest.\n\nPoslana je jučer u 07:14. Sljedećih dan i pol nitko od njih šestero nije očekivao ni riječ.\n\n—\n\nIspod toga, u razgovoru s Tomom, zadnje što mu je poslala prošli utorak:\n\n<code>Ne mogu sad o nama. Daj mi tjedan dana da ovo završim, pa ću biti prisutna koliko god hoćeš.</code>\n\n<code>Ako ti to nije dovoljno, razumjet ću i to.</code>\n\nOn je odgovorio jednom riječju: <code>Dobro.</code>\n\nPrije osam dana tražila je od njega tjedan dana šutnje. Zato joj ga i daje.",
+        "en": "A group message, sent yesterday morning, to all six of them at once:\n\n<code>On assignment, texts only for the next few days. Don’t ring.</code>\n\nRead receipts: all six.\n\nSent yesterday at 07:14. For the next day and a half not one of the six was expecting a word.\n\n—\n\nBelow it, in the thread with Toma, the last thing she sent him this time last week:\n\n<code>I can’t do us right now. Give me a week to finish this and then I’ll be as present as you want.</code>\n\n<code>If that isn’t enough for you, I’ll understand that too.</code>\n\nHe answered with one word: <code>All right.</code>\n\nEight days ago she asked him for a week of silence. That is why he is giving her one."
+      }
     }
   ]
 }
