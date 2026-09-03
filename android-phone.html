@@ -382,7 +382,7 @@
     body { padding:0; min-height:0; background:var(--device); }
     .device { width:100%; max-width:none; height:var(--app-height,100dvh); max-height:none; margin:0; border:0; border-radius:0; box-shadow:none; }
     .screen { min-height:0; }
-    .statusbar { padding-top:max(8px,env(safe-area-inset-top)); }
+    .statusbar { padding-top:max(8px,env(safe-area-inset-top),var(--tg-top,0px)); }
     .footerbar { padding:6px 14px; }
     .applist { align-content:start; grid-template-columns:repeat(auto-fit,minmax(88px,1fr)); gap:22px 10px; }
     .inbox { background:#f8fafd; color:#202124; flex:1; }
@@ -415,12 +415,13 @@
 
   .row[hidden] { display:none; }
 .filepreview {position:relative;line-height:0;margin-bottom:14px}.filepreview .fileimage{display:block;margin:0}.receiptqr{position:absolute;display:block}.receiptqr:focus-visible{outline:2px solid #185abc;outline-offset:2px}
+.androidnav{padding-bottom:max(8px,var(--tg-bottom,0px))}.weektoolbar{flex-wrap:wrap}.schedule-toggle{font-size:12px}
 </style>
 </head>
 <body>
   <div class="device">
     <div class="statusbar">
-      <span>9:41</span>
+      <span id="phoneclock" aria-label="Current time"></span>
       <span class="icons">
         <svg width="16" height="10" viewBox="0 0 16 10"><rect x="0" y="6" width="2.5" height="4" fill="currentColor"/><rect x="4.5" y="4" width="2.5" height="6" fill="currentColor"/><rect x="9" y="2" width="2.5" height="8" fill="currentColor"/><rect x="13.5" y="0" width="2.5" height="10" fill="currentColor"/></svg>
         <svg width="20" height="11" viewBox="0 0 20 11"><rect x="0.5" y="0.5" width="17" height="10" rx="2.5" stroke="currentColor" fill="none"/><rect x="2" y="2" width="13" height="7" rx="1" fill="currentColor"/><rect x="18" y="3.5" width="1.5" height="4" rx="0.5" fill="currentColor"/></svg>
@@ -471,9 +472,13 @@
   (async () => {
     // ------- Telegram bootstrap (mirrors padlock.html) -------
     const tg = window.Telegram ? window.Telegram.WebApp : null;
-    if (tg) { tg.ready(); tg.expand(); }
+    if (tg) { tg.ready(); tg.expand(); try { if(tg.isVersionAtLeast?.('8.0')) tg.requestFullscreen?.(); } catch {} }
+    const syncSafeArea=()=>{const safe=tg?.safeAreaInset||{},content=tg?.contentSafeAreaInset||{};document.documentElement.style.setProperty('--tg-top',((safe.top||0)+(content.top||0))+'px');document.documentElement.style.setProperty('--tg-bottom',((safe.bottom||0)+(content.bottom||0))+'px');};
+    syncSafeArea();tg?.onEvent?.('safeAreaChanged',syncSafeArea);tg?.onEvent?.('contentSafeAreaChanged',syncSafeArea);
     const fitViewport = () => document.documentElement.style.setProperty('--app-height', `${window.visualViewport?.height || window.innerHeight}px`);
     fitViewport(); window.visualViewport?.addEventListener('resize', fitViewport); window.addEventListener('resize', fitViewport);
+    const updatePhoneClock=()=>{document.getElementById('phoneclock').textContent=new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit',hour12:false});};
+    updatePhoneClock();setInterval(updatePhoneClock,1000);document.addEventListener('visibilitychange',updatePhoneClock);
     const haptic = (kind) => {
       try {
         if (!tg || !tg.HapticFeedback) return;
@@ -861,7 +866,7 @@
       const previous=document.createElement('button');previous.textContent='‹';previous.setAttribute('aria-label',S.previousWeek);
       const next=document.createElement('button');next.textContent='›';next.setAttribute('aria-label',S.nextWeek);
       const title=document.createElement('strong');title.textContent=first.toLocaleDateString(lang,{month:'long',year:'numeric',timeZone:'UTC'});
-      previous.onclick=()=>renderWeek(a,back,dateKey(dayAt(-7)));next.onclick=()=>renderWeek(a,back,dateKey(dayAt(7)));bar.append(previous,title,next);
+      previous.onclick=()=>renderWeek(a,back,dateKey(dayAt(-7)));next.onclick=()=>renderWeek(a,back,dateKey(dayAt(7)));const schedule=document.createElement('button');schedule.className='schedule-toggle';schedule.textContent=lang==='hr'?'Raspored':'Schedule';schedule.onclick=()=>renderAgenda({...a,weekStart:null},()=>renderWeek(a,back,start));bar.append(previous,title,schedule,next);
       const scroll=document.createElement('div');scroll.className='weekscroll';
       const head=document.createElement('div');head.className='weekhead';head.appendChild(document.createElement('span'));
       const grid=document.createElement('div');grid.className='weekbody';
@@ -903,9 +908,9 @@
           return;
         }
         entries.forEach((e) => {
-          const row = document.createElement(e.body ? 'button' : 'div');
-          row.className = 'agrow' + (e.body ? ' tap' : '');
-          if (e.body) row.type = 'button';
+          const row = document.createElement('button');
+          row.className = 'agrow tap';
+          row.type = 'button';
           const time = document.createElement('div'); time.className = 'agtime';
           const b = document.createElement('b'); b.textContent = loc(e.from) || '';
           time.appendChild(b);
@@ -918,9 +923,9 @@
           body.appendChild(title);
           if (e.note) { const n = document.createElement('div'); n.className = 'agnote'; n.textContent = loc(e.note); body.appendChild(n); }
           row.append(time, bar, body);
-          if (e.body) {
+          {
             row.addEventListener('click', () => renderNote(
-              { label: e.title, meta: e.from, body: e.body },
+              { label: e.title, meta: e.from, body: e.body || e.note },
               () => renderAgenda(a, back),
             ));
           }
