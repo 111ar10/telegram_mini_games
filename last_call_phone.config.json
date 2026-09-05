@@ -927,23 +927,17 @@
           "rows": [
             {
               "icon": "📄",
-              "primary": "vozni_red_noc.pdf",
+              "primary": "ZET_101_Britanski_trg_Sestine.pdf",
               "secondary": {
-                "hr": "142 kB · čet 23:41",
-                "en": "142 kB · Thu 23:41"
+                "hr": "34 kB · čet 23:41",
+                "en": "34 kB · Thu 23:41"
               },
               "body": {
-                "hr": "Noćni vozni red. Zadnji tramvaj s njezine strane grada polazi u 00:12.\n\n<i>Preuzela ga je u 23:41. Trideset i jednu minutu prije polaska.</i>",
-                "en": "The night timetable. The last tram from her side of the city leaves at 00:12.\n\n<i>She downloaded it at 23:41. Thirty-one minutes before it left.</i>"
+                "hr": "Službeni ZET-ov vozni red autobusne linije 101, Britanski trg – Šestine. Zadnji polazak radnim danom s Britanskog trga bio je u 23:30.\n\n<i>Preuzela ga je u 23:41, jedanaest minuta nakon zadnjeg autobusa.</i>",
+                "en": "The official ZET timetable for bus line 101, Britanski trg – Šestine. The last weekday departure from Britanski trg was at 23:30.\n\n<i>She downloaded it at 23:41, eleven minutes after the last bus.</i>"
               },
-              "document": {
-                "hr": "lc/documents/hr/vozni_red_noc.pdf",
-                "en": "lc/documents/en/vozni_red_noc.pdf"
-              },
-              "img": {
-                "hr": "lc/documents/hr/vozni_red_noc.png",
-                "en": "lc/documents/en/vozni_red_noc.png"
-              }
+              "document": "lc/documents/zet_101_original.pdf",
+              "img": "lc/documents/zet_101_original.png"
             },
             {
               "icon": "📄",
@@ -964,16 +958,6 @@
                 "hr": "lc/documents/hr/obrazac_pristup_arhivi.png",
                 "en": "lc/documents/en/obrazac_pristup_arhivi.png"
               }
-            },
-            {
-              "icon": "📄",
-              "primary": "zet_101.pdf",
-              "body": {
-                "hr": "ZET-ov vozni red autobusne linije 101: Britanski trg – Šestine.",
-                "en": "ZET bus line 101 timetable: Britanski trg – Šestine."
-              },
-              "document": "lc/documents/zet_101_original.pdf",
-              "img": "lc/documents/zet_101_original.png"
             }
           ]
         },
@@ -1621,33 +1605,34 @@
         {
           "icon": "🔎",
           "primary": {
-            "hr": "noćni tramvaj vozni red",
-            "en": "night tram timetable"
+            "hr": "zet 101 vozni red britanski trg šestine",
+            "en": "zet 101 timetable britanski trg šestine"
           },
-          "meta": "čet 23:41"
+          "meta": "čet 23:41",
+          "url": "https://www.zet.hr/UserDocsImages/Autobusne%20linije%20-%20rasporedi/101.pdf?vel=33675"
         }
       ],
       "bookmarks": [
         {
           "title": {
-            "hr": "Fokus24 — redakcija",
-            "en": "Fokus24 — newsroom"
+            "hr": "Zviždačica — redakcija",
+            "en": "Zviždačica — newsroom"
           },
-          "url": "intranet.fokus24.example"
+          "url": "https://zvizdacica.hr/"
         },
         {
           "title": {
-            "hr": "Vremenska prognoza",
-            "en": "Weather forecast"
+            "hr": "DHMZ — vremenska prognoza",
+            "en": "DHMZ — weather forecast"
           },
-          "url": "vrijeme.example"
+          "url": "https://meteo.hr/"
         },
         {
           "title": {
-            "hr": "Gradska knjižnica",
-            "en": "City library"
+            "hr": "Knjižnice grada Zagreba",
+            "en": "Zagreb City Libraries"
           },
-          "url": "knjiznica.example"
+          "url": "https://www.kgz.hr/hr"
         }
       ]
     },
@@ -1659,7 +1644,7 @@
         "en": "Mail"
       },
       "screen": "mail",
-      "account": "magdalena.tomic@fokus24.example",
+      "account": "magdalena.tomic@zvizdacica.hr",
       "folders": [
         {
           "id": "inbox",
@@ -1670,7 +1655,7 @@
           "rows": [
             {
               "sender": "Vesna — redakcija",
-              "address": "vesna@fokus24.example",
+              "address": "vesna@zvizdacica.hr",
               "subject": {
                 "hr": "Jutarnji sastanak",
                 "en": "Morning meeting"
@@ -1706,7 +1691,7 @@
             },
             {
               "sender": "Uredništvo",
-              "address": "desk@fokus24.example",
+              "address": "desk@zvizdacica.hr",
               "subject": {
                 "hr": "Raspored dežurstava — rujan",
                 "en": "Duty rota — September"
@@ -1724,7 +1709,7 @@
             },
             {
               "sender": "Gradska knjižnica",
-              "address": "obavijesti@knjiznica.example",
+              "address": "obavijesti@kgz.hr",
               "subject": {
                 "hr": "Podsjetnik na rok posudbe",
                 "en": "Loan due reminder"
@@ -1759,8 +1744,8 @@
               "important": false
             },
             {
-              "sender": "Fokus24 administracija",
-              "address": "administracija@fokus24.example",
+              "sender": "Zviždačica administracija",
+              "address": "administracija@zvizdacica.hr",
               "subject": {
                 "hr": "Troškovi kolovoza",
                 "en": "August expenses"
@@ -1823,7 +1808,7 @@
           "rows": [
             {
               "sender": "Za: Vesna",
-              "address": "vesna@fokus24.example",
+              "address": "vesna@zvizdacica.hr",
               "subject": {
                 "hr": "Rad od kuće",
                 "en": "Working remotely"
@@ -1880,7 +1865,7 @@
             },
             {
               "sender": "Za: Fotografija",
-              "address": "foto@fokus24.example",
+              "address": "foto@zvizdacica.hr",
               "subject": {
                 "hr": "Bez fotografije osobe",
                 "en": "No portrait photograph"
@@ -1899,7 +1884,7 @@
             },
             {
               "sender": "Za: Administracija",
-              "address": "administracija@fokus24.example",
+              "address": "administracija@zvizdacica.hr",
               "subject": {
                 "hr": "Re: Troškovi kolovoza",
                 "en": "Re: August expenses"
@@ -1946,7 +1931,7 @@
             },
             {
               "sender": "Za: Vesna",
-              "address": "vesna@fokus24.example",
+              "address": "vesna@zvizdacica.hr",
               "subject": {
                 "hr": "O tekstu — radna verzija",
                 "en": "About the article — working version"
@@ -2012,7 +1997,7 @@
           "rows": [
             {
               "sender": "Vesna — redakcija",
-              "address": "vesna@fokus24.example",
+              "address": "vesna@zvizdacica.hr",
               "subject": {
                 "hr": "Ispravak u sutrašnjem broju",
                 "en": "Correction in tomorrow’s edition"
