@@ -112,7 +112,7 @@
       phrases     JSON array, messages screen only: [{"id":"...", "label":"..."}] (label may be a {en,hr} object)
       freeText    messages screen only: "false" hides the typing box (phrases-only puzzle). Default shown.
       to          messages screen only: contact id (from `contacts`) or plain text — cosmetic "To:" label
-      gallery     JSON array, url-encoded: [{"id":"p1","img":"https://…","caption":"…"}, ...] — `img` optional;
+      gallery     JSON array, url-encoded: [{"id":"p1","img":"https://…","backImg":"https://…","caption":"…","backCaption":"…"}, ...] — `img` optional;
                   omit it for a placeholder card (add `"emoji":"🏖️"` to customize the placeholder glyph).
       confirmLabel  see above (decodeURIComponent; label may not be a {en,hr} object — plain string only)
       title       header/app title      tag  italic prompt line (decodeURIComponent)      lang  "en" | "hr"
@@ -327,6 +327,8 @@
     .lightbox .lbcap { margin-top: 14px; color: var(--ink); font-size: 13px; text-align: center; max-width: 260px; }
     .lightbox .lbnav { display: flex; align-items: center; gap: 30px; margin-top: 16px; }
     .lightbox .lbnav button { background: none; border: none; color: var(--ink); font-size: 26px; cursor: pointer; }
+    .lightbox .lbnav .lbflip { min-width: 108px; border: 1px solid #47505e; border-radius: 18px; padding: 7px 12px;
+      color: #c2e7ff; font-size: 12px; font-weight: 700; }
 
     .footerbar { display: flex; flex-direction: column; align-items: center; gap: 6px; }
     .confirmbtn { margin-top: 14px; padding: 10px 22px; border-radius: 20px; border: none; cursor: pointer;
@@ -451,8 +453,9 @@
       <div id="lbmedia"></div>
       <div class="lbcap" id="lbcap"></div>
       <div class="lbnav">
-        <button id="lbprev">‹</button>
-        <button id="lbnext">›</button>
+        <button id="lbprev" aria-label="Previous">‹</button>
+        <button class="lbflip" id="lbflip" type="button" hidden>↻ Turn over</button>
+        <button id="lbnext" aria-label="Next">›</button>
       </div>
     </div>
 
@@ -548,13 +551,13 @@
             typeMsg: 'Type a message…', noContacts: 'No contacts.', confirmed: 'Confirmed', confirmedBody: 'Noted.',
             gaveTitle: 'Screen locked', gaveBody: 'You put the phone down.',
             unlock: 'Unlock', locked: 'Locked',
-            week: 'Week', previousWeek: 'Previous week', nextWeek: 'Next week', searchContacts: 'Search contacts', back: 'Back', home: 'Home', recent: 'Recent apps', noRecent: 'No recent apps.', openFile: 'Open document', fileError: 'Preview unavailable. The description remains below.', hint: '💡 Hint', noMoreHints: '💡 No more hints', emptyFolder: 'Empty folder.', agendaEmpty: 'Nothing scheduled.' },
+            week: 'Week', turnOver: 'Turn over', showFront: 'Show front', previousWeek: 'Previous week', nextWeek: 'Next week', searchContacts: 'Search contacts', back: 'Back', home: 'Home', recent: 'Recent apps', noRecent: 'No recent apps.', openFile: 'Open document', fileError: 'Preview unavailable. The description remains below.', hint: '💡 Hint', noMoreHints: '💡 No more hints', emptyFolder: 'Empty folder.', agendaEmpty: 'Nothing scheduled.' },
       hr: { title: 'Telefon', give: 'Odustani', call: 'Telefon', contacts: 'Kontakti', messages: 'Poruke', gallery: 'Galerija',
             sent: 'Poslano', sentBody: 'Provjeri chat za ishod.', to: 'Za',
             typeMsg: 'Upiši poruku…', noContacts: 'Nema kontakata.', confirmed: 'Potvrđeno', confirmedBody: 'Zabilježeno.',
             gaveTitle: 'Zaključan zaslon', gaveBody: 'Odložiš telefon.',
             unlock: 'Otključaj', locked: 'Zaključano',
-            week: 'Tjedan', previousWeek: 'Prethodni tjedan', nextWeek: 'Sljedeći tjedan', searchContacts: 'Pretraži kontakte', back: 'Natrag', home: 'Početni zaslon', recent: 'Nedavne aplikacije', noRecent: 'Nema nedavnih aplikacija.', openFile: 'Otvori dokument', fileError: 'Pregled nije dostupan. Opis je i dalje ispod.', hint: '💡 Savjet', noMoreHints: '💡 Nema više savjeta', emptyFolder: 'Prazna mapa.', agendaEmpty: 'Ništa zakazano.' },
+            week: 'Tjedan', turnOver: 'Okreni fotografiju', showFront: 'Prikaži prednju stranu', previousWeek: 'Prethodni tjedan', nextWeek: 'Sljedeći tjedan', searchContacts: 'Pretraži kontakte', back: 'Natrag', home: 'Početni zaslon', recent: 'Nedavne aplikacije', noRecent: 'Nema nedavnih aplikacija.', openFile: 'Otvori dokument', fileError: 'Pregled nije dostupan. Opis je i dalje ispod.', hint: '💡 Savjet', noMoreHints: '💡 Nema više savjeta', emptyFolder: 'Prazna mapa.', agendaEmpty: 'Ništa zakazano.' },
     };
     const S = STR[lang] || STR.en;
     function loc(v) { if (v == null) return ''; if (typeof v === 'object') return v[lang] || v.en || Object.values(v)[0] || ''; return String(v); }
@@ -1103,21 +1106,27 @@
     }
 
     let lbIndex = 0;
+    let lbShowingBack = false;
     function renderLightbox() {
       const g = shownGallery[lbIndex];
       const media = document.getElementById('lbmedia');
+      const flip = document.getElementById('lbflip');
       media.replaceChildren();
-      if (g.img) { const img = document.createElement('img'); img.className = 'lbimg'; img.src = g.img; media.appendChild(img); }
+      const src = lbShowingBack && g.backImg ? g.backImg : g.img;
+      if (src) { const img = document.createElement('img'); img.className = 'lbimg'; img.src = src; media.appendChild(img); }
       else { const glyph = document.createElement('div'); glyph.className = 'lbglyph'; glyph.textContent = g.emoji || '🖼️'; media.appendChild(glyph); }
-      document.getElementById('lbcap').textContent = g.caption ? loc(g.caption) : '';
+      document.getElementById('lbcap').textContent = lbShowingBack && g.backCaption ? loc(g.backCaption) : (g.caption ? loc(g.caption) : '');
+      flip.hidden = !g.backImg;
+      flip.textContent = lbShowingBack ? '↻ ' + S.showFront : '↻ ' + S.turnOver;
     }
     function openLightbox(i) {
-      lbIndex = i; renderLightbox();
+      lbIndex = i; lbShowingBack = false; renderLightbox();
       document.getElementById('lightbox').classList.add('show');
     }
     document.getElementById('lbclose').addEventListener('click', () => document.getElementById('lightbox').classList.remove('show'));
-    document.getElementById('lbprev').addEventListener('click', () => { lbIndex = (lbIndex - 1 + shownGallery.length) % shownGallery.length; renderLightbox(); haptic('tick'); });
-    document.getElementById('lbnext').addEventListener('click', () => { lbIndex = (lbIndex + 1) % shownGallery.length; renderLightbox(); haptic('tick'); });
+    document.getElementById('lbprev').addEventListener('click', () => { lbIndex = (lbIndex - 1 + shownGallery.length) % shownGallery.length; lbShowingBack = false; renderLightbox(); haptic('tick'); });
+    document.getElementById('lbflip').addEventListener('click', () => { lbShowingBack = !lbShowingBack; renderLightbox(); haptic('tick'); });
+    document.getElementById('lbnext').addEventListener('click', () => { lbIndex = (lbIndex + 1) % shownGallery.length; lbShowingBack = false; renderLightbox(); haptic('tick'); });
 
     const sudokuSolution=[1,2,3,4,5,6,4,5,6,1,2,3,2,3,4,5,6,1,5,6,1,2,3,4,3,4,5,6,1,2,6,1,2,3,4,5];
     const sudokuGiven={0:1,2:3,5:6,7:5,9:1,12:2,16:6,19:6,22:3,25:4,28:1,30:6,33:3,35:5};

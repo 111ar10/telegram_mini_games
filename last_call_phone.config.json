@@ -885,6 +885,31 @@
       ]
     },
     {
+      "id": "fotografija_ane",
+      "icon": "🖼️",
+      "label": {
+        "hr": "Album A.",
+        "en": "Album A."
+      },
+      "screen": "gallery",
+      "gallery": [
+        {
+          "id": "ana_scan",
+          "emoji": "👩‍🦳",
+          "caption": {
+            "hr": "Ana P. — skenirana fotografija",
+            "en": "Ana P. — scanned photograph"
+          },
+          "img": "lc/gallery/ana.jpg",
+          "backImg": "lc/gallery/ana-back.png",
+          "backCaption": {
+            "hr": "Poleđina skenirane fotografije",
+            "en": "Back of the scanned photograph"
+          }
+        }
+      ]
+    },
+    {
       "id": "datoteke",
       "icon": "📁",
       "label": {
