@@ -839,8 +839,8 @@
           "id": "registracija",
           "emoji": "🚗",
           "caption": {
-            "hr": "Registracija, kroz izlog",
-            "en": "Number plate, through a shop window"
+            "hr": "Registracija kroz izlog: ZG 48219-Š",
+            "en": "Number plate through glass: ZG 48219-Š"
           },
           "img": "lc/gallery/registracija.svg"
         },
@@ -1285,6 +1285,22 @@
               }
             }
           ]
+        },
+        {
+          "icon": "ℹ️",
+          "primary": {
+            "hr": "Pohrana",
+            "en": "Storage"
+          },
+          "requires": "arhiva_price",
+          "secondary": {
+            "hr": "skrivene stavke pronađene",
+            "en": "hidden items found"
+          },
+          "body": {
+            "hr": "Sustav je pronašao sadržaj u mapi koja je ranije izgledala prazno. Provjeri mape čiji se broj stavki promijenio.",
+            "en": "The system found content in a folder that previously looked empty. Check folders whose item count changed."
+          }
         }
       ]
     },
@@ -1429,13 +1445,13 @@
         },
         {
           "label": {
-            "hr": "subota, 12. rujna",
-            "en": "Saturday 12 September"
+            "hr": "petak, 18. rujna",
+            "en": "Friday 18 September"
           },
           "entries": [
             {
-              "from": "11:00",
-              "to": "12:00",
+              "from": "09:00",
+              "to": "10:00",
               "color": "#5f6368",
               "title": {
                 "hr": "mama — kava, Kvatrić",
@@ -1459,7 +1475,7 @@
               "color": "#78909c"
             }
           ],
-          "date": "2026-09-12"
+          "date": "2026-09-18"
         },
         {
           "date": "2026-09-14",
@@ -2093,6 +2109,149 @@
           ]
         }
       ]
+    },
+    {
+      "id": "biljeske",
+      "icon": "🗒️",
+      "label": {
+        "hr": "Bilješke",
+        "en": "Notes"
+      },
+      "screen": "list",
+      "available": true,
+      "rows": [
+        {
+          "icon": "🛒",
+          "primary": {
+            "hr": "Trgovina",
+            "en": "Groceries"
+          },
+          "secondary": {
+            "hr": "uređeno pon",
+            "en": "edited Mon"
+          },
+          "body": {
+            "hr": "Kava\nZobeno mlijeko\nVrećice za smeće\nBosiljak",
+            "en": "Coffee\nOat milk\nBin bags\nBasil"
+          }
+        },
+        {
+          "icon": "📚",
+          "primary": {
+            "hr": "Vratiti",
+            "en": "Return"
+          },
+          "secondary": {
+            "hr": "uređeno uto",
+            "en": "edited Tue"
+          },
+          "body": {
+            "hr": "Kuharica iz knjižnice.\nMaknuti papiriće između stranica.",
+            "en": "Library cookbook.\nRemove bookmarks before returning."
+          }
+        },
+        {
+          "icon": "🔧",
+          "primary": {
+            "hr": "Za servis",
+            "en": "For repair"
+          },
+          "secondary": {
+            "hr": "uređeno sri",
+            "en": "edited Wed"
+          },
+          "body": {
+            "hr": "Bicikl: stražnja kočnica.\nPerilica: riješeno, samo brtva.",
+            "en": "Bike: rear brake.\nWashing machine: fixed, just the seal."
+          }
+        },
+        {
+          "icon": "💡",
+          "primary": {
+            "hr": "Naslovi koje neću koristiti",
+            "en": "Headlines I will not use"
+          },
+          "secondary": {
+            "hr": "uređeno čet 18:06",
+            "en": "edited Thu 18:06"
+          },
+          "body": {
+            "hr": "„Istina koja ubija“ — melodramatično.\n„Trinaest“ — ništa ne govori.\nPočeti činjenicom, ne pridjevom.",
+            "en": "“The truth that kills” — melodramatic.\n“Thirteen” — says nothing.\nStart with a fact, not an adjective."
+          }
+        }
+      ]
+    },
+    {
+      "id": "sat",
+      "icon": "⏰",
+      "label": {
+        "hr": "Sat",
+        "en": "Clock"
+      },
+      "screen": "list",
+      "available": true,
+      "rows": [
+        {
+          "icon": "⏰",
+          "primary": "07:10",
+          "secondary": {
+            "hr": "radnim danom · isključeno",
+            "en": "weekdays · off"
+          },
+          "body": {
+            "hr": "Alarm „ustani“. Isključen prije tri dana.",
+            "en": "“get up” alarm. Disabled three days ago."
+          }
+        },
+        {
+          "icon": "⏱️",
+          "primary": {
+            "hr": "Mjerač vremena",
+            "en": "Timer"
+          },
+          "secondary": "00:00",
+          "body": {
+            "hr": "Nema spremljenih mjerača.",
+            "en": "No saved timers."
+          }
+        },
+        {
+          "icon": "🌍",
+          "primary": {
+            "hr": "Svjetski sat",
+            "en": "World clock"
+          },
+          "secondary": {
+            "hr": "Zagreb · lokalno vrijeme",
+            "en": "Zagreb · local time"
+          },
+          "body": {
+            "hr": "Nema drugih gradova.",
+            "en": "No other cities."
+          }
+        }
+      ]
+    },
+    {
+      "id": "kalkulator",
+      "icon": "🧮",
+      "label": {
+        "hr": "Kalkulator",
+        "en": "Calculator"
+      },
+      "screen": "calculator",
+      "available": true
+    },
+    {
+      "id": "sudoku",
+      "icon": "▦",
+      "label": {
+        "hr": "Mini Sudoku",
+        "en": "Mini Sudoku"
+      },
+      "screen": "sudoku",
+      "available": true
     }
   ]
 }
