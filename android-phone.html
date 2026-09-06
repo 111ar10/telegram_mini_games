@@ -317,6 +317,22 @@
     .gtile .cap { position: absolute; left: 0; right: 0; bottom: 0; padding: 3px 5px 4px; font-size: 9px; color: #fff;
       background: linear-gradient(0deg, rgba(0,0,0,.65), transparent); text-align: left; }
 
+    /* Files trash: Android-style selection and restoration, driven entirely by authored photo data. */
+    .trashrestore { min-height: 100%; display: flex; flex-direction: column; background: #111319; }
+    .trashintro { padding: 14px 16px 10px; color: var(--muted); font-size: 12px; line-height: 1.45; }
+    .trashgrid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 3px; padding: 0 3px 14px; }
+    .trashtile { position: relative; aspect-ratio: 1; border: 0; padding: 0; overflow: hidden; background: #272b34; cursor: pointer; }
+    .trashtile img { display: block; width: 100%; height: 100%; object-fit: cover; opacity: .76; }
+    .trashtile::after { content: '✓'; position: absolute; right: 6px; top: 6px; width: 20px; height: 20px; border-radius: 50%;
+      display: grid; place-items: center; color: white; background: #3276df; border: 2px solid white; font-size: 12px; font-weight: 800; }
+    .trashmeta { position: absolute; left: 5px; right: 5px; bottom: 4px; color: #fff; font-size: 9px; text-align: left;
+      line-height: 1.25; text-shadow: 0 1px 3px #000, 0 0 3px #000; }
+    .restorebar { position: sticky; bottom: 0; margin-top: auto; padding: 10px 14px calc(10px + var(--tg-bottom));
+      display: flex; align-items: center; justify-content: space-between; gap: 12px; background: rgba(31,34,42,.98); border-top: 1px solid #343945; }
+    .restorebar span { color: var(--muted); font-size: 12px; }
+    .restorebutton { border: 0; border-radius: 20px; padding: 10px 18px; background: #8ab4f8; color: #10213b; font-weight: 750; cursor: pointer; }
+    .restorednotice { margin: 18px 16px 4px; padding: 14px; border-radius: 14px; color: #dce8ff; background: #1c3151; font-size: 13px; line-height: 1.45; }
+
     .lightbox { position: absolute; inset: 0; background: rgba(6,7,10,.94); z-index: 15;
       display: none; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
     .lightbox.show { display: flex; }
@@ -566,13 +582,13 @@
             typeMsg: 'Type a message…', noContacts: 'No contacts.', confirmed: 'Confirmed', confirmedBody: 'Noted.',
             gaveTitle: 'Screen locked', gaveBody: 'You put the phone down.',
             unlock: 'Unlock', locked: 'Locked',
-            week: 'Week', turnOver: 'Turn over', showFront: 'Show front', previousWeek: 'Previous week', nextWeek: 'Next week', searchContacts: 'Search contacts', back: 'Back', home: 'Home', recent: 'Recent apps', noRecent: 'No recent apps.', openFile: 'Open document', fileError: 'Preview unavailable. The description remains below.', hint: '💡 Hint', noMoreHints: '💡 No more hints', emptyFolder: 'Empty folder.', agendaEmpty: 'Nothing scheduled.' },
+            week: 'Week', turnOver: 'Turn over', showFront: 'Show front', previousWeek: 'Previous week', nextWeek: 'Next week', searchContacts: 'Search contacts', back: 'Back', home: 'Home', recent: 'Recent apps', noRecent: 'No recent apps.', openFile: 'Open document', fileError: 'Preview unavailable. The description remains below.', hint: '💡 Hint', noMoreHints: '💡 No more hints', emptyFolder: 'Empty folder.', agendaEmpty: 'Nothing scheduled.', restore: 'Restore', restored: 'Photos restored', restoredBody: 'The photos are back in Gallery, in their original order.', selected: 'selected', deletesIn: 'Permanently deleted in 23 days' },
       hr: { title: 'Telefon', give: 'Odustani', call: 'Telefon', contacts: 'Kontakti', messages: 'Poruke', gallery: 'Galerija',
             sent: 'Poslano', sentBody: 'Provjeri chat za ishod.', to: 'Za',
             typeMsg: 'Upiši poruku…', noContacts: 'Nema kontakata.', confirmed: 'Potvrđeno', confirmedBody: 'Zabilježeno.',
             gaveTitle: 'Zaključan zaslon', gaveBody: 'Odložiš telefon.',
             unlock: 'Otključaj', locked: 'Zaključano',
-            week: 'Tjedan', turnOver: 'Okreni fotografiju', showFront: 'Prikaži prednju stranu', previousWeek: 'Prethodni tjedan', nextWeek: 'Sljedeći tjedan', searchContacts: 'Pretraži kontakte', back: 'Natrag', home: 'Početni zaslon', recent: 'Nedavne aplikacije', noRecent: 'Nema nedavnih aplikacija.', openFile: 'Otvori dokument', fileError: 'Pregled nije dostupan. Opis je i dalje ispod.', hint: '💡 Savjet', noMoreHints: '💡 Nema više savjeta', emptyFolder: 'Prazna mapa.', agendaEmpty: 'Ništa zakazano.' },
+            week: 'Tjedan', turnOver: 'Okreni fotografiju', showFront: 'Prikaži prednju stranu', previousWeek: 'Prethodni tjedan', nextWeek: 'Sljedeći tjedan', searchContacts: 'Pretraži kontakte', back: 'Natrag', home: 'Početni zaslon', recent: 'Nedavne aplikacije', noRecent: 'Nema nedavnih aplikacija.', openFile: 'Otvori dokument', fileError: 'Pregled nije dostupan. Opis je i dalje ispod.', hint: '💡 Savjet', noMoreHints: '💡 Nema više savjeta', emptyFolder: 'Prazna mapa.', agendaEmpty: 'Ništa zakazano.', restore: 'Vrati', restored: 'Fotografije su vraćene', restoredBody: 'Fotografije su ponovno u Galeriji, izvornim redoslijedom.', selected: 'odabrano', deletesIn: 'Trajno brisanje za 23 dana' },
     };
     const S = STR[lang] || STR.en;
     function loc(v) { if (v == null) return ''; if (typeof v === 'object') return v[lang] || v.en || Object.values(v)[0] || ''; return String(v); }
@@ -792,7 +808,12 @@
 
     function renderInbox(a) {
       const wrap=document.createElement('div'); wrap.className='inbox';
-      (a.rows || []).filter(r=>!r.requires || owned.has(r.requires)).forEach(r=>{
+      (a.rows || [])
+        .map((r,index)=>({r,index}))
+        .filter(x=>!x.r.requires || owned.has(x.r.requires))
+        .sort((a,b)=>(Date.parse(b.r.updatedAt)||0)-(Date.parse(a.r.updatedAt)||0)||a.index-b.index)
+        .map(x=>x.r)
+        .forEach(r=>{
         const contact=owned.has('imenik') ? (apps.find(x=>x.id==='imenik')?.contacts || []).find(c=>c.id===r.contactId) : null;
         const title=loc(contact?.name) || loc(r.number) || loc(r.primary);
         const row=document.createElement('button'); row.type='button'; row.className='inboxrow'+(r.unread?' unread':'');
@@ -831,6 +852,7 @@
       try {
         const safe = new URL(url, window.location.href);
         if (!['http:', 'https:'].includes(safe.protocol)) return;
+        if (safe.origin === window.location.origin && !safe.searchParams.has('lang')) safe.searchParams.set('lang',lang);
         if (tg && typeof tg.openLink === 'function') tg.openLink(safe.href);
         else window.open(safe.href, '_blank', 'noopener,noreferrer');
       } catch (e) {}
@@ -860,7 +882,7 @@
         // a hidden folder must not, or it isn't hidden.
         if (r.requires && !owned.has(r.requires)) return;
         drawn++;
-        const tappable = !!(r.body || r.rows || r.thread || r.img || r.document);
+        const tappable = !!(r.body || r.rows || r.thread || r.img || r.document || r.restorePhotos);
         const row = document.createElement(tappable ? 'button' : 'div');
         row.className = 'row' + (tappable ? ' tap' : '');
         if (tappable) row.type = 'button';
@@ -879,7 +901,8 @@
           // Back always returns HERE, one level up, rather than to the home grid — the difference between
           // a file explorer and a set of unrelated screens.
           const backHere = () => renderList(a, back);
-          if (r.rows) renderList(r, backHere);
+          if (r.restorePhotos) renderTrashRecovery(r, backHere);
+          else if (r.rows) renderList(r, backHere);
           else if (r.thread) renderThread(r.thread, loc(r.primary), backHere);
           else renderNote({ label: r.primary, meta: r.savedAt || r.meta, body: r.body, img: r.img, document: r.document, qrLink: r.qrLink, qrBounds: r.qrBounds, file: /\.(pdf|docx|csv|md|txt|eml|jpg|png)$/i.test(loc(r.primary)) }, backHere);
         });
@@ -888,6 +911,24 @@
       if (!drawn) { const empty = document.createElement('div'); empty.className = 'tag'; empty.textContent = S.emptyFolder; wrap.appendChild(empty); }
       showScreen(wrap, { title: loc(a.label) || loc(a.primary) || S.title, showBack: true });
       if (typeof back === 'function') backBtn.onclick = back;
+    }
+
+    // ------- FILES TRASH / PHOTO RESTORATION -------
+    function renderTrashRecovery(entry, back) {
+      const photos = Array.isArray(entry.restorePhotos) ? entry.restorePhotos : [];
+      const stateKey = 'android-phone:restored:' + (entry.id || loc(entry.primary) || 'photos');
+      let restored = false;
+      try { restored = localStorage.getItem(stateKey) === '1'; } catch (e) {}
+      if (restored) {
+        const wrap=document.createElement('div');wrap.className='trashrestore';
+        const notice=document.createElement('div');notice.className='restorednotice';const strong=document.createElement('b');strong.textContent=S.restored;notice.append(strong,document.createElement('br'),document.createTextNode(S.restoredBody));wrap.append(notice);
+        shownGallery=photos;const grid=document.createElement('div');grid.className='gallerygrid';photos.forEach((g,i)=>grid.append(makeGalleryTile(g,i)));wrap.append(grid);
+        showScreen(wrap,{title:loc(entry.primary)||S.gallery,showBack:true});backBtn.onclick=back;return;
+      }
+      const wrap=document.createElement('div');wrap.className='trashrestore';const intro=document.createElement('div');intro.className='trashintro';intro.textContent=loc(entry.restoreIntro)||S.deletesIn;wrap.append(intro);
+      const grid=document.createElement('div');grid.className='trashgrid';photos.forEach((g)=>{const tile=document.createElement('button');tile.type='button';tile.className='trashtile';const img=document.createElement('img');img.src=loc(g.img);img.alt=loc(g.caption)||loc(g.label)||S.gallery;img.loading='lazy';const meta=document.createElement('span');meta.className='trashmeta';meta.textContent=loc(g.deletedAt)||loc(g.caption);tile.append(img,meta);grid.append(tile)});wrap.append(grid);
+      const bar=document.createElement('div');bar.className='restorebar';const count=document.createElement('span');count.textContent=photos.length+' '+S.selected;const button=document.createElement('button');button.type='button';button.className='restorebutton';button.textContent=S.restore+' '+photos.length;button.onclick=()=>{try{localStorage.setItem(stateKey,'1')}catch(e){}haptic('ok');renderTrashRecovery(entry,back)};bar.append(count,button);wrap.append(bar);
+      showScreen(wrap,{title:loc(entry.primary)||S.gallery,showBack:true});backBtn.onclick=back;
     }
 
     // ------- NOTE / document -------
@@ -1126,21 +1167,19 @@
     // A catalog app may carry its OWN roll (`renderGallery(a.gallery, …)`); with no arguments this is
     // the top-level `gallery` param, exactly as before.
     let shownGallery = gallery;
-    function renderGallery(roll, title) {
+    function makeGalleryTile(g, i) {
+      const tile = document.createElement('button'); tile.className = 'gtile'; tile.type = 'button';
+      if (g.img) { const img = document.createElement('img'); img.src = loc(g.img); img.alt = loc(g.caption) || loc(g.label) || S.gallery; img.loading = 'lazy'; tile.appendChild(img); }
+      else { const glyph = document.createElement('div'); glyph.className = 'glyph'; glyph.textContent = g.emoji || '🖼️'; tile.appendChild(glyph); }
+      if (g.caption) { const cap = document.createElement('div'); cap.className = 'cap'; cap.textContent = loc(g.caption); tile.appendChild(cap); }
+      tile.addEventListener('click', () => openLightbox(i)); return tile;
+    }
+    function renderGallery(roll, title, back) {
       shownGallery = Array.isArray(roll) && roll.length ? roll : gallery;
       const grid = document.createElement('div'); grid.className = 'gallerygrid';
-      shownGallery.forEach((g, i) => {
-        const tile = document.createElement('button'); tile.className = 'gtile'; tile.type = 'button';
-        if (g.img) {
-          const img = document.createElement('img'); img.src = g.img; img.alt = loc(g.caption) || loc(g.label) || S.gallery; img.loading = 'lazy'; tile.appendChild(img);
-        } else {
-          const glyph = document.createElement('div'); glyph.className = 'glyph'; glyph.textContent = g.emoji || '🖼️'; tile.appendChild(glyph);
-        }
-        if (g.caption) { const cap = document.createElement('div'); cap.className = 'cap'; cap.textContent = loc(g.caption); tile.appendChild(cap); }
-        tile.addEventListener('click', () => openLightbox(i));
-        grid.appendChild(tile);
-      });
+      shownGallery.forEach((g, i) => grid.appendChild(makeGalleryTile(g, i)));
       showScreen(grid, { title: title || S.gallery, showBack: true });
+      if (typeof back === 'function') backBtn.onclick = back;
     }
 
     let lbIndex = 0;

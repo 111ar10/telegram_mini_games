@@ -107,7 +107,8 @@
               }
             }
           ],
-          "contactId": "toma"
+          "contactId": "toma",
+          "updatedAt": "2026-09-11T14:02:00+02:00"
         },
         {
           "icon": "👩‍🦳",
@@ -200,7 +201,8 @@
               "status": "draft"
             }
           ],
-          "contactId": "ana_p"
+          "contactId": "ana_p",
+          "updatedAt": "2019-03-19T12:00:00+01:00"
         },
         {
           "icon": "☎️",
@@ -283,7 +285,8 @@
           ],
           "contactId": "bez_imena",
           "number": "01 000 0271",
-          "requires": "poruke"
+          "requires": "poruke",
+          "updatedAt": "2026-09-10T23:53:00+02:00"
         },
         {
           "icon": "📇",
@@ -360,7 +363,8 @@
               "time": "22:30"
             }
           ],
-          "contactId": "vesna_redakcija"
+          "contactId": "vesna_redakcija",
+          "updatedAt": "2026-09-10T22:30:00+02:00"
         }
       ],
       "hiddenFromHome": true
@@ -1051,19 +1055,99 @@
           },
           "rows": [
             {
-              "icon": "🚫",
+              "id": "restored_birthday",
+              "icon": "🗑",
               "primary": {
-                "hr": "7 datoteka obrisano u četvrtak",
-                "en": "7 files deleted on Thursday"
+                "hr": "7 fotografija s rođendana",
+                "en": "7 birthday photos"
               },
               "secondary": {
-                "hr": "sve između 23:30 i 23:57",
-                "en": "all between 23:30 and 23:57"
+                "hr": "obrisano u četvrtak, 23:30–23:57",
+                "en": "deleted Thursday, 23:30–23:57"
               },
-              "body": {
-                "hr": "Sedam datoteka obrisano je u istih dvadeset i sedam minuta.\n\nNijedna nije iz radne mape. Sve su fotografije, i sve su s istog rođendana.",
-                "en": "Seven files were deleted inside the same twenty-seven minutes.\n\nNot one of them is from the working folder. They are all photographs, and all from the same birthday."
-              }
+              "restoreIntro": {
+                "hr": "Odabrano je svih 7 fotografija. Bit će trajno obrisane za 23 dana.",
+                "en": "All 7 photos are selected. They will be permanently deleted in 23 days."
+              },
+              "restorePhotos": [
+                {
+                  "img": "lc/restored/IMG_3184.png",
+                  "caption": {
+                    "hr": "IMG_3184 · snimljeno 19.07.2025. 19:18",
+                    "en": "IMG_3184 · taken 19 Jul 2025, 19:18"
+                  },
+                  "deletedAt": {
+                    "hr": "Obrisano čet 10.09. u 23:30",
+                    "en": "Deleted Thu 10 Sep at 23:30"
+                  }
+                },
+                {
+                  "img": "lc/restored/IMG_3185.png",
+                  "caption": {
+                    "hr": "IMG_3185 · snimljeno 19.07.2025. 19:42",
+                    "en": "IMG_3185 · taken 19 Jul 2025, 19:42"
+                  },
+                  "deletedAt": {
+                    "hr": "Obrisano čet 10.09. u 23:34",
+                    "en": "Deleted Thu 10 Sep at 23:34"
+                  }
+                },
+                {
+                  "img": "lc/restored/IMG_3186.png",
+                  "caption": {
+                    "hr": "IMG_3186 · snimljeno 19.07.2025. 20:14",
+                    "en": "IMG_3186 · taken 19 Jul 2025, 20:14"
+                  },
+                  "deletedAt": {
+                    "hr": "Obrisano čet 10.09. u 23:38",
+                    "en": "Deleted Thu 10 Sep at 23:38"
+                  }
+                },
+                {
+                  "img": "lc/restored/IMG_3187.png",
+                  "caption": {
+                    "hr": "IMG_3187 · snimljeno 19.07.2025. 21:06",
+                    "en": "IMG_3187 · taken 19 Jul 2025, 21:06"
+                  },
+                  "deletedAt": {
+                    "hr": "Obrisano čet 10.09. u 23:41",
+                    "en": "Deleted Thu 10 Sep at 23:41"
+                  }
+                },
+                {
+                  "img": "lc/restored/IMG_3188.png",
+                  "caption": {
+                    "hr": "IMG_3188 · snimljeno 19.07.2025. 21:44",
+                    "en": "IMG_3188 · taken 19 Jul 2025, 21:44"
+                  },
+                  "deletedAt": {
+                    "hr": "Obrisano čet 10.09. u 23:47",
+                    "en": "Deleted Thu 10 Sep at 23:47"
+                  }
+                },
+                {
+                  "img": "lc/restored/IMG_3189.png",
+                  "caption": {
+                    "hr": "IMG_3189 · snimljeno 19.07.2025. 22:37",
+                    "en": "IMG_3189 · taken 19 Jul 2025, 22:37"
+                  },
+                  "deletedAt": {
+                    "hr": "Obrisano čet 10.09. u 23:52",
+                    "en": "Deleted Thu 10 Sep at 23:52"
+                  }
+                },
+                {
+                  "img": "lc/restored/IMG_3190.png",
+                  "caption": {
+                    "hr": "IMG_3190 · snimljeno 19.07.2025. 23:26",
+                    "en": "IMG_3190 · taken 19 Jul 2025, 23:26"
+                  },
+                  "deletedAt": {
+                    "hr": "Obrisano čet 10.09. u 23:57",
+                    "en": "Deleted Thu 10 Sep at 23:57"
+                  }
+                }
+              ]
             }
           ]
         },
@@ -1593,6 +1677,15 @@
             "en": "how to prove a document was altered afterwards"
           },
           "meta": "sri 11:41"
+        },
+        {
+          "icon": "🔎",
+          "primary": {
+            "hr": "što ostaje nakon brisanja fotografija android",
+            "en": "what remains after deleting photos android"
+          },
+          "meta": "sri 18:06",
+          "url": "lc/browser-cache.html"
         },
         {
           "icon": "🔎",
@@ -2536,7 +2629,8 @@
             "hr": "čet",
             "en": "Thu"
           },
-          "unread": true
+          "unread": true,
+          "updatedAt": "2026-09-10T22:30:00+02:00"
         },
         {
           "primary": {
@@ -2545,8 +2639,8 @@
           },
           "contactId": "ana_p",
           "meta": {
-            "hr": "jučer",
-            "en": "yesterday"
+            "hr": "ožu",
+            "en": "Mar"
           },
           "thread": [
             {
@@ -2666,7 +2760,8 @@
           "unlockedMeta": {
             "hr": "ožu",
             "en": "Mar"
-          }
+          },
+          "updatedAt": "2019-03-19T12:00:00+01:00"
         },
         {
           "primary": {
@@ -2700,7 +2795,8 @@
                 "en": "Read"
               }
             }
-          ]
+          ],
+          "updatedAt": "2026-09-10T07:14:00+02:00"
         },
         {
           "primary": {
@@ -2734,7 +2830,8 @@
                 "en": "Read"
               }
             }
-          ]
+          ],
+          "updatedAt": "2026-09-10T07:14:00+02:00"
         },
         {
           "primary": {
@@ -2768,7 +2865,8 @@
                 "en": "Read"
               }
             }
-          ]
+          ],
+          "updatedAt": "2026-09-10T07:14:00+02:00"
         },
         {
           "primary": {
@@ -2802,14 +2900,15 @@
                 "en": "Read"
               }
             }
-          ]
+          ],
+          "updatedAt": "2026-09-10T07:14:00+02:00"
         },
         {
           "primary": "Toma",
           "contactId": "toma",
           "meta": {
-            "hr": "uto",
-            "en": "Tue"
+            "hr": "danas",
+            "en": "today"
           },
           "thread": [
             {
@@ -2945,7 +3044,8 @@
             "hr": "čet",
             "en": "Thu"
           },
-          "unread": true
+          "unread": true,
+          "updatedAt": "2026-09-11T14:02:00+02:00"
         },
         {
           "primary": "Dora Marić",
@@ -2978,7 +3078,8 @@
               "time": "16:25",
               "status": "seen"
             }
-          ]
+          ],
+          "updatedAt": "2026-08-26T16:26:00+02:00"
         },
         {
           "primary": "Ema Perić",
@@ -3019,7 +3120,8 @@
               },
               "time": "16:26"
             }
-          ]
+          ],
+          "updatedAt": "2026-08-25T16:26:00+02:00"
         },
         {
           "primary": "Filip Novak",
@@ -3060,7 +3162,8 @@
               },
               "time": "16:26"
             }
-          ]
+          ],
+          "updatedAt": "2026-08-24T16:26:00+02:00"
         },
         {
           "primary": "Goran Babić",
@@ -3093,7 +3196,8 @@
               "time": "16:25",
               "status": "seen"
             }
-          ]
+          ],
+          "updatedAt": "2026-08-23T16:26:00+02:00"
         },
         {
           "primary": "Helena Radić",
@@ -3126,7 +3230,8 @@
               "time": "16:25",
               "status": "seen"
             }
-          ]
+          ],
+          "updatedAt": "2026-08-22T16:26:00+02:00"
         },
         {
           "primary": "Jasna Vuković",
@@ -3159,7 +3264,8 @@
               "time": "16:25",
               "status": "seen"
             }
-          ]
+          ],
+          "updatedAt": "2026-08-21T16:26:00+02:00"
         },
         {
           "icon": "☎️",
@@ -3172,8 +3278,8 @@
             "en": "nobody signs their name"
           },
           "meta": {
-            "hr": "čet",
-            "en": "Thu"
+            "hr": "jučer",
+            "en": "yesterday"
           },
           "thread": [
             {
@@ -3242,7 +3348,8 @@
           ],
           "contactId": "bez_imena",
           "number": "01 000 0271",
-          "requires": "poruke"
+          "requires": "poruke",
+          "updatedAt": "2026-09-10T23:53:00+02:00"
         }
       ],
       "badge": 2
