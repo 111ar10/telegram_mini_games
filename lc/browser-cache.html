@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="hr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Digitalni trag</title>
+<style>
+:root{font-family:Roboto,Arial,sans-serif;color:#202124;background:#f8fafd}*{box-sizing:border-box}body{margin:0}.bar{height:56px;display:flex;align-items:center;padding:0 18px;background:#fff;border-bottom:1px solid #dadce0;color:#185abc;font-weight:700}.page{max-width:680px;margin:auto;padding:28px 22px 54px}.source{color:#5f6368;font-size:12px;letter-spacing:.08em;text-transform:uppercase}.cached{display:inline-block;margin-left:8px;padding:3px 7px;border-radius:10px;background:#e8f0fe;color:#185abc;font-size:10px}h1{font-size:30px;line-height:1.14;margin:14px 0}p{font-size:16px;line-height:1.62}.card{margin:24px 0;padding:18px;border-left:5px solid #1a73e8;background:#fff;border-radius:4px;box-shadow:0 2px 10px #3c40431a}.steps{padding-left:22px}.steps li{margin:12px 0;line-height:1.5}.foot{margin-top:34px;padding-top:18px;border-top:1px solid #dadce0;color:#5f6368;font-size:13px}
+</style>
+</head>
+<body>
+<div class="bar">DIGITALNI TRAG</div>
+<main class="page">
+<div class="source" data-hr="Vodič za digitalnu samoobranu" data-en="Digital self-defence guide">Vodič za digitalnu samoobranu</div>
+<h1 data-hr="Što ostaje nakon brisanja fotografije?" data-en="What remains after a photo is deleted?">Što ostaje nakon brisanja fotografije?</h1>
+<p data-hr="Brisanje nije isto što i nestanak. Na većini telefona izvorna datoteka prvo odlazi u koš, a umanjeni pregled može ostati u predmemoriji i nakon što je original uklonjen." data-en="Deletion is not the same as disappearance. On most phones the original first moves to the bin, while a thumbnail can remain in cache after the original is removed.">Brisanje nije isto što i nestanak. Na većini telefona izvorna datoteka prvo odlazi u koš, a umanjeni pregled može ostati u predmemoriji i nakon što je original uklonjen.</p>
+<div class="card">
+<strong data-hr="Ako pokušavaš rekonstruirati događaj:" data-en="If you are reconstructing an event:">Ako pokušavaš rekonstruirati događaj:</strong>
+<ol class="steps">
+<li data-hr="zapiši točno vrijeme brisanja;" data-en="record the exact deletion time;">zapiši točno vrijeme brisanja;</li>
+<li data-hr="usporedi ga s pozivima, porukama i preuzimanjima;" data-en="compare it with calls, messages and downloads;">usporedi ga s pozivima, porukama i preuzimanjima;</li>
+<li data-hr="provjeri koš i mapu sličica prije zaključka da datoteke nema." data-en="check the bin and thumbnail folder before concluding that a file is gone.">provjeri koš i mapu sličica prije zaključka da datoteke nema.</li>
+</ol>
+</div>
+<p data-hr="Vraćena fotografija može dokazati gdje je netko bio. Ne dokazuje automatski zašto je ondje bio, a privatna fotografija nije automatski dokaz za objavu." data-en="A restored photograph may prove where somebody was. It does not automatically prove why they were there, and a private photograph is not automatically evidence fit for publication.">Vraćena fotografija može dokazati gdje je netko bio. Ne dokazuje automatski zašto je ondje bio, a privatna fotografija nije automatski dokaz za objavu.</p>
+<div class="foot" data-hr="Spremljena kopija · izvorna stranica više nije dostupna" data-en="Cached copy · original page no longer available">Spremljena kopija · izvorna stranica više nije dostupna</div>
+</main>
+<script>
+const lang=new URLSearchParams(location.search).get('lang')==='en'?'en':'hr';
+document.documentElement.lang=lang;
+document.querySelectorAll('[data-'+lang+']').forEach(el=>el.textContent=el.dataset[lang]);
+</script>
+</body>
+</html>
