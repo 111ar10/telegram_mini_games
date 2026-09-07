@@ -9,7 +9,7 @@ const L={en:{title:'Notebook',open:'Open notebook',prev:'Previous',next:'Next',f
 const pattern='<svg class="gridmark" viewBox="0 0 150 150" aria-label="nine dot grid"><path class="guide" d="M25 25H125V125H25Z M25 25L125 125M125 25L25 125"/><g>'+[25,75,125].flatMap(y=>[25,75,125].map(x=>'<circle cx="'+x+'" cy="'+y+'" r="6"/>')).join('')+'</g></svg>';
 const route='<svg class="gridmark" viewBox="0 0 150 150" aria-label="drawn path"><path class="guide" d="M25 25H125V125H25Z M25 25L125 125M125 25L25 125"/><path class="route" d="M25 25H125V125H25Z"/><path class="route" d="M18 25l10-6m-10 6 10 6"/><g>'+[25,75,125].flatMap(y=>[25,75,125].map((x,i)=>'<circle class="'+(x===25&&y===25?'start':'')+'" cx="'+x+'" cy="'+y+'" r="6"/>')).join('')+'</g></svg>';
 const pages={en:[
-['Inside cover','If found — Tomislav 091 ••• •••\n\nThe number is written twice. The second time, more firmly.'],
+['Inside cover','If found — Tomislav 091 442 8061\n\nThe number is written twice. The second time, more firmly.'],
 ['Friday list','☐ return library book\n☐ milk\n☐ tell M. I cannot make Tuesday\n☐ charge recorder\n☐ buy batteries'],
 ['Bus notes','109 — wait for the second one; the first is always full.\n\nA rough sketch of a stop, a bench, and an arrow pointing toward the kiosk.'],
 ['Names to remember','Mum: no lilies.\nToma: rice, not pasta.\nIvana: takes coffee black but complains if it is bad.\n\n<span class="strike">Buy a plant.</span>'],
@@ -22,7 +22,7 @@ const pages={en:[
 ['Recipes','Lentils: more lemon than seems reasonable.\nRice: wash it first.\nSoup: call Mum and ask what she used to put in it.'],
 ['Back page','A telephone number has been written, then erased until only the pressure remains.']
 ],hr:[
-['Unutarnja korica','Ako nađete — Tomislav 091 ••• •••\n\nBroj je napisan dvaput. Drugi put čvršće.'],
+['Unutarnja korica','Ako nađete — Tomislav 091 442 8061\n\nBroj je napisan dvaput. Drugi put čvršće.'],
 ['Popis za petak','☐ vratiti knjigu u knjižnicu\n☐ mlijeko\n☐ javiti M. da ne mogu u utorak\n☐ napuniti diktafon\n☐ kupiti baterije'],
 ['Bilješke o autobusu','109 — čekaj drugi; prvi je uvijek pun.\n\nGruba skica stanice, klupe i strelice prema kiosku.'],
 ['Imena za zapamtiti','Mama: ne ljiljane.\nToma: riža, ne tjestenina.\nIvana: pije crnu kavu, ali se žali ako je loša.\n\n<span class="strike">Kupi biljku.</span>'],
