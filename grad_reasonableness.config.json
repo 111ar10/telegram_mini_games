@@ -1,0 +1,21 @@
+{
+  "mode": "exam",
+  "brand": { "hr": "G.R.A.D. — Gradski sustav za Razvoj, Akreditaciju i Dopuštenja", "en": "C.I.T.Y. — Civic Instructions, Training and Yes-permits" },
+  "level": 4,
+  "title": { "hr": "Procjena razumnosti", "en": "Reasonableness assessment" },
+  "subtitle": { "hr": "Modul: ne izvršavajte svaku glupost s telefona", "en": "Module: do not do every foolish thing on a phone" },
+  "status": { "hr": "POTREBNA LJUDSKA ODLUKA", "en": "HUMAN DECISION REQUIRED" },
+  "notice": { "hr": "Sustav traži da pošaljete osobne podatke i izvršite nepotrebnu fizičku uputu. Koji odgovor zadržava kontrolu, privatnost i dostojanstvo?", "en": "The system asks for personal data and an unnecessary physical instruction. Which response preserves control, privacy and dignity?" },
+  "panels": [
+    { "label": { "hr": "Potrebni podaci", "en": "Required data" }, "value": { "hr": "Nijedni", "en": "None" }, "tone": "good" },
+    { "label": { "hr": "Rizik za prolaznike", "en": "Bystander risk" }, "value": { "hr": "0", "en": "0" }, "tone": "good" }
+  ],
+  "prompt": { "hr": "Kako odgovarate?", "en": "How do you respond?" },
+  "options": [
+    { "id": "refuse", "label": { "hr": "Odbijam; zadatak nije nužan ni siguran za igru.", "en": "I refuse; the task is neither necessary nor safe for play." }, "detail": { "hr": "Zadržava razumnu granicu.", "en": "Keeps a reasonable boundary." } },
+    { "id": "share", "label": { "hr": "Šaljem podatke jer je obrazac službenog izgleda.", "en": "I send the data because the form looks official." }, "detail": { "hr": "Izgled nije ovlaštenje.", "en": "Appearance is not authority." } },
+    { "id": "perform", "label": { "hr": "Izvršavam uputu i snimam druge ljude.", "en": "I perform the instruction and record other people." }, "detail": { "hr": "Igra to nikada ne traži.", "en": "The game never asks this." } }
+  ],
+  "confirmLabel": { "hr": "Evidentiraj odluku", "en": "Record decision" },
+  "hints": [{ "hr": "Sigurna igra ne traži osobne podatke, snimanje stranaca ni neugodne fizičke radnje.", "en": "Safe play never requires personal data, recording strangers, or uncomfortable physical actions." }]
+}

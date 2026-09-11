@@ -636,6 +636,8 @@
     const gallery = pjson('gallery') || [];
     const confirmLabelRaw = q.get('confirmLabel');
     const confirmLabel = confirmLabelRaw ? decodeURIComponent(confirmLabelRaw) : null;
+    // Optional context for a phone-rendered NPC reply. The bot independently validates it.
+    const phoneNpc = pjson('phoneNpc');
 
     let solved = false;
 
@@ -644,7 +646,7 @@
     // phrase id) — never `success`, and this page never receives the correct number/contact/message.
     // `confirmLabel` is the one deliberate exception (client-trusted "I looked" beat, see header doc).
     function send(payload) {
-      const result = { sessionId, userId, gameId: 'android-phone', timestamp: Date.now(), metrics: { hintsUsed: hintsRevealed }, ...payload };
+      const result = { sessionId, userId, gameId: 'android-phone', timestamp: Date.now(), metrics: { hintsUsed: hintsRevealed }, ...(phoneNpc ? { phoneNpc } : {}), ...payload };
       console.log('📤 android-phone result', result);
       try { if (window.parent && window.parent !== window) window.parent.postMessage({ type: 'MINIGAME_RESULT', payload: result }, '*'); } catch (e) {}
       try {
